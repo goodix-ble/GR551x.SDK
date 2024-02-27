@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<flash_board>
+  <pass>
+    <loader>$TOOLKIT_DIR$\config\flashloader\Goodix\GR55xx_IAR_8M.flash</loader>
+    <range>CODE 0x01000000 0x017FFFFF</range>
+  </pass>
+</flash_board>
+
