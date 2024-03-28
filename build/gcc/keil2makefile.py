@@ -113,6 +113,7 @@ COMMON_COMPILE_FLAGS += -ggdb3
 COMMON_COMPILE_FLAGS += -ffunction-sections -fdata-sections 
 COMMON_COMPILE_FLAGS += -mfloat-abi=softfp -mfpu=fpv4-sp-d16  -mapcs-frame -mthumb-interwork -mthumb -mcpu=cortex-m4
 COMMON_COMPILE_FLAGS += -gdwarf-2 -MD
+COMMON_COMPILE_FLAGS += -Wno-attributes
 
 ## Set CFLAGS
 # Set include path
