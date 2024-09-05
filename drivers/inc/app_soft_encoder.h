@@ -110,7 +110,7 @@ typedef void (*app_soft_encoder_callback)(app_soft_encoder_direction_t direction
 /** @} */
 
 /* Exported functions --------------------------------------------------------*/
-/** @addtogroup APP_SOFT_ENODER_DRIVER_FUNCTIONS Functions
+/** @addtogroup APP_SOFT_ENCODER_DRIVER_FUNCTIONS Functions
   * @{
   */
 /**
@@ -119,8 +119,8 @@ typedef void (*app_soft_encoder_callback)(app_soft_encoder_direction_t direction
  *         in the app_soft_encoder_params_t and app_soft_encoder_evt_handler_t.
  *
  * @param[in]  p_params: Pointer to app_soft_encoder_params_t parameter which contains the
- *                       configuration information for the specified SOFT_ENODER module.
- * @param[in]  evt_handler: SOFT_ENODER user callback function.
+ *                       configuration information for the specified SOFT_ENCODER module.
+ * @param[in]  evt_handler: SOFT_ENCODER user callback function.
  *
  * @return Result of initialization.
  ****************************************************************************************

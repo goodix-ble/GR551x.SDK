@@ -139,9 +139,13 @@ void uart_init(uint32_t baud_rate)
     s_uart_param.pin_cfg.tx.pull      = APP_UART_TX_PULL;
     s_uart_param.dma_cfg.tx_dma_instance = DMA0;
     s_uart_param.dma_cfg.rx_dma_instance = DMA0;
-    s_uart_param.dma_cfg.tx_dma_channel = DMA_Channel0;
-    s_uart_param.dma_cfg.rx_dma_channel = DMA_Channel1;
+    s_uart_param.dma_cfg.tx_dma_channel = DMA_Channel2;
+    s_uart_param.dma_cfg.rx_dma_channel = DMA_Channel3;
 
+    app_uart_dma_deinit(APP_UART_ID);
+    app_uart_deinit(APP_UART_ID);
+
+    APP_LOG_INFO("The baud rate update value=%d.",s_uart_param.init.baud_rate);
     app_uart_init(&s_uart_param, app_uart_evt_handler, &s_uart_buffer);
     app_uart_dma_init(&s_uart_param);
     app_uart_dma_receive_async(APP_UART_ID, s_uart_rx_buffer, UART_RX_BUFFER_SIZE);

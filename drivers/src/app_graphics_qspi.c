@@ -121,6 +121,110 @@ bool app_qspi_dma_mmap_read_block(app_qspi_id_t id, uint32_t address, uint8_t * 
     return ret;
 }
 
+bool app_qspi_dma_llp_scroll_read(app_qspi_id_t id, uint8_t data_size, uint32_t llp_src_en, uint32_t llp_dst_en, app_qspi_scroll_read_info_t* p_link_scroll_read, uint32_t link_len) {
+#if (QSPI_ASYNC_VERI_LINK_DRAW_SCREEN_SUPPORT > 0u)
+
+    hal_status_t status;
+    bool ret = true;
+    dma_sg_llp_config_t sg_llp_config;
+    uint32_t j;
+
+    APP_ASSERT_CHECK(p_qspi_env[id]->is_mmap_inited);
+    APP_ASSERT_CHECK(p_qspi_env[id]->is_used_dma);
+    app_qspi_mmap_set_prefetch(id, true);
+    ret = app_qspi_switch_dma_mode(id, true);
+    if(ret) {
+        sg_llp_config.scatter_config.dst_scatter_en = DMA_DST_SCATTER_DISABLE;
+        sg_llp_config.scatter_config.dst_dsi = 0x2;
+        sg_llp_config.scatter_config.dst_dsc = 0x1;
+        sg_llp_config.gather_config.src_gather_en = DMA_SRC_GATHER_DISABLE;
+        sg_llp_config.gather_config.src_sgi = 0x2;
+        sg_llp_config.gather_config.src_sgc = 0x1;
+        sg_llp_config.llp_config.head_lli = &s_dma_llp_block[0];
+        sg_llp_config.llp_config.llp_src_writeback = 0XAA;
+        sg_llp_config.llp_config.llp_dst_writeback = 0XBB;
+
+        uint32_t dma_sdata_align,dma_ddata_align;
+        if(data_size == QSPI_DATASIZE_32_BITS)
+        {
+            dma_sdata_align = DMA_SDATAALIGN_WORD;
+            dma_ddata_align = DMA_DDATAALIGN_WORD;
+            app_qspi_mmap_set_endian_mode(id, APP_QSPI_MMAP_ENDIAN_MODE_2);
+        }
+        else if(data_size == QSPI_DATASIZE_16_BITS)
+        {
+            dma_sdata_align = DMA_SDATAALIGN_HALFWORD;
+            dma_ddata_align = DMA_DDATAALIGN_HALFWORD;
+            app_qspi_mmap_set_endian_mode(id, APP_QSPI_MMAP_ENDIAN_MODE_1);
+        }
+        else
+        {
+            dma_sdata_align = DMA_SDATAALIGN_BYTE;
+            dma_ddata_align = DMA_DDATAALIGN_BYTE;
+            app_qspi_mmap_set_endian_mode(id, APP_QSPI_MMAP_ENDIAN_MODE_0);
+        }
+        uint32_t isrc_llp_en;
+        if(llp_src_en > 0)
+        {
+            sg_llp_config.llp_config.llp_src_en = DMA_LLP_SRC_ENABLE;
+            isrc_llp_en = DMA_LLP_SRC_ENABLE;
+        }
+        else
+        {
+            sg_llp_config.llp_config.llp_src_en = DMA_LLP_SRC_DISABLE;
+            isrc_llp_en = DMA_LLP_SRC_DISABLE;
+        }
+        uint32_t idst_llp_en;
+        if(llp_dst_en > 0)
+        {
+            sg_llp_config.llp_config.llp_dst_en = DMA_LLP_DST_ENABLE;
+            idst_llp_en = DMA_LLP_DST_ENABLE;
+        }
+        else
+        {
+            sg_llp_config.llp_config.llp_dst_en = DMA_LLP_DST_DISABLE;
+            idst_llp_en = DMA_LLP_DST_DISABLE;
+        }
+        uint32_t ctrl_low = DMA_CTLL_INI_EN | DMA_DST_INCREMENT | DMA_SRC_INCREMENT | dma_sdata_align | dma_ddata_align | DMA_SRC_GATHER_DISABLE | DMA_DST_SCATTER_DISABLE | isrc_llp_en | idst_llp_en | LL_DMA_SRC_BURST_LENGTH_1 | LL_DMA_DST_BURST_LENGTH_1 | DMA_MEMORY_TO_MEMORY;
+
+        memset(&s_dma_llp_block[0], 0, sizeof(dma_block_config_t) * (link_len +1));
+
+        app_qspi_scroll_read_info_t* p_current_scroll_read_info = p_link_scroll_read;
+        for (j = 0; j < link_len; j++) {
+            s_dma_llp_block[j].src_address = p_current_scroll_read_info->src_start_address;
+            s_dma_llp_block[j].dst_address = p_current_scroll_read_info->dst_start_address;
+            s_dma_llp_block[j].p_lli = &s_dma_llp_block[j +1];
+            s_dma_llp_block[j].CTL_L = ctrl_low;
+            s_dma_llp_block[j].CTL_H = p_current_scroll_read_info->length;
+            s_dma_llp_block[j].src_status = 0x0;
+            s_dma_llp_block[j].dst_status = 0x0;
+
+            p_current_scroll_read_info = p_current_scroll_read_info->next;
+        }
+        s_dma_llp_block[j - 1].p_lli = NULL;
+
+        p_qspi_env[id]->is_dma_done = 0;
+        p_qspi_env[id]->is_xfer_err = 0;
+        status = hal_dma_start_sg_llp_it(p_qspi_env[id]->handle.p_dma, p_link_scroll_read->src_start_address, p_link_scroll_read->dst_start_address, p_link_scroll_read->length, &sg_llp_config);
+        if (HAL_OK == status)
+        {
+            while(!p_qspi_env[id]->is_dma_done && !p_qspi_env[id]->is_xfer_err);
+            if(p_qspi_env[id]->is_xfer_err) {
+                ret = false;
+            }
+        }
+        else
+        {
+            ret = false;
+        }
+    }
+
+    app_qspi_mmap_set_prefetch(id, false);
+    return ret;
+#else
+    return false;
+#endif
+}
 
 #if APP_QSPI_IN_DEBUG_MODE
 bool app_qspi_sync_draw_screen(app_qspi_id_t screen_id, app_qspi_id_t storage_id, const app_qspi_screen_command_t * const p_screen_cmd, const app_qspi_screen_info_t * const p_screen_info, app_qspi_screen_scroll_t * p_scroll_config) {
@@ -441,7 +545,8 @@ bool app_qspi_async_draw_screen(app_qspi_id_t screen_id, app_qspi_id_t storage_i
     }
 
     if ((p_qspi_env[screen_id] == NULL) || (p_qspi_env[screen_id]->qspi_state == APP_QSPI_INVALID) ||
-        (p_qspi_env[storage_id] == NULL) || (p_qspi_env[storage_id]->qspi_state == APP_QSPI_INVALID))
+        (is_stored_in_qspi_storage && ((p_qspi_env[storage_id] == NULL) || (p_qspi_env[storage_id]->qspi_state == APP_QSPI_INVALID)))
+        )
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -866,7 +971,7 @@ bool app_qspi_async_veri_draw_screen(app_qspi_id_t screen_id,
     memset(&s_dma_llp_block[0], 0, sizeof(dma_block_config_t) * (p_cur_scroll->frame_draw_lines + 1));
 
     for(j = 0; j < p_cur_scroll->frame_draw_lines; j++) {
-        s_dma_llp_block[j].src_address    = p_cur_scroll->frame_ahb_start_address + (p_cur_scroll->frame_offset_lines + j) * scrn_line_size ;
+        s_dma_llp_block[j].src_address    = p_cur_scroll->frame_ahb_start_address + j * scrn_line_size;
         s_dma_llp_block[j].dst_address    = 0;
         s_dma_llp_block[j].p_lli          = &s_dma_llp_block[j + 1];
         s_dma_llp_block[j].CTL_L          = s_async_write_screen_info.llp_cfg_ctrl_low;
@@ -1119,6 +1224,309 @@ bool app_qspi_async_llp_draw_block(app_qspi_id_t screen_id,
     return false;
 #endif
 }
+
+
+__weak void * _q_malloc(uint32_t size) {
+    // TODO: override this function
+    return NULL;
+}
+
+__weak void _q_free(void * ptr) {
+    // TODO: override this function
+    return;
+}
+
+static dma_block_config_t * p_llp = NULL;
+static app_qspi_id_t s_screen_id ;
+
+void _free_qspi_dma_llp_resource(void) {
+    if (p_llp != NULL)
+    {
+        dma_block_config_t * p = p_llp;
+        dma_block_config_t * q = NULL;
+        while (p)
+        {
+            q = p->p_lli;
+            _q_free(p);
+            p = q;
+        }
+
+        p_qspi_env[s_screen_id]->start_flag = false;
+        app_qspi_force_cs(s_screen_id, false);
+    }
+    p_llp = NULL;
+}
+
+/****************************************************************
+ * IF Flush Area <= Frame Buffer :
+ *
+ *      ---------------------[stride]------------------
+ *      |    [p_buff]                                 |
+ *      |    ++++++++++++++[width]++++++++++++        |
+ *      |    +                               +        |
+ *      |    +                               +        |
+ *      |    +          Flush Area        [height]    |
+ *      |    +                               +        |
+ *      |    +                               +        |
+ *      |    +++++++++++++++++++++++++++++++++        |
+ *      |                                             |
+ *      -----------------------------------------------
+ *                      Frame Buffer
+ ****************************************************************/
+uint16_t app_qspi_send_display_frame(app_qspi_id_t screen_id,
+                                     const app_qspi_screen_command_t *const p_screen_cmd,
+                                     const app_qspi_screen_info_t *const p_screen_info, const uint8_t * p_buff) {
+
+    uint32_t shift_bit   = 0;
+    uint32_t xfer_width  = 0;
+    uint32_t i           = 0;
+    uint32_t block_count = 0;
+    uint32_t block_left  = 0;
+    uint32_t block_beat  = 0;
+    hal_status_t status  = HAL_ERROR;
+
+    if ((p_screen_cmd == NULL) || (p_screen_info == NULL) || (p_buff == NULL)) {
+        return APP_DRV_ERR_POINTER_NULL;
+    }
+
+    dma_block_config_t * p_llp_block      = NULL;
+    dma_block_config_t * p_llp_block_prev = NULL;
+
+    dma_llp_config_t  s_llp_config = {
+        .llp_src_en = DMA_LLP_SRC_ENABLE,
+        .llp_dst_en = DMA_LLP_DST_DISABLE,
+        .head_lli = NULL,
+    };
+
+    qspi_command_t s_cmd = {
+        .instruction              = p_screen_cmd->instruction,
+        .address                  = p_screen_cmd->leading_address,
+        .instruction_size         = p_screen_cmd->instruction_size,
+        .address_size             = p_screen_cmd->address_size,
+        .dummy_cycles             = p_screen_cmd->dummy_cycles,
+        .data_size                = p_screen_cmd->data_size,
+        .instruction_address_mode = p_screen_cmd->instruction_address_mode,
+        .data_mode                = p_screen_cmd->data_mode,
+        .length                   = p_screen_info->scrn_pixel_width * p_screen_info->scrn_pixel_height * p_screen_info->scrn_pixel_depth,
+        .clock_stretch_en         = false,
+    };
+
+    if(p_screen_cmd->data_size == QSPI_DATASIZE_08_BITS) {
+        xfer_width = DMA_SDATAALIGN_BYTE | DMA_DDATAALIGN_BYTE ;
+        shift_bit  = 0;
+    } else if(p_screen_cmd->data_size == QSPI_DATASIZE_16_BITS) {
+        xfer_width = DMA_SDATAALIGN_HALFWORD | DMA_DDATAALIGN_HALFWORD ;
+        shift_bit  = 1;
+    } else if(p_screen_cmd->data_size == QSPI_DATASIZE_32_BITS) {
+        if(s_cmd.length % 4 != 0) {
+            printf("Not Support length: %d\r\n", s_cmd.length);
+            return APP_DRV_ERR_INVALID_PARAM;
+        }
+        xfer_width = DMA_SDATAALIGN_WORD | DMA_DDATAALIGN_WORD ;
+        shift_bit  = 2;
+    } else {
+        printf("Not Support data_size: %d\r\n", p_screen_cmd->data_size);
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
+    uint32_t stride_size = 0;
+    const uint32_t total_beats = (p_screen_info->scrn_pixel_width * p_screen_info->scrn_pixel_height * p_screen_info->scrn_pixel_depth) >> shift_bit;
+
+    {
+        block_count = total_beats / 4092;
+        block_left  = total_beats % 4092;
+        block_beat  = 4092;
+        stride_size = block_beat << shift_bit;
+    }
+
+    uint32_t src_addr = (uint32_t) p_buff;
+
+    for(i = 0; i < block_count; i++) {
+        p_llp_block = _q_malloc(sizeof(dma_block_config_t));
+
+        p_llp_block->src_address = src_addr;
+        p_llp_block->dst_address = 0;
+        p_llp_block->src_status  = 0x00;
+        p_llp_block->dst_status  = 0x00;
+
+        /* memset in word mode */
+        p_llp_block->CTL_L       = DMA_CTLL_INI_EN
+                                    | DMA_SRC_INCREMENT
+                                    | DMA_DST_NO_CHANGE
+                                    | DMA_SRC_GATHER_DISABLE
+                                    | DMA_DST_SCATTER_DISABLE
+                                    | DMA_LLP_SRC_ENABLE
+                                    | DMA_LLP_DST_DISABLE
+                                    | DMA_MEMORY_TO_PERIPH
+                                    | LL_DMA_SRC_BURST_LENGTH_8 | LL_DMA_DST_BURST_LENGTH_8
+                                    | xfer_width;
+
+        p_llp_block->CTL_H       = block_beat;
+        p_llp_block->p_lli       = NULL;
+
+        if(p_llp_block_prev == NULL) {
+            s_llp_config.head_lli = p_llp_block;
+        } else {
+            p_llp_block_prev->p_lli = p_llp_block;
+        }
+        p_llp_block_prev = p_llp_block;
+
+        src_addr += stride_size;
+    }
+
+    if(block_left > 0) {
+        p_llp_block = _q_malloc(sizeof(dma_block_config_t));
+
+        p_llp_block->src_address = src_addr;
+        p_llp_block->dst_address = 0;
+        p_llp_block->src_status  = 0x00;
+        p_llp_block->dst_status  = 0x00;
+
+        /* memset in word mode */
+        p_llp_block->CTL_L       = DMA_CTLL_INI_EN
+                                    | DMA_SRC_INCREMENT
+                                    | DMA_DST_NO_CHANGE
+                                    | DMA_SRC_GATHER_DISABLE
+                                    | DMA_DST_SCATTER_DISABLE
+                                    | DMA_LLP_SRC_ENABLE
+                                    | DMA_LLP_DST_DISABLE
+                                    | DMA_MEMORY_TO_PERIPH
+                                    | LL_DMA_SRC_BURST_LENGTH_8 | LL_DMA_DST_BURST_LENGTH_8
+                                    | xfer_width;
+
+        p_llp_block->CTL_H       = block_left;
+        p_llp_block->p_lli       = NULL;
+
+        if(p_llp_block_prev == NULL) {
+            s_llp_config.head_lli = p_llp_block;
+        } else {
+            p_llp_block_prev->p_lli = p_llp_block;
+        }
+        p_llp_block_prev = p_llp_block;
+    }
+
+    p_llp = s_llp_config.head_lli;
+    s_screen_id = screen_id;
+    if (p_qspi_env[screen_id]->start_flag == false)
+    {
+        p_qspi_env[screen_id]->start_flag = true;
+        app_qspi_force_cs(screen_id, true);
+        status = hal_qspi_command_transmit_dma_llp(&(p_qspi_env[screen_id]->handle), &s_cmd, &s_llp_config);
+        if (status != HAL_OK)
+        {
+            _free_qspi_dma_llp_resource();
+            p_qspi_env[screen_id]->start_flag = false;
+            return (uint16_t)status;
+        }
+    }
+    else
+    {
+        _free_qspi_dma_llp_resource();
+        return APP_DRV_ERR_BUSY;
+    }
+
+    return APP_DRV_SUCCESS;
+}
+
+/*
+ * if p_screen_info->scrn_pixel_width == p_screen_info->scrn_pixel_stride, Please use this API.
+ * This API costs less time than app_qspi_send_display_frame
+ */
+SECTION_RAM_CODE uint16_t app_qspi_send_display_frame_simp(app_qspi_id_t screen_id,
+                                     const app_qspi_screen_command_t *const p_screen_cmd,
+                                     const app_qspi_screen_info_t *const p_screen_info, const uint8_t * p_buff) {
+    uint32_t i           = 0;
+    hal_status_t status  = HAL_ERROR;
+    uint32_t beat_bytes  = 1;
+    uint32_t xfer_width  = DMA_SDATAALIGN_BYTE | DMA_DDATAALIGN_BYTE;
+
+    dma_llp_config_t  s_llp_config = {
+        .llp_src_en = DMA_LLP_SRC_ENABLE,
+        .llp_dst_en = DMA_LLP_DST_DISABLE,
+        .head_lli = NULL,
+    };
+
+    if ((p_screen_cmd == NULL) || (p_screen_info == NULL) || (p_buff == NULL)) {
+        return APP_DRV_ERR_POINTER_NULL;
+    }
+
+    if(p_screen_cmd->data_size == QSPI_DATASIZE_08_BITS) {
+        beat_bytes  = 1;
+        xfer_width  = DMA_SDATAALIGN_BYTE | DMA_DDATAALIGN_BYTE | LL_DMA_SRC_BURST_LENGTH_8 | LL_DMA_DST_BURST_LENGTH_8;
+    } else if(p_screen_cmd->data_size == QSPI_DATASIZE_16_BITS) {
+        beat_bytes  = 2;
+        xfer_width  = DMA_SDATAALIGN_HALFWORD | DMA_DDATAALIGN_HALFWORD | LL_DMA_SRC_BURST_LENGTH_8 | LL_DMA_DST_BURST_LENGTH_8;
+    } else if(p_screen_cmd->data_size == QSPI_DATASIZE_32_BITS) {
+        beat_bytes  = 4;
+        xfer_width  = DMA_SDATAALIGN_WORD | DMA_DDATAALIGN_WORD | LL_DMA_SRC_BURST_LENGTH_4 | LL_DMA_DST_BURST_LENGTH_4;
+    }
+
+    const uint32_t _xfer_lines_once  = (beat_bytes*4092)/(p_screen_info->scrn_pixel_width * p_screen_info->scrn_pixel_depth);
+    const uint32_t _xfer_times_once  = p_screen_info->scrn_pixel_height/_xfer_lines_once + ((p_screen_info->scrn_pixel_height%_xfer_lines_once !=0) ? 1 : 0);
+    const uint32_t _xfer_bytes_once  = _xfer_lines_once * p_screen_info->scrn_pixel_width * p_screen_info->scrn_pixel_depth;
+    const uint32_t _xfer_bytes_total = p_screen_info->scrn_pixel_width * p_screen_info->scrn_pixel_depth * p_screen_info->scrn_pixel_height;
+          uint32_t _xfer_bytes_left  = _xfer_bytes_total;
+          uint32_t _xfer_bytes_this  = 0;
+    memset(&s_dma_llp_block[0], 0, sizeof(dma_block_config_t)*_xfer_times_once);
+
+    for(i = 0; i < _xfer_times_once; i++) {
+        _xfer_bytes_this = (_xfer_bytes_left > _xfer_bytes_once) ? _xfer_bytes_once : _xfer_bytes_left;
+        s_dma_llp_block[i].src_address = (uint32_t) p_buff + i * _xfer_bytes_once;
+        s_dma_llp_block[i].dst_address = 0;
+        s_dma_llp_block[i].src_status  = 0x00;
+        s_dma_llp_block[i].dst_status  = 0x00;
+
+        /* memset in word mode */
+        s_dma_llp_block[i].CTL_L = DMA_CTLL_INI_EN
+                                 | DMA_SRC_INCREMENT
+                                 | DMA_DST_NO_CHANGE
+                                 | DMA_SRC_GATHER_DISABLE
+                                 | DMA_DST_SCATTER_DISABLE
+                                 | DMA_LLP_SRC_ENABLE
+                                 | DMA_LLP_DST_DISABLE
+                                 | DMA_MEMORY_TO_PERIPH
+                                 | xfer_width;
+        s_dma_llp_block[i].CTL_H       = _xfer_bytes_this/beat_bytes;
+        s_dma_llp_block[i].p_lli       = &s_dma_llp_block[i+1];
+        _xfer_bytes_left -= _xfer_bytes_this;
+    }
+    s_dma_llp_block[i-1].p_lli       = NULL;
+
+    qspi_command_t s_cmd = {
+        .instruction              = p_screen_cmd->instruction,
+        .address                  = p_screen_cmd->leading_address,
+        .instruction_size         = p_screen_cmd->instruction_size,
+        .address_size             = p_screen_cmd->address_size,
+        .dummy_cycles             = p_screen_cmd->dummy_cycles,
+        .data_size                = p_screen_cmd->data_size,
+        .instruction_address_mode = p_screen_cmd->instruction_address_mode,
+        .data_mode                = p_screen_cmd->data_mode,
+        .length                   = _xfer_bytes_total,
+        .clock_stretch_en         = true,
+    };
+
+    s_screen_id = screen_id;
+    s_llp_config.head_lli = &s_dma_llp_block[0];
+    if (p_qspi_env[screen_id]->start_flag == false)
+    {
+        p_qspi_env[screen_id]->start_flag = true;
+
+        status = hal_qspi_command_transmit_dma_llp(&(p_qspi_env[screen_id]->handle), &s_cmd, &s_llp_config);
+        if (status != HAL_OK)
+        {
+            p_qspi_env[screen_id]->start_flag = false;
+            return (uint16_t)status;
+        }
+    }
+    else
+    {
+        return APP_DRV_ERR_BUSY;
+    }
+
+    return APP_DRV_SUCCESS;
+}
+
+
 
 bool app_qspi_mmap_blit_image(app_qspi_id_t storage_id, blit_image_config_t * p_blit_config, blit_xfer_type_e xfer_type) {
 #if QSPI_BLIT_RECT_IMAGE_SUPPORT > 0u
@@ -1481,11 +1889,13 @@ Label_async_scrn_notify:
 static void app_qspi_dma_evt_handler_0(app_dma_evt_type_t type) {
     switch(type) {
         case APP_DMA_EVT_TFR:
-        case APP_DMA_EVT_BLK:
         {
             p_qspi_env[APP_QSPI_ID_0]->is_xfer_err = 0;
             p_qspi_env[APP_QSPI_ID_0]->is_dma_done = 1;
         }
+        break;
+
+        case APP_DMA_EVT_BLK:
         break;
 
         default:
@@ -1501,11 +1911,13 @@ static void app_qspi_dma_evt_handler_0(app_dma_evt_type_t type) {
 static void app_qspi_dma_evt_handler_1(app_dma_evt_type_t type) {
     switch(type) {
         case APP_DMA_EVT_TFR:
-        case APP_DMA_EVT_BLK:
         {
             p_qspi_env[APP_QSPI_ID_1]->is_xfer_err = 0;
             p_qspi_env[APP_QSPI_ID_1]->is_dma_done = 1;
         }
+        break;
+
+        case APP_DMA_EVT_BLK:
         break;
 
         default:
@@ -1521,11 +1933,13 @@ static void app_qspi_dma_evt_handler_1(app_dma_evt_type_t type) {
 static void app_qspi_dma_evt_handler_2(app_dma_evt_type_t type) {
     switch(type) {
         case APP_DMA_EVT_TFR:
-        case APP_DMA_EVT_BLK:
         {
             p_qspi_env[APP_QSPI_ID_2]->is_xfer_err = 0;
             p_qspi_env[APP_QSPI_ID_2]->is_dma_done = 1;
         }
+        break;
+
+        case APP_DMA_EVT_BLK:
         break;
 
         default:

@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "app_log.h"
+#include "utility.h"
 /*
  * LOCAL VARIABLE DEFINITIONS
  *****************************************************************************************
@@ -107,6 +108,7 @@ static void ancs_notify_attr_print(void)
     if (commd_id == CTRL_POINT_GET_NTF_ATTRIBUTE)
     {
         attr_id = s_attr_buf[5];
+        UNUSED_VARIABLE(lit_attrid[attr_id]);
         APP_LOG_INFO("UID=%d, ATTR_ID: %s, ATTR_SIZE=%d", UID, lit_attrid[attr_id], attr_size);
         for (uint16_t idx = 0; idx < attr_size; idx++)
         {
@@ -228,7 +230,9 @@ static void notification_content_print(ntf_source_pdu_t *p_notif)
 {
     APP_LOG_INFO("\r\nNotification");
     APP_LOG_INFO("Event:       %s", lit_eventid[p_notif->event_id]);
+    UNUSED_VARIABLE(lit_eventid[0]);
     APP_LOG_INFO("Category ID: %s", lit_catid[p_notif->category_id]);
+    UNUSED_VARIABLE(lit_catid[0]);
     APP_LOG_INFO("Category Cnt:%u", (unsigned int) p_notif->category_count);
     APP_LOG_INFO("UID:         %u", (unsigned int) p_notif->notification_uid);
     APP_LOG_INFO("Flags: ");

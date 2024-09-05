@@ -347,16 +347,13 @@ static void battery_service_process_event(bas_evt_t *p_evt)
  */
 static void heartrate_service_process_event(hrs_evt_t *p_hrs_evt)
 {
-    sdk_err_t error_code;
-
     switch (p_hrs_evt->evt_type)
     {
         case HRS_EVT_NOTIFICATION_ENABLED:
-            error_code = app_timer_start(s_heart_rate_meas_timer_id, HEART_RATE_MEAS_INTERVAL, NULL);
-            APP_ERROR_CHECK(error_code);
+            app_timer_start(s_heart_rate_meas_timer_id, HEART_RATE_MEAS_INTERVAL, NULL);
 
-            error_code = app_timer_start(s_rr_interval_meas_timer_id, RR_INTERVAL_INTERVAL, NULL);
-            APP_ERROR_CHECK(error_code);
+            app_timer_start(s_rr_interval_meas_timer_id, RR_INTERVAL_INTERVAL, NULL);
+
             APP_LOG_DEBUG("Heart Rate Notification Enabled.");
             break;
 
@@ -670,9 +667,6 @@ void ble_evt_handler(const ble_evt_t *p_evt)
             if (BLE_SUCCESS == p_evt->evt_status)
             {
                 lns_pay_load_update(p_evt->evt.gatt_common_evt.index, p_evt->evt.gatt_common_evt.params.mtu_exchange.mtu);
-#if DFU_ENABLE
-                dfu_ble_set_mtu_size(p_evt->evt.gatt_common_evt.params.mtu_exchange.mtu);
-#endif
             }
             break;
     }

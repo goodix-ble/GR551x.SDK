@@ -189,7 +189,10 @@ static void current_time_update(void *p_arg)
         s_current_exact_time.cur_time.day_date_time.date_time.year ++;
     }
 
-    cts_exact_time_update(&s_current_exact_time);
+    if (s_current_exact_time.cur_time.day_date_time.date_time.year <= 9999)
+    {
+        cts_exact_time_update(&s_current_exact_time);
+    }
 }
 
 /**
@@ -220,7 +223,8 @@ static void current_time_service_event_process(cts_evt_t *p_evt)
                                                      str[p_evt->cur_time.day_date_time.day_of_week],
                                                      p_evt->cur_time.day_date_time.date_time.hour,
                                                      p_evt->cur_time.day_date_time.date_time.min,
-                                                     p_evt->cur_time.day_date_time.date_time.sec);              
+                                                     p_evt->cur_time.day_date_time.date_time.sec);
+              UNUSED_VARIABLE(str[0]);
               APP_LOG_DEBUG("Fractions_256:%d Adjust_reason:%d \r\n", p_evt->cur_time.day_date_time.fractions_256,
                                                                  p_evt->cur_time.adjust_reason);
               memcpy(&s_current_exact_time.cur_time,&p_evt->cur_time, sizeof(cts_cur_time_t));

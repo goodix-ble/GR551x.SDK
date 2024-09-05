@@ -28,11 +28,11 @@
 
     .section    .stack
     .align      3
-//#ifdef __STACK_SIZE
-//  .equ    Stack_Size, __STACK_SIZE
-//#else
-    .equ    Stack_Size, 0x00008000
-//#endif
+#ifdef __STACK_SIZE
+    .equ    Stack_Size, __STACK_SIZE
+#else
+    .equ    Stack_Size, 0x00002000
+#endif
     .globl      __StackTop
     .globl      __StackLimit
 __StackLimit:
@@ -78,56 +78,6 @@ __Vectors:
     .long    0                     /* Reserved */
     .long    PendSV_Handler        /* PendSV Handler */
     .long    SysTick_Handler       /* SysTick Handler */
-
-    /* External interrupts */
-    .long    WDT_IRQHandler        /*  0: Watchdog Timer             */
-    .long    BLE_SDK_Handler       /*  1: Reserved                   */
-    .long    BLE_IRQHandler        /*  2: BLE                        */
-    .long    DMA0_IRQHandler       /*  3: DMA0                       */
-    .long    SPI_M_IRQHandler      /*  4: SPI_M                      */
-    .long    SPI_S_IRQHandler      /*  5: SPI_S                      */
-    .long    EXT0_IRQHandler       /*  6: GPIO0                      */
-    .long    EXT1_IRQHandler       /*  7: GPIO1                      */
-    .long    TIMER0_IRQHandler     /*  8: TIMER0                     */
-    .long    TIMER1_IRQHandler     /*  9: TIMER1                     */
-    .long    DUAL_TIMER_IRQHandler /* 10: DUAL_TIMER0/DUAL_TIMER1    */
-    .long    QSPI0_IRQHandler      /* 11: QSPI0                      */
-    .long    UART0_IRQHandler      /* 12: UART0                      */
-    .long    UART1_IRQHandler      /* 13: UART1                      */
-    .long    I2C0_IRQHandler       /* 14: I2C0                       */
-    .long    I2C1_IRQHandler       /* 15: I2C1                       */
-    .long    AES_IRQHandler        /* 16: AES                        */
-    .long    HMAC_IRQHandler       /* 17: HMAC                       */
-    .long    EXT2_IRQHandler       /* 18: GPIO2                      */
-    .long    RNG_IRQHandler        /* 19: TRNG Interrupt             */
-    .long    PMU_IRQHandler        /* 20: PMU                        */
-    .long    PKC_IRQHandler        /* 21: PKC                        */
-    .long    XQSPI_IRQHandler      /* 22: XQSPI                      */
-    .long    QSPI1_IRQHandler      /* 23: QSPI1                      */
-    .long    PWR_CMD_IRQHandler    /* 24: PWR_CMD                    */
-    .long    BLESLP_IRQHandler     /* 25: BLE Sleep                  */
-    .long    SLPTIMER_IRQHandler   /* 26: Sleep Timer                */
-    .long    EXTWKUP_IRQHandler    /* 27: EXT Wakeup                 */
-    .long    AON_WDT_IRQHandler    /* 28: AON_WDT                    */
-    .long    I2S_M_IRQHandler      /* 29: I2S_M                      */
-    .long    I2S_S_IRQHandler      /* 30: I2S_S                      */
-    .long    ISO7816_IRQHandler    /* 31: ISO7816                    */
-    .long    PRESENT_IRQHandler    /* 32: PRESENT                    */
-    .long    CALENDAR_IRQHandler   /* 33: CALENDAR                   */
-    .long    COMM_CORE_IRQHandler  /* 34: COMM_CORE                  */
-    .long    DMA1_IRQHandler       /* 35: DMA1                       */
-    .long    DMA2_IRQHandler       /* 36: DMA2                       */
-    .long    DSPI_IRQHandler       /* 37: DSPI                       */
-    .long    AON_IRQHandler        /* 38: AON                        */
-    .long    PDM_IRQHandler        /* 39: PDM                        */
-    .long    VTTBL_IRQHandler      /* 40: VTTBL                      */
-    .long    CTE_FULL_IRQHandler   /* 41: CTE_FULL                   */
-    .long    USB_IRQHandler        /* 42: USB                        */
-    .long    GPADC_IRQHandler      /* 43: GPADC                      */
-    .long    AON_PMU_BOD_FEDGE_IRQHandler /* 44: AON_PMU_BOD_FEDGE   */
-    .long    AON_PMU_MSIO_COMP_IRQHandler /* 45: AON_PMU_MSIO_COMP   */
-    .long    AON_PMU_USB_WKUP_IRQHandler  /* 46: AON_PMU_USB_WKUP    */
-
     .size       __Vectors, . - __Vectors
 
     .text
@@ -170,49 +120,4 @@ Default_Handler:
     def_irq_handler    DebugMon_Handler
     def_irq_handler    PendSV_Handler
     def_irq_handler    SysTick_Handler
-
-    def_irq_handler    WDT_IRQHandler
-    def_irq_handler    DMA0_IRQHandler
-    def_irq_handler    SPI_M_IRQHandler
-    def_irq_handler    SPI_S_IRQHandler
-    def_irq_handler    EXT0_IRQHandler
-    def_irq_handler    EXT1_IRQHandler
-    def_irq_handler    TIMER0_IRQHandler
-    def_irq_handler    TIMER1_IRQHandler
-    def_irq_handler    DUAL_TIMER_IRQHandler
-    def_irq_handler    QSPI0_IRQHandler
-    def_irq_handler    UART0_IRQHandler
-    def_irq_handler    UART1_IRQHandler
-    def_irq_handler    I2C0_IRQHandler
-    def_irq_handler    I2C1_IRQHandler
-    def_irq_handler    AES_IRQHandler
-    def_irq_handler    HMAC_IRQHandler
-    def_irq_handler    EXT2_IRQHandler
-    def_irq_handler    RNG_IRQHandler
-    def_irq_handler    PMU_IRQHandler
-    def_irq_handler    PKC_IRQHandler
-    def_irq_handler    XQSPI_IRQHandler
-    def_irq_handler    QSPI1_IRQHandler
-    def_irq_handler    PWR_CMD_IRQHandler
-    def_irq_handler    SLPTIMER_IRQHandler
-    def_irq_handler    EXTWKUP_IRQHandler
-    def_irq_handler    AON_WDT_IRQHandler
-    def_irq_handler    I2S_M_IRQHandler
-    def_irq_handler    I2S_S_IRQHandler
-    def_irq_handler    ISO7816_IRQHandler
-    def_irq_handler    PRESENT_IRQHandler
-    def_irq_handler    CALENDAR_IRQHandler
-    def_irq_handler    COMM_CORE_IRQHandler
-    def_irq_handler    DMA1_IRQHandler
-    def_irq_handler    DMA2_IRQHandler
-    def_irq_handler    DSPI_IRQHandler
-    def_irq_handler    AON_IRQHandler
-    def_irq_handler    PDM_IRQHandler
-    def_irq_handler    VTTBL_IRQHandler
-    def_irq_handler    CTE_FULL_IRQHandler
-    def_irq_handler    USB_IRQHandler
-    def_irq_handler    GPADC_IRQHandler
-    def_irq_handler    AON_PMU_BOD_FEDGE_IRQHandler
-    def_irq_handler    AON_PMU_MSIO_COMP_IRQHandler
-    def_irq_handler    AON_PMU_USB_WKUP_IRQHandler
     .end

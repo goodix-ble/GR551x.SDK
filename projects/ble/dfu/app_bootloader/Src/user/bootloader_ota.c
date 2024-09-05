@@ -152,20 +152,28 @@ static void bootloader_address_restore(void)
     }
 }
 
+
 static void ble_evt_handler(const ble_evt_t *p_evt)
 {
     switch(p_evt->evt_id)
     {
         case BLE_COMMON_EVT_STACK_INIT:
+        {
+            sdk_version_t     version;
+
+            sys_sdk_verison_get(&version);
+            APP_LOG_INFO(">>> Goodix BLE SDK V%d.%d.%d (commit %x)",
+                        version.major, version.minor, version.build, version.commit_id);
             APP_LOG_DEBUG(">>> Enter bootloader OTA");
             bootloader_ota_init();
             bootloader_gap_params_init();
             bootloader_address_change();
             ble_gap_adv_start(0, &s_gap_adv_time_param);
             break;
-
+        }
         case BLE_GAPC_EVT_CONNECTED:
             bootloader_address_restore();
+            dfu_mode_update(DFU_NON_COPY_UPGRADE_MODE_PATTERN);
             break;
 
         case BLE_GAPC_EVT_DISCONNECTED:

@@ -123,12 +123,9 @@ static const uart_info_t s_uart_info[APP_UART_ID_MAX] = {
 };
 
 uart_env_t *p_uart_env[APP_UART_ID_MAX];
-static bool       s_sleep_cb_registered_flag = false;
-static pwr_id_t   s_uart_pwr_id;
 static const app_sleep_callbacks_t uart_sleep_cb =
 {
     .app_prepare_for_sleep = uart_prepare_for_sleep,
-    .app_sleep_canceled    = NULL,
     .app_wake_up_ind       = uart_wake_up_ind,
 };
 
@@ -140,7 +137,7 @@ static bool uart_prepare_for_sleep(void)
 {
     hal_uart_state_t state;
 
-    for (uint8_t i = 0; i < APP_UART_ID_MAX; i++)
+    for (uint32_t i = 0; i < APP_UART_ID_MAX; i++)
     {
         if (p_uart_env[i] == NULL)
         {
@@ -170,7 +167,7 @@ static bool uart_prepare_for_sleep(void)
 SECTION_RAM_CODE static void uart_wake_up_ind(void)
 {
 #ifndef APP_DRIVER_WAKEUP_CALL_FUN
-    uint8_t i;
+    uint32_t i;
 
     for (i = 0; i < APP_UART_ID_MAX; i++)
     {
@@ -218,9 +215,7 @@ __WEAK uint16_t app_uart_dma_start_transmit_async(app_uart_id_t id)
 
 static app_uart_id_t uart_get_id(uart_handle_t *p_uart)
 {
-    int i = 0;
-
-    for (i = 0; i < APP_UART_ID_MAX; i++)
+    for (uint32_t i = 0; i < APP_UART_ID_MAX; i++)
     {
         if (p_uart->p_instance == s_uart_info[i].instance)
         {
@@ -231,36 +226,36 @@ static app_uart_id_t uart_get_id(uart_handle_t *p_uart)
     return APP_UART_ID_MAX;
 }
 
-static uint16_t uart_gpio_config(uint32_t hw_flow_ctrl, app_uart_pin_cfg_t pin_cfg)
+static uint16_t uart_gpio_config(uint32_t hw_flow_ctrl, app_uart_pin_cfg_t *p_pin_cfg)
 {
     app_io_init_t io_init  = APP_IO_DEFAULT_CONFIG;
     app_drv_err_t err_code = APP_DRV_SUCCESS;
 
-    io_init.pull = pin_cfg.tx.pull;
+    io_init.pull = p_pin_cfg->tx.pull;
     io_init.mode = APP_IO_MODE_MUX;
-    io_init.pin  = pin_cfg.tx.pin;
-    io_init.mux  = pin_cfg.tx.mux;
-    err_code = app_io_init(pin_cfg.tx.type, &io_init);
+    io_init.pin  = p_pin_cfg->tx.pin;
+    io_init.mux  = p_pin_cfg->tx.mux;
+    err_code = app_io_init(p_pin_cfg->tx.type, &io_init);
     APP_DRV_ERR_CODE_CHECK(err_code);
 
-    io_init.pull = pin_cfg.rx.pull;
-    io_init.pin  = pin_cfg.rx.pin;
-    io_init.mux  = pin_cfg.rx.mux;
-    err_code = app_io_init(pin_cfg.rx.type, &io_init);
+    io_init.pull = p_pin_cfg->rx.pull;
+    io_init.pin  = p_pin_cfg->rx.pin;
+    io_init.mux  = p_pin_cfg->rx.mux;
+    err_code = app_io_init(p_pin_cfg->rx.type, &io_init);
     APP_DRV_ERR_CODE_CHECK(err_code);
 
     if (UART_HWCONTROL_RTS_CTS == hw_flow_ctrl)
     {
-        io_init.pull = pin_cfg.cts.pull;
-        io_init.pin  = pin_cfg.cts.pin;
-        io_init.mux  = pin_cfg.cts.mux;
-        err_code = app_io_init(pin_cfg.cts.type, &io_init);
+        io_init.pull = p_pin_cfg->cts.pull;
+        io_init.pin  = p_pin_cfg->cts.pin;
+        io_init.mux  = p_pin_cfg->cts.mux;
+        err_code = app_io_init(p_pin_cfg->cts.type, &io_init);
         APP_DRV_ERR_CODE_CHECK(err_code);
 
-        io_init.pull = pin_cfg.rts.pull;
-        io_init.pin  = pin_cfg.rts.pin;
-        io_init.mux  = pin_cfg.rts.mux;
-        err_code = app_io_init(pin_cfg.rts.type, &io_init);
+        io_init.pull = p_pin_cfg->rts.pull;
+        io_init.pin  = p_pin_cfg->rts.pin;
+        io_init.mux  = p_pin_cfg->rts.mux;
+        err_code = app_io_init(p_pin_cfg->rts.type, &io_init);
         APP_DRV_ERR_CODE_CHECK(err_code);
     }
 
@@ -302,13 +297,15 @@ static uint16_t app_uart_start_transmit_async(app_uart_id_t id)
  */
 uint16_t app_uart_init(app_uart_params_t *p_params, app_uart_evt_handler_t evt_handler, app_uart_tx_buf_t *tx_buffer)
 {
-    app_uart_id_t    id = p_params->id;
+    app_uart_id_t id;
     app_drv_err_t err_code = APP_DRV_SUCCESS;
 
     if ((p_params == NULL) || (tx_buffer == NULL))
     {
         return APP_DRV_ERR_POINTER_NULL;
     }
+
+    id = p_params->id;
 
     if (id >= APP_UART_ID_MAX)
     {
@@ -318,8 +315,25 @@ uint16_t app_uart_init(app_uart_params_t *p_params, app_uart_evt_handler_t evt_h
     p_uart_env[id] = &(p_params->uart_dev);
     ring_buffer_init(&p_uart_env[id]->tx_ring_buffer, tx_buffer->tx_buf, tx_buffer->tx_buf_size);
 
-    err_code = uart_gpio_config(p_params->init.hw_flow_ctrl, p_params->pin_cfg);
+    err_code = uart_gpio_config(p_params->init.hw_flow_ctrl, &p_params->pin_cfg);
     APP_DRV_ERR_CODE_CHECK(err_code);
+
+    p_uart_env[id]->p_pin_cfg = &p_params->pin_cfg;
+    p_uart_env[id]->evt_handler = evt_handler;
+
+    memcpy(&p_uart_env[id]->handle.init, &p_params->init, sizeof(uart_init_t));
+    p_uart_env[id]->handle.p_instance = s_uart_info[id].instance;
+
+    hal_uart_deinit(&p_uart_env[id]->handle);
+    hal_uart_init(&p_uart_env[id]->handle);
+
+    pwr_register_sleep_cb(&uart_sleep_cb, APP_DRIVER_UART_WAKEUP_PRIORITY, UART_PWR_ID);
+
+    p_uart_env[id]->uart_state = APP_UART_ACTIVITY;
+    p_uart_env[id]->start_tx_flag = false;
+    p_uart_env[id]->start_flush_flag = false;
+    p_uart_env[id]->tx_abort_flag = false;
+    p_uart_env[id]->rx_abort_flag = false;
 
     soc_register_nvic(UART0_IRQn, (uint32_t)UART0_IRQHandler);
     soc_register_nvic(UART1_IRQn, (uint32_t)UART1_IRQHandler);
@@ -335,38 +349,11 @@ uint16_t app_uart_init(app_uart_params_t *p_params, app_uart_evt_handler_t evt_h
     hal_nvic_clear_pending_irq(s_uart_info[id].irq);
     hal_nvic_enable_irq(s_uart_info[id].irq);
 
-    p_uart_env[id]->p_pin_cfg = &p_params->pin_cfg;
-    p_uart_env[id]->evt_handler = evt_handler;
-
-    memcpy(&p_uart_env[id]->handle.init, &p_params->init, sizeof(uart_init_t));
-    p_uart_env[id]->handle.p_instance = s_uart_info[id].instance;
-
-    hal_uart_deinit(&p_uart_env[id]->handle);
-    hal_uart_init(&p_uart_env[id]->handle);
-
-    if (s_sleep_cb_registered_flag == false)// register sleep callback
-    {
-        s_sleep_cb_registered_flag = true;
-        s_uart_pwr_id = pwr_register_sleep_cb(&uart_sleep_cb, APP_DRIVER_UART_WAPEUP_PRIORITY);
-
-        if (s_uart_pwr_id < 0)
-        {
-            return APP_DRV_ERR_INVALID_PARAM;
-        }
-    }
-
-    p_uart_env[id]->uart_state = APP_UART_ACTIVITY;
-    p_uart_env[id]->start_tx_flag = false;
-    p_uart_env[id]->start_flush_flag = false;
-    p_uart_env[id]->tx_abort_flag = false;
-    p_uart_env[id]->rx_abort_flag = false;
-
     return APP_DRV_SUCCESS;
 }
 
 uint16_t app_uart_deinit(app_uart_id_t id)
 {
-    uint8_t i;
     app_drv_err_t err_code = APP_DRV_SUCCESS;
 
     if (id >= APP_UART_ID_MAX)
@@ -403,22 +390,19 @@ uint16_t app_uart_deinit(app_uart_id_t id)
     p_uart_env[id]->rx_abort_flag = false;
 
     GLOBAL_EXCEPTION_DISABLE();
-    for (i = 0; i < APP_UART_ID_MAX; i++)
+    for (uint32_t i = 0; i < APP_UART_ID_MAX; i++)
     {
-        if (p_uart_env[i] != NULL && (p_uart_env[i]->uart_state) != APP_UART_INVALID)
+        if ((p_uart_env[i]) && ((p_uart_env[i]->uart_state) != APP_UART_INVALID))
         {
-            break;
+            goto __deinit;
         }
     }
-    if (APP_UART_ID_MAX == i)
-    {
-        pwr_unregister_sleep_cb(s_uart_pwr_id);
-        s_uart_pwr_id = -1;
-        s_sleep_cb_registered_flag = false;
-    }
+    pwr_unregister_sleep_cb(UART_PWR_ID);
+__deinit:
     GLOBAL_EXCEPTION_ENABLE();
 
     hal_uart_deinit(&p_uart_env[id]->handle);
+
     if (p_uart_env[id]->uart_dma_state == APP_UART_DMA_INVALID)
     {
         p_uart_env[id] = NULL;
@@ -483,6 +467,11 @@ uint16_t app_uart_receive_sync(app_uart_id_t id, uint8_t *p_data, uint16_t size,
     }
 
     if (p_data == NULL || size == 0 )
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
     {
         return APP_DRV_ERR_INVALID_PARAM;
     }
@@ -573,6 +562,11 @@ uint16_t app_uart_transmit_sync(app_uart_id_t id, uint8_t *p_data, uint16_t size
         return APP_DRV_ERR_INVALID_PARAM;
     }
 
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
 #ifdef APP_DRIVER_WAKEUP_CALL_FUN
     uart_wake_up(id);
 #endif
@@ -620,7 +614,10 @@ void app_uart_flush(app_uart_id_t id)
     uart_wake_up(id);
 #endif
 
-    if (p_uart_env[id]->uart_state == APP_UART_ACTIVITY)
+    /* Can not flush when using sync tx. start_tx_flag only set by async tx */
+    if ((p_uart_env[id]->uart_state == APP_UART_ACTIVITY)
+        && (p_uart_env[id]->start_tx_flag == true)
+        && (p_uart_env[id]->start_flush_flag == false))
     {
         p_uart_env[id]->start_flush_flag = true;
 
@@ -649,7 +646,7 @@ void app_uart_flush(app_uart_id_t id)
             {
                 tx_wait_count++;
             }
-            while ((HAL_UART_STATE_READY != p_uart_env[id]->handle.tx_state) &&
+            while (HAL_UART_STATE_READY != p_uart_env[id]->handle.tx_state &&
                    (tx_wait_count <= data_width * TX_ONCE_MAX_SIZE * (SystemCoreClock/p_uart_env[id]->handle.init.baud_rate)));
         }
 
@@ -678,6 +675,7 @@ void app_uart_flush(app_uart_id_t id)
             __HAL_UART_ENABLE_IT(p_uart, UART_IT_THRE);
         }
 
+        p_uart_env[id]->start_tx_flag = false;
         p_uart_env[id]->start_flush_flag = false;
         GLOBAL_EXCEPTION_ENABLE();
     }

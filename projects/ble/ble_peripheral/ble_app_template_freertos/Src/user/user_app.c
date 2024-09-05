@@ -138,7 +138,7 @@ static void gap_params_init(void)
 static void services_init(void)
 {
     dfu_service_init(NULL);
-    
+
 #if APP_LOG_STORE_ENABLE
     app_log_dump_service_init();
 #endif
@@ -149,7 +149,7 @@ static void app_disconnected_handler(uint8_t conn_idx, uint8_t reason)
     sdk_err_t error_code;
     APP_LOG_INFO("Disconnected (0x%02X).", reason);
 
-    error_code = ble_gap_adv_start(conn_idx, &s_gap_adv_time_param);
+    error_code = ble_gap_adv_start(0, &s_gap_adv_time_param);
     APP_ERROR_CHECK(error_code);
 }
 
@@ -279,10 +279,9 @@ void ble_evt_handler(const ble_evt_t *p_evt)
         case BLE_GATT_COMMON_EVT_MTU_EXCHANGE:
             if (BLE_SUCCESS == p_evt->evt_status)
             {
-                dfu_ble_set_mtu_size(p_evt->evt.gatt_common_evt.params.mtu_exchange.mtu);
-#if APP_LOG_STORE_ENABLE
+                #if APP_LOG_STORE_ENABLE
                 lms_update_mtu_size(p_evt->evt.gatt_common_evt.params.mtu_exchange.mtu);
-#endif
+                #endif
             }
             break;
 

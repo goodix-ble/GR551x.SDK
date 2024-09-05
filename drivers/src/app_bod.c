@@ -218,7 +218,7 @@ void hal_bod_fedge_callback(bod_handle_t *p_bod)
     app_bod_event_call(p_bod, APP_BOD_EVT_TRIGGERED);
 }
 
-SECTION_RAM_CODE void BOD_ASSERT_IRQHandler(void)
+void BOD_ASSERT_IRQHandler(void)
 {
     hal_bod_fedge_irq_handler(&p_bod_env->handle);
 }
@@ -230,7 +230,7 @@ void hal_bod_redge_callback(bod_handle_t *p_bod)
     app_bod_event_call(p_bod, APP_BOD_EVT_REMOVED);
 }
 
-SECTION_RAM_CODE void BOD_DEASSERT_IRQHandler(void)
+void BOD_DEASSERT_IRQHandler(void)
 {
     hal_bod_redge_irq_handler(&p_bod_env->handle);
 }

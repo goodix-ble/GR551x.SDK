@@ -151,7 +151,6 @@ typedef struct _hal_pwr_handler
 /** @} */
 
 /** @defgroup PWR_Timer_Type  PWR Timer Type
- *  @note     Only available on GR5515_C and later versions.
  *  @{
  */
 #define PWR_TIMER_TYPE_CAL_TIMER        LL_PWR_TIMER_READ_SEL_CAL_TIMER  /**< Calendar timer     */
@@ -423,7 +422,6 @@ void hal_pwr_set_comm_mode(uint32_t timer_mode, uint32_t core_mode);
 /**
  ****************************************************************************************
  * @brief  Get the current value of specified timer.
- * @note   Only available on GR5515_C and later versions.
  * @param[in]  timer_type: This parameter can be one of the following values:
  *         @arg @ref PWR_TIMER_TYPE_CAL_TIMER
  *         @arg @ref PWR_TIMER_TYPE_AON_WDT
@@ -448,7 +446,6 @@ hal_status_t hal_pwr_get_timer_current_value(uint32_t timer_type, uint32_t *p_va
 /**
  ****************************************************************************************
  * @brief  Handle PWR Sleep Timer interrupt request.
- * @note   Only available on GR5515_C and later versions.
  ****************************************************************************************
  */
 void hal_pwr_sleep_timer_irq_handler(void);
@@ -457,8 +454,7 @@ void hal_pwr_sleep_timer_irq_handler(void);
 /**
  ****************************************************************************************
  * @brief  PWR Sleep Timer Elapsed callback.
- * @note   Only available on GR5515_C and later versions.
- *         This function should not be modified. When the callback is needed,
+ * @note   This function should not be modified. When the callback is needed,
  *         the hal_pwr_sleep_timer_elapsed_callback can be implemented in the user file.
  ****************************************************************************************
  */

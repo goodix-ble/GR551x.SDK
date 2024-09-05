@@ -57,17 +57,32 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#define APP_DVR_LOG_LVL_NONE        (0)                   /**< None log level define */
+#define APP_DVR_LOG_LVL_ERR         (1)                   /**< Error log level define */
+#define APP_DVR_LOG_LVL_WARN        (2)                   /**< Warning log level define */
+#define APP_DVR_LOG_LVL_INFO        (3)                   /**< Info log level define */
+
+#ifndef APP_DRV_LOG_LEVEL
+#define APP_DRV_LOG_LEVEL           APP_DVR_LOG_LVL_NONE  /**< App driver log level setting */
+#endif
+#ifndef APP_DRV_LOG_INTERFACE
+#define APP_DRV_LOG_INTERFACE       printf                /**< App driver log interface setting */
+#endif
+#ifndef APP_DRV_ASSERT_ENABLE
+#define APP_DRV_ASSERT_ENABLE       0                     /**< App driver assert enable */
+#endif
 
 #define APP_DRIVER_GR551X           0x0              /**< APP_DRIVER for GR551X */
 #define APP_DRIVER_GR5525X          0x1              /**< APP_DRIVER for GR5525X */
 #define APP_DRIVER_GR5526X          0x2              /**< APP_DRIVER for GR5526X */
 #define APP_DRIVER_GR5332X          0x3              /**< APP_DRIVER for GR5332X */
+#define APP_DRIVER_GR5405           0x3              /**< APP_DRIVER for GR5405 */
 
 #ifdef SOC_GR5515
 #define APP_DRIVER_CHIP_TYPE  APP_DRIVER_GR551X      /**< GR5515 chip type*/
 #define SOC_GPIO_PINS_MAX     (32)                   /**< GR5515 max gpio pins */
 #define SOC_AON_PINS_MAX      (8)                    /**< GR5515 max aon pins */
-#elif defined(SOC_GR5525)
+#elif defined(SOC_GR5X25)
 #define APP_DRIVER_CHIP_TYPE  APP_DRIVER_GR5525X     /**< GR5525 chip type*/
 #define SOC_GPIO_PINS_MAX     (32)                   /**< GR5525 max gpio pins */
 #define SOC_AON_PINS_MAX      (8)                    /**< GR5525 max aon pins */
@@ -75,111 +90,106 @@ extern "C" {
 #define APP_DRIVER_CHIP_TYPE  APP_DRIVER_GR5526X     /**< GR5526 chip type*/
 #define SOC_GPIO_PINS_MAX     (34)                   /**< GR5526 max gpio pins */
 #define SOC_AON_PINS_MAX      (8)                    /**< GR5526 max aon pins */
-#elif defined(SOC_GR5332)
-#define APP_DRIVER_CHIP_TYPE  APP_DRIVER_GR5332X     /**< GR5332 chip type*/
-#define SOC_GPIO_PINS_MAX     (14)                   /**< GR5332 max gpio pins */
-#define SOC_AON_PINS_MAX      (8)                    /**< GR5332 max aon pins */
+#elif defined(SOC_GR533X)
+#define APP_DRIVER_CHIP_TYPE  APP_DRIVER_GR5332X     /**< GR533X chip type*/
+#define SOC_GPIO_PINS_MAX     (14)                   /**< GR533X max gpio pins */
+#define SOC_AON_PINS_MAX      (8)                    /**< GR533X max aon pins */
+#elif defined(SOC_GR5405)
+#define APP_DRIVER_CHIP_TYPE  APP_DRIVER_GR5405      /**< GR5405 chip type*/
+#define SOC_GPIO_PINS_MAX     (14)                   /**< GR5405 max gpio pins */
+#define SOC_AON_PINS_MAX      (8)                    /**< GR5405 max aon pins */
 #endif
-
 /**
  * @defgroup APP_DRV_PERIPHERAL_PRIORITY_DEFINE Defines
  * @{
  */
 /**@brief APP driver peripheral priority define. */
-#ifndef APP_DRIVER_ADC_WAPEUP_PRIORITY
-#define APP_DRIVER_ADC_WAPEUP_PRIORITY              WAPEUP_PRIORITY_HIGH  /**< ADC Wakeup priority High */
+#ifndef APP_DRIVER_ADC_WAKEUP_PRIORITY
+#define APP_DRIVER_ADC_WAKEUP_PRIORITY              WAKEUP_PRIORITY_HIGH  /**< ADC Wakeup priority High */
 #endif
 
-#ifndef APP_DRIVER_AES_WAPEUP_PRIORITY
-#define APP_DRIVER_AES_WAPEUP_PRIORITY              WAPEUP_PRIORITY_MID   /**< AES Wakeup priority Mid */
+#ifndef APP_DRIVER_AES_WAKEUP_PRIORITY
+#define APP_DRIVER_AES_WAKEUP_PRIORITY              WAKEUP_PRIORITY_MID   /**< AES Wakeup priority Mid */
 #endif
 
-#ifndef APP_DRIVER_COMP_WAPEUP_PRIORITY
-#define APP_DRIVER_COMP_WAPEUP_PRIORITY             WAPEUP_PRIORITY_LOW   /**< COMP Wakeup priority Low */
+#ifndef APP_DRIVER_COMP_WAKEUP_PRIORITY
+#define APP_DRIVER_COMP_WAKEUP_PRIORITY             WAKEUP_PRIORITY_LOW   /**< COMP Wakeup priority Low */
 #endif
 
-#ifndef APP_DRIVER_DUAL_TIM_WAPEUP_PRIORITY
-#define APP_DRIVER_DUAL_TIM_WAPEUP_PRIORITY         WAPEUP_PRIORITY_MID   /**< DUAL TIM Wakeup priority Mid */
+#ifndef APP_DRIVER_DUAL_TIM_WAKEUP_PRIORITY
+#define APP_DRIVER_DUAL_TIM_WAKEUP_PRIORITY         WAKEUP_PRIORITY_MID   /**< DUAL TIM Wakeup priority Mid */
 #endif
 
-#ifndef APP_DRIVER_DMA_WAPEUP_PRIORITY
-#define APP_DRIVER_DMA_WAPEUP_PRIORITY              WAPEUP_PRIORITY_HIGH  /**< DMA Wakeup priority High */
+#ifndef APP_DRIVER_DMA_WAKEUP_PRIORITY
+#define APP_DRIVER_DMA_WAKEUP_PRIORITY              WAKEUP_PRIORITY_HIGH  /**< DMA Wakeup priority High */
 #endif
 
-#ifndef APP_DRIVER_GPIOTE_WAPEUP_PRIORITY
-#define APP_DRIVER_GPIOTE_WAPEUP_PRIORITY           WAPEUP_PRIORITY_LOW   /**< GPIOTE Wakeup priority Low */
+#ifndef APP_DRIVER_UART_WAKEUP_PRIORITY
+#define APP_DRIVER_UART_WAKEUP_PRIORITY             WAKEUP_PRIORITY_HIGH  /**< Uart Wakeup priority High */
 #endif
 
-#ifndef APP_DRIVER_SYSTICK_WAPEUP_PRIORITY
-#define APP_DRIVER_SYSTICK_WAPEUP_PRIORITY          WAPEUP_PRIORITY_HIGH  /**< SysTick Wakeup priority High */
+#ifndef APP_DRIVER_HMAC_WAKEUP_PRIORITY
+#define APP_DRIVER_HMAC_WAKEUP_PRIORITY             WAKEUP_PRIORITY_MID   /**< Hmac Wakeup priority Mid */
 #endif
 
-#ifndef APP_DRIVER_UART_WAPEUP_PRIORITY
-#define APP_DRIVER_UART_WAPEUP_PRIORITY             WAPEUP_PRIORITY_HIGH  /**< Uart Wakeup priority High */
+#ifndef APP_DRIVER_I2C_WAKEUP_PRIORITY
+#define APP_DRIVER_I2C_WAKEUP_PRIORITY              WAKEUP_PRIORITY_HIGH  /**< I2C Wakeup priority High */
 #endif
 
-#ifndef APP_DRIVER_HMAC_WAPEUP_PRIORITY
-#define APP_DRIVER_HMAC_WAPEUP_PRIORITY             WAPEUP_PRIORITY_MID   /**< Hmac Wakeup priority Mid */
+#ifndef APP_DRIVER_I2S_WAKEUP_PRIORITY
+#define APP_DRIVER_I2S_WAKEUP_PRIORITY              WAKEUP_PRIORITY_HIGH  /**< I2S Wakeup priority High */
 #endif
 
-#ifndef APP_DRIVER_I2C_WAPEUP_PRIORITY
-#define APP_DRIVER_I2C_WAPEUP_PRIORITY              WAPEUP_PRIORITY_HIGH  /**< I2C Wakeup priority High */
+#ifndef APP_DRIVER_QSPI_WAKEUP_PRIORITY
+#define APP_DRIVER_QSPI_WAKEUP_PRIORITY             WAKEUP_PRIORITY_HIGH  /**< QSPI Wakeup priority High */
 #endif
 
-#ifndef APP_DRIVER_I2S_WAPEUP_PRIORITY
-#define APP_DRIVER_I2S_WAPEUP_PRIORITY              WAPEUP_PRIORITY_HIGH  /**< I2S Wakeup priority High */
+#ifndef APP_DRIVER_RNG_WAKEUP_PRIORITY
+#define APP_DRIVER_RNG_WAKEUP_PRIORITY              WAKEUP_PRIORITY_MID   /**< RNG Wakeup priority Mid */
 #endif
 
-#ifndef APP_DRIVER_QSPI_WAPEUP_PRIORITY
-#define APP_DRIVER_QSPI_WAPEUP_PRIORITY             WAPEUP_PRIORITY_HIGH  /**< QSPI Wakeup priority High */
+#ifndef APP_DRIVER_SPI_WAKEUP_PRIORITY
+#define APP_DRIVER_SPI_WAKEUP_PRIORITY              WAKEUP_PRIORITY_HIGH  /**< SPI Wakeup priority High */
 #endif
 
-#ifndef APP_DRIVER_RNG_WAPEUP_PRIORITY
-#define APP_DRIVER_RNG_WAPEUP_PRIORITY              WAPEUP_PRIORITY_MID   /**< RNG Wakeup priority Mid */
+#ifndef APP_DRIVER_TIM_WAKEUP_PRIORITY
+#define APP_DRIVER_TIM_WAKEUP_PRIORITY              WAKEUP_PRIORITY_MID   /**< TIM Wakeup priority Mid */
 #endif
 
-#ifndef APP_DRIVER_SPI_WAPEUP_PRIORITY
-#define APP_DRIVER_SPI_WAPEUP_PRIORITY              WAPEUP_PRIORITY_HIGH  /**< SPI Wakeup priority High */
+#ifndef APP_DRIVER_PWM_WAKEUP_PRIORITY
+#define APP_DRIVER_PWM_WAKEUP_PRIORITY              WAKEUP_PRIORITY_MID   /**< PWM Wakeup priority Mid */
 #endif
 
-#ifndef APP_DRIVER_TIM_WAPEUP_PRIORITY
-#define APP_DRIVER_TIM_WAPEUP_PRIORITY              WAPEUP_PRIORITY_MID   /**< TIM Wakeup priority Mid */
+#ifndef APP_DRIVER_ISO7816_WAKEUP_PRIORITY
+#define APP_DRIVER_ISO7816_WAKEUP_PRIORITY          WAKEUP_PRIORITY_HIGH    /**< ISO7816 Wakeup priority High */
 #endif
 
-#ifndef APP_DRIVER_PWM_WAPEUP_PRIORITY
-#define APP_DRIVER_PWM_WAPEUP_PRIORITY              WAPEUP_PRIORITY_MID   /**< PWM Wakeup priority Mid */
-#endif
-
-#ifndef APP_DRIVER_ISO7816_WAPEUP_PRIORITY
-#define APP_DRIVER_ISO7816_WAPEUP_PRIORITY          WAPEUP_PRIORITY_HIGH    /**< ISO7816 Wakeup priority High */
-#endif
-
-#ifndef APP_DRIVER_PKC_WAPEUP_PRIORITY
-#define APP_DRIVER_PKC_WAPEUP_PRIORITY              WAPEUP_PRIORITY_HIGH    /**< PKC Wakeup priority High */
+#ifndef APP_DRIVER_PKC_WAKEUP_PRIORITY
+#define APP_DRIVER_PKC_WAKEUP_PRIORITY              WAKEUP_PRIORITY_HIGH    /**< PKC Wakeup priority High */
 #endif
 
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X || APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X)
-#ifndef APP_DRIVER_DSPI_WAPEUP_PRIORITY
-#define APP_DRIVER_DSPI_WAPEUP_PRIORITY             WAPEUP_PRIORITY_HIGH    /**< DSPI Wakeup priority High */
+#ifndef APP_DRIVER_DSPI_WAKEUP_PRIORITY
+#define APP_DRIVER_DSPI_WAKEUP_PRIORITY             WAKEUP_PRIORITY_HIGH    /**< DSPI Wakeup priority High */
 #endif
 
-#ifndef APP_DRIVER_PDM_WAPEUP_PRIORITY
-#define APP_DRIVER_PDM_WAPEUP_PRIORITY              WAPEUP_PRIORITY_HIGH    /**< PDM Wakeup priority High */
+#ifndef APP_DRIVER_PDM_WAKEUP_PRIORITY
+#define APP_DRIVER_PDM_WAKEUP_PRIORITY              WAKEUP_PRIORITY_HIGH    /**< PDM Wakeup priority High */
 #endif
 #endif
 
 /**@} */
 
 
-/**@addtogroup APP_DRV_WAPEUP_PRIORITY_ENUM Enumerations
+/**@addtogroup APP_DRV_WAKEUP_PRIORITY_ENUM Enumerations
  * @{
  */
 /**@brief APP driver peripheral wakeup priority define. */
 typedef enum
 {
-    WAPEUP_PRIORITY_LOW = 1,          /**< Wakeup priority low */
-    WAPEUP_PRIORITY_MID,              /**< Wakeup priority mid */
-    WAPEUP_PRIORITY_HIGH              /**< Wakeup priority high */
+    WAKEUP_PRIORITY_LOW = 1,          /**< Wakeup priority low */
+    WAKEUP_PRIORITY_MID,              /**< Wakeup priority mid */
+    WAKEUP_PRIORITY_HIGH              /**< Wakeup priority high */
 } wakeup_priority_t;
 /** @} */
 

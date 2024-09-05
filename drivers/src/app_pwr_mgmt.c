@@ -48,13 +48,13 @@ struct pwr_env_t
 {
     app_sleep_callbacks_t *pwr_sleep_cb[APP_SLEEP_CB_MAX];
     wakeup_priority_t wakeup_priority[APP_SLEEP_CB_MAX];
-    bool is_pwr_callback_reg;
 };
 
 /*
  * LOCAL VARIABLE DEFINITIONS
  *****************************************************************************************
  */
+static bool is_pwr_callback_reg = false;
 struct pwr_env_t s_pwr_env;
 
 /*
@@ -159,15 +159,11 @@ SECTION_RAM_CODE void pwr_wake_up_ind_new(void)
 }
 #endif
 
-pwr_id_t pwr_register_sleep_cb(const app_sleep_callbacks_t *p_cb, wakeup_priority_t wakeup_priority)
+void app_pwr_mgmt_init(void)
 {
-    pwr_id_t id = -1;
-    uint8_t  i  = 0;
-
-    GLOBAL_EXCEPTION_DISABLE();
-
-    if (!s_pwr_env.is_pwr_callback_reg)
+    if (!is_pwr_callback_reg)
     {
+        is_pwr_callback_reg = true;
 #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR551X)
         pwr_mgmt_dev_init(pwr_wake_up_ind_new);
         pwr_mgmt_set_callback(pwr_enter_sleep_check_new, NULL);
@@ -175,35 +171,27 @@ pwr_id_t pwr_register_sleep_cb(const app_sleep_callbacks_t *p_cb, wakeup_priorit
         pwr_mgmt_dev_init(pwr_wake_up_ind);
         pwr_mgmt_set_callback(pwr_enter_sleep_check, NULL);
 #endif
-
-        s_pwr_env.is_pwr_callback_reg = true;
     }
+}
 
-    if (p_cb == NULL || wakeup_priority > WAPEUP_PRIORITY_HIGH || wakeup_priority < WAPEUP_PRIORITY_LOW)
+pwr_id_t pwr_register_sleep_cb(const app_sleep_callbacks_t *p_cb, wakeup_priority_t wakeup_priority, pwr_id_t id)
+{
+    app_pwr_mgmt_init();
+
+    if (id >= PWR_ID_MAX || ((unsigned)(wakeup_priority - WAKEUP_PRIORITY_LOW) > (WAKEUP_PRIORITY_HIGH - WAKEUP_PRIORITY_LOW)))
     {
-        goto exit;
+        return PWR_ID_MAX;
     }
 
-    while ((i < APP_SLEEP_CB_MAX) && (s_pwr_env.pwr_sleep_cb[i] != NULL))
-    {
-        i++;
-    }
-    if (i < APP_SLEEP_CB_MAX)
-    {
-        s_pwr_env.pwr_sleep_cb[i] = (app_sleep_callbacks_t *)p_cb;
-        s_pwr_env.wakeup_priority[i] = wakeup_priority;
-        id = i;
-    }
-
-exit:
-    GLOBAL_EXCEPTION_ENABLE();
+    s_pwr_env.pwr_sleep_cb[id] = (app_sleep_callbacks_t *)p_cb;
+    s_pwr_env.wakeup_priority[id] = wakeup_priority;
 
     return id;
 }
 
 void pwr_unregister_sleep_cb(pwr_id_t id)
 {
-    if((id >= 0) && (id < APP_SLEEP_CB_MAX))// Is id valid?
+    if(id < APP_SLEEP_CB_MAX)
     {
         s_pwr_env.pwr_sleep_cb[id] = NULL;
     }
@@ -211,29 +199,21 @@ void pwr_unregister_sleep_cb(pwr_id_t id)
 
 SECTION_RAM_CODE void pwr_wake_up_ind(void)
 {
-    uint8_t i;
     app_sleep_callbacks_t *p_cb;
-    wakeup_priority_t priority;
+    uint32_t priority;
 
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
-    uint8_t hal_init_mark = 0;
+     hal_init();
 #endif
 
-    for (priority = WAPEUP_PRIORITY_HIGH; priority != 0; priority--)
+    for (priority = WAKEUP_PRIORITY_HIGH; priority != 0; priority--)
     {
-        for (i = 0; i < APP_SLEEP_CB_MAX; i++)
+        for (uint32_t i = 0; i < APP_SLEEP_CB_MAX; i++)
         {
             p_cb = s_pwr_env.pwr_sleep_cb[i];
-            if ((p_cb != NULL) && (p_cb ->app_wake_up_ind != NULL) && (priority == s_pwr_env.wakeup_priority[i]))
+            if ((p_cb != NULL) && (p_cb->app_wake_up_ind != NULL) && (priority == s_pwr_env.wakeup_priority[i]))
             {
-                p_cb ->app_wake_up_ind();
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
-                if(hal_init_mark == 0)
-                {
-                    hal_init_mark = 1;
-                    hal_init();
-                }
-#endif
+                p_cb->app_wake_up_ind();
             }
         }
     }
@@ -241,36 +221,19 @@ SECTION_RAM_CODE void pwr_wake_up_ind(void)
 
 pwr_mgmt_dev_state_t pwr_enter_sleep_check(void)
 {
-    int16_t i;
     pwr_mgmt_dev_state_t allow_entering_sleep = DEVICE_IDLE;
     app_sleep_callbacks_t *p_cb;
 
-    // 1. Inquiry Adapters
-    for (i = APP_SLEEP_CB_MAX - 1; i >= 0; i--)
+    for (uint32_t i = 0; i < APP_SLEEP_CB_MAX ; i++)
     {
         p_cb = s_pwr_env.pwr_sleep_cb[i];
-        if (( p_cb != NULL) && (p_cb->app_prepare_for_sleep != NULL) )
+        if ((p_cb != NULL) && (p_cb->app_prepare_for_sleep != NULL))
         {
             if (!p_cb->app_prepare_for_sleep())
             {
                 allow_entering_sleep = DEVICE_BUSY;
                 break;
             }
-        }
-    }
-
-    // 2. If an Adapter rejected sleep, resume any Adapters that have already accepted it.
-    if ( allow_entering_sleep == DEVICE_BUSY )
-    {
-        i++;
-        while (i < APP_SLEEP_CB_MAX)
-        {
-            p_cb = s_pwr_env.pwr_sleep_cb[i];
-            if ( (p_cb != NULL) && (p_cb->app_sleep_canceled != NULL) )
-            {
-                p_cb->app_sleep_canceled();
-            }
-            i++;
         }
     }
 

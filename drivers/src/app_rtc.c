@@ -83,12 +83,20 @@ void CALENDAR_IRQHandler(void);
 struct rtc_env_t  s_rtc_env;
 
 /*
+ * EXPORTED VARIABLE DEFINITIONS
+ *****************************************************************************************
+ */
+#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
+extern float SystemRtcSlowClock;
+#endif
+
+/*
 * NOTE:
-* This defined value is only for SOC GR5332
+* This defined value is only for SOC GR533X
 * 1.RTC is fully functional without FreeRTOS
 * 2.In FreeRTOS, only init time and get time work.
 */
-#if defined(ENV_USE_FREERTOS) && defined(SOC_GR5332)
+#if defined(ENV_USE_FREERTOS) && defined(SOC_GR533X)
 
 /*
  * GLOBAL FUNCTION DEFINITIONS
@@ -97,7 +105,7 @@ struct rtc_env_t  s_rtc_env;
 uint16_t app_rtc_init(app_rtc_evt_handler_t evt_handler)
 {
     s_rtc_env.evt_handler = evt_handler;
-    s_rtc_env.handle.clock_freq = SystemSlowClock;
+    s_rtc_env.handle.clock_freq = SystemRtcSlowClock;
 
     clock_calib_notify_register(app_rtc_time_sync);
 
@@ -191,7 +199,7 @@ uint16_t app_rtc_setup_tick(uint32_t interval)
     return APP_DRV_SUCCESS;
 }
 
-void app_rtc_time_sync(uint16_t SlowClockFreq)
+void app_rtc_time_sync(float SlowClockFreq)
 {
     if (s_rtc_env.rtc_state == APP_RTC_INVALID || SlowClockFreq == 0)
     {
@@ -229,7 +237,7 @@ uint16_t app_rtc_init(app_rtc_evt_handler_t evt_handler)
     s_rtc_env.evt_handler = evt_handler;
 
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
-    s_rtc_env.handle.clock_freq = SystemSlowClock;
+    s_rtc_env.handle.clock_freq = SystemRtcSlowClock;
 #endif
 
     soc_register_nvic(CALENDAR_IRQn, (uint32_t)CALENDAR_IRQHandler);
@@ -376,7 +384,7 @@ uint16_t app_rtc_disable_event(uint32_t disable_mode)
 }
 
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
-void app_rtc_time_sync(uint16_t SlowClockFreq)
+void app_rtc_time_sync(float SlowClockFreq)
 {
     if (s_rtc_env.rtc_state == APP_RTC_INVALID || SlowClockFreq == 0)
     {
@@ -496,6 +504,13 @@ void calendar_time_sync(void)
 
     // calculate the sync diff
     ble_time_t current_time = ble_time_get();
+
+    /* Work-Around */
+    if(current_time.hs < s_ble_sync_time.hs ) {
+        //printf("RTC Exception, Now : %d-%d, Last: %d-%d\r\n",current_time.hs, current_time.hus, s_ble_sync_time.hs, s_ble_sync_time.hus);
+        s_ble_sync_time = current_time;
+    }
+
     uint64_t diff_hus = (uint64_t)CLK_SUB(current_time.hs, s_ble_sync_time.hs)*HALF_SLOT_SIZE;
     diff_hus = diff_hus +  current_time.hus - s_ble_sync_time.hus;
 

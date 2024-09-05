@@ -65,12 +65,6 @@ bd_info s_bd_info =
     .s_bd_addr = {0x08, 0xae, 0xdf, 0x3e, 0xcb, 0xea},
 };
 
-//bd_info s_bd_info = 
-//{
-//    .tk        = 567890,
-//    .s_bd_addr = {0x07, 0xae, 0xdf, 0x3e, 0xcb, 0xea},
-//};
-
 /*
  * LOCAL VARIABLE DEFINITIONS
  *****************************************************************************************
@@ -85,19 +79,6 @@ static uint8_t s_uart_rx_buffer[UART_RX_BUFFER_SIZE];
  * LOCAL FUNCTION DEFINITIONS
  *****************************************************************************************
  */
-// static void app_uart_evt_handler(app_uart_evt_t *p_evt)
-// {
-//     if (APP_UART_EVT_RX_DATA == p_evt->type)
-//     {
-//         uart_to_ble_push(s_uart_rx_buffer, p_evt->data.size);
-
-//         app_uart_receive_async(APP_UART_ID, s_uart_rx_buffer, UART_RX_BUFFER_SIZE);
-//     }
-//     else if (APP_UART_EVT_TX_CPLT == p_evt->type)
-//     {
-//         update_ble_flow_ctrl_state();
-//     }
-// }
 
 static void uart_init(void)
 {

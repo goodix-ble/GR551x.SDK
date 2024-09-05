@@ -93,6 +93,17 @@
 #define APP_KEY_LEFT_MUX                APP_IO_MUX_7
 #define APP_KEY_RIGHT_MUX               APP_IO_MUX_7
 
+#define APP_GPIO_PIN0                   APP_IO_PIN_12     /* GPIO28 */
+#define APP_GPIO_PIN0_TYPE              APP_IO_TYPE_GPIOB
+
+#define APP_GPIO_PIN1                   APP_IO_PIN_0     /* MSIO0 */
+#define APP_GPIO_PIN1_TYPE              APP_IO_TYPE_MSIO
+
+#define APP_GPIO_PIN2                   APP_IO_PIN_7      /* AON7 */
+#define APP_GPIO_PIN2_TYPE              APP_IO_TYPE_AON
+
+#define APP_GPIO_PIN3                   APP_IO_PIN_1      /* MSIO1 */
+#define APP_GPIO_PIN3_TYPE              APP_IO_TYPE_MSIO
 /*******KEY TRIGGER & PULL MODE CONFIG*******************/
 #define APP_KEY_TRIGGER_MODE            APP_IO_MODE_IT_FALLING
 #define APP_KEY_PULL_MODE               APP_IO_PULLUP
@@ -106,13 +117,14 @@
 #define APP_ADC_P_INPUT_PIN_MUX         APP_IO_MUX_7
 #define APP_ADC_N_INPUT_PIN             MSIO_PIN_1
 #define APP_ADC_N_INPUT_PIN_MUX         APP_IO_MUX_7
-
+#define APP_ADC_N_INPUT_SRC             ADC_INPUT_SRC_IO1
+#define APP_ADC_P_INPUT_SRC             ADC_INPUT_SRC_IO0
 /*******COMP IO CONFIG***************************/
 #define APP_COMP_INPUT_PIN              APP_IO_PIN_0
 #define APP_COMP_INPUT_PIN_MUX          APP_IO_MUX_7
 #define APP_COMP_VREF_PIN               APP_IO_PIN_1
 #define APP_COMP_VREF_PIN_MUX           APP_IO_MUX_7
-
+#define APP_COMP_INPUT_SRC              COMP_INPUT_SRC_IO0
 /*******I2C IO CONFIG***************************/
 #define APP_I2C_MASTER_ID               APP_I2C_ID_1
 #define APP_I2C_MASTER_SCL_PIN          APP_IO_PIN_30

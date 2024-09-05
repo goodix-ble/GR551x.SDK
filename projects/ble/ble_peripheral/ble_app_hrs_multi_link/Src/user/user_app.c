@@ -450,7 +450,7 @@ static void multi_advertising_start(void)
 {
     sdk_err_t error_code;
 
-    if (CONN_LINK_MAX - 1 == s_adv_inst_counter)
+    if (CONN_LINK_MAX == s_adv_inst_counter)
     {
         return;
     }

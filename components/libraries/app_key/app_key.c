@@ -42,12 +42,7 @@
 #include "app_key.h"
 #include "app_gpiote.h"
 
-#ifdef ENV_USE_FREERTOS
-#include "FreeRTOS.h"
-#include "timers.h"
-#else
 #include "app_timer.h"
-#endif
 /*
  * DEFINES
  *****************************************************************************************
@@ -61,11 +56,7 @@ static uint8_t            s_app_key_info[APP_KEY_REG_COUNT_MAX];
 static app_gpiote_param_t s_app_io_cfg[APP_KEY_REG_COUNT_MAX];
 static app_key_evt_cb_t   s_app_key_evt_cb;
 static uint8_t            s_app_key_reg_num;
-#ifdef ENV_USE_FREERTOS
-static TimerHandle_t app_key_timer_handle = NULL;
-#else
 static app_timer_id_t     s_app_key_timer_id;
-#endif
 static bool               s_is_timer_enabled;
 
 /*
@@ -119,12 +110,8 @@ static void app_key_timeout_handler(void *p_arg)
  */
 static void app_key_timer_start(void)
 {
-#if defined(ENV_USE_FREERTOS)
-     xTimerStartFromISR(app_key_timer_handle, 0);
-#else
     app_timer_create(&s_app_key_timer_id, ATIMER_REPEAT, app_key_timeout_handler);
     app_timer_start(s_app_key_timer_id, APP_KEY_TIMER_INTERVAL, NULL);
-#endif
     s_is_timer_enabled = true;
 }
 
@@ -135,11 +122,7 @@ static void app_key_timer_start(void)
  */
 void app_key_timer_stop(void)
 {
-#if defined(ENV_USE_FREERTOS)
-    xTimerStopFromISR(app_key_timer_handle,0);
-#else
     app_timer_delete(&s_app_key_timer_id);
-#endif
     s_is_timer_enabled = false;
 }
 
@@ -222,15 +205,6 @@ bool app_key_init(app_key_gpio_t key_inst[], uint8_t key_num, app_key_evt_cb_t k
     s_app_key_evt_cb  = key_evt_cb;
     app_key_core_cb_register(app_key_core_evt_handler);
 
-/* If using FreeRTOS, xTimer need to be create and do not create in IRQ handler */
-#if defined(ENV_USE_FREERTOS)
-    #if defined(FREERTOS_V10_4_3_LTS)
-        app_key_timer_handle =
-            xTimerCreate(NULL, APP_KEY_TIMER_INTERVAL, pdTRUE, NULL, (TimerCallbackFunction_t)app_key_timeout_handler);
-    #else
-        app_key_timer_handle = xTimerCreate(NULL, APP_KEY_TIMER_INTERVAL, pdTRUE, NULL, app_key_timeout_handler);
-    #endif
-#endif
     return true;
 }
 

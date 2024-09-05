@@ -43,12 +43,22 @@
 #include "grx_hal.h"
 #include "app_memory.h"
 
+#include <stdlib.h>
+
 /*
  * DEFINES
  *****************************************************************************************
  */
 #define APP_SCHEDULER_LOCK()                  LOCAL_INT_DISABLE(BLE_IRQn)
 #define APP_SCHEDULER_UNLOCK()                LOCAL_INT_RESTORE()
+
+#ifndef APP_SCHEDULER_MALLOC
+#define APP_SCHEDULER_MALLOC                  app_malloc
+#endif
+
+#ifndef APP_SCHEDULER_FREE
+#define APP_SCHEDULER_FREE                    app_free
+#endif
 
 /*
  * STRUCTURES
@@ -100,7 +110,7 @@ sdk_err_t app_scheduler_init(uint16_t queue_size)
         return SDK_ERR_INVALID_PARAM;
     }
 
-    s_app_scheduler_env.p_evt_info_buffer = app_malloc((queue_size + 1) * sizeof(app_scheduler_evt_info_t));
+    s_app_scheduler_env.p_evt_info_buffer = APP_SCHEDULER_MALLOC((queue_size + 1) * sizeof(app_scheduler_evt_info_t));
 
     if (NULL == s_app_scheduler_env.p_evt_info_buffer)
     {
@@ -129,7 +139,7 @@ sdk_err_t app_scheduler_evt_put(void const *p_evt_data, uint16_t evt_data_size, 
         s_app_scheduler_env.p_evt_info_buffer[s_app_scheduler_env.queue_end_index].evt_data_size = evt_data_size;
         if (p_evt_data && evt_data_size)
         {
-            evt_data_ptr = app_malloc(evt_data_size);
+            evt_data_ptr = APP_SCHEDULER_MALLOC(evt_data_size);
             if (NULL == evt_data_ptr)
             {
                 return SDK_ERR_NO_RESOURCES;
@@ -171,7 +181,7 @@ void app_scheduler_execute(void)
             evt_handler(p_evt_data, evt_data_size);
         }
 
-        app_free(p_evt_data);
+        APP_SCHEDULER_FREE(p_evt_data);
 
         s_app_scheduler_env.queue_start_index = next_index_get(s_app_scheduler_env.queue_start_index);
     }

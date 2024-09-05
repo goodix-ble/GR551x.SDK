@@ -60,15 +60,16 @@ static adc_handle_t gr55xx_snsadc_handle = {0};
 static double adc_offset = 0;
 static double adc_slope = 0;
 
-static gr55xx_set_signal_to_mux(gr55xx_mux_signal_t my_mux_signal)
+static void gr55xx_set_signal_to_mux(gr55xx_mux_signal_t my_mux_signal)
 {
+
 }
 
 /*
  * GLOBAL FUNCTION DEFINITIONS
  *****************************************************************************************
  */
-void gr55xx_mux_signal_measurement_init(void);
+void gr55xx_mux_signal_measurement_init(void)
 {
     adc_trim_info_t adc_trim = {0};
 
@@ -97,7 +98,7 @@ void gr55xx_mux_signal_measurement_init(void);
     return;
 }
 
-double gr55xx_mux_signal_measure_average(gr55xx_mux_signal_t my_mux_signal);
+double gr55xx_mux_signal_measure_average(gr55xx_mux_signal_t my_mux_signal)
 {
     uint16_t conver_buff[16] = {0};
     uint16_t average = 0;

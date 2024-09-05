@@ -14,32 +14,22 @@
 
 #include "custom_config.h"
 
-/*****************************************************************
- * if SYSTEM_STACK_SIZE is not defined in custom_config.h, 
- * keep default setting to 32KB
- */
-#ifndef SYSTEM_STACK_SIZE
-    #define SYSTEM_STACK_SIZE    0x8000
-#endif
-
 #define FLASH_START_ADDR         0x01000000
 #define FLASH_SIZE               0x00800000
+
+#define RAM_START_ADDR            0x00800000
+#define HIGH_RAM_OFFSET           0x2F800000
+#define FPB_DATA_SPACE_SIZE       0x100
+#define RAM_CODE_SPACE_SIZE       (0x5000 - FPB_DATA_SPACE_SIZE)
 
 /* size of ROM reserved RAM in retention cell */
 #ifndef ROM_RTN_RAM_SIZE
 #define ROM_RTN_RAM_SIZE        0x4100
 #endif
 
-#define RAM_ALIAS
+#define RAM_CODE_SPACE_START      (RAM_START_ADDR + ROM_RTN_RAM_SIZE)
+#define FPB_DATA_SPACE_START      (RAM_START_ADDR + ROM_RTN_RAM_SIZE + RAM_CODE_SPACE_SIZE + HIGH_RAM_OFFSET)
 
-/*****************************************************************
- * Warning: User App developer never change the six macros below
- */
-#ifdef RAM_ALIAS
-#define RAM_START_ADDR          0x00800000
-#else
-#define RAM_START_ADDR          0x30000000
-#endif
 
 #if (CHIP_TYPE == 6) || (CHIP_TYPE == 7) //GR5513
     #define RAM_SIZE            0x00020000
@@ -47,8 +37,7 @@
     #define RAM_SIZE            0x00040000
 #endif
 
-#define RAM_END_ADDR            (RAM_START_ADDR + RAM_SIZE)
-
+#define RAM_END_ADDR            (RAM_START_ADDR + HIGH_RAM_OFFSET + RAM_SIZE)
 
 #define FERP_SIZE               0x8000     //32K
 #define CRITICAL_CODE_MAX_SIZE  0x10000    // maximum size of critical code reserved
@@ -57,6 +46,11 @@
         APP_CODE_RUN_ADDR >= FLASH_START_ADDR && \
         APP_CODE_RUN_ADDR < FLASH_START_ADDR + FLASH_SIZE)
     #define XIP_MODE    
+#endif
+
+#if ((APP_CODE_RUN_ADDR > (RAM_START_ADDR + HIGH_RAM_OFFSET)) && \
+        (APP_CODE_RUN_ADDR < (RAM_START_ADDR + HIGH_RAM_OFFSET + RAM_SIZE)))
+    #define HMIRROR_MODE
 #endif
 /****************************************************************/
 
@@ -72,11 +66,6 @@
 
 #define TINY_RAM_SPACE_START    (0x30000000 + 0x35CC)     /* DONT MODIFY ME !!! */
 #define TINY_RAM_SPACE_SIZE     (0x750)                   /* DONT MODIFY ME !!! */
-
-#define FPB_SECTION_START       0x30004000
-#define FPB_SECTION_SIZE        0x100
-
-#define RAM_RESERVE_SECTION_SIZE    0x64
 
 // Code size of Application
 #ifndef APP_MAX_CODE_SIZE

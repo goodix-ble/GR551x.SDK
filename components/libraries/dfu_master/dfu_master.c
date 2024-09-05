@@ -42,8 +42,6 @@
 #include "dfu_master.h"
 #include "flash_scatter_config.h"
 #include <string.h>
-#include "app_log.h"
-#include "hal_flash.h"
 
 /*
  * DEFINES
@@ -116,11 +114,13 @@ typedef struct
  ****************************************************************************************
  */
 static receive_frame_t   s_receive_frame;
+static boot_info_t       s_bootloader_boot_info;
 static bool              s_cmd_receive_flag;
 static uint16_t          s_receive_data_count;
 static uint32_t          s_receive_check_sum;
 
 static dfu_img_info_t    s_now_img_info;
+static dfu_img_info_t    s_app_info;
 static uint32_t          s_page_start_addr;
 static uint32_t          s_all_check_sum;
 static uint32_t          s_file_size;
@@ -138,11 +138,11 @@ static bool              s_sec_flag = false;
 static bool              s_version_flag = false;
 
 static uint16_t          s_erase_all_count = 0;
+static uint32_t          s_dfu_save_addr = 0;
 
-uint8_t                  dfu_mode_set = 0;
-uint32_t                 dfu_save_addr = 0;
 uint8_t                  fast_dfu_mode = 0;
-uint32_t                 s_program_size;
+uint32_t                 program_size;
+uint8_t                  ble_send_cplt_flag = 0;
 /**
  *****************************************************************************************
  * @brief Function for getting updated firmware information.
@@ -193,6 +193,27 @@ static void dfu_m_send_data(uint8_t *data, uint16_t len)
 
 /**
  *****************************************************************************************
+ * @brief Function for read firmware information.
+ *
+ * @param[in]  addr: The address of firmware stored.
+ * @param[in]  p_buf:The buffer stored firmware data.
+ * @param[in]  size: The read size.
+ *****************************************************************************************
+ */
+//static uint32_t dfu_m_fw_read(const uint32_t addr, uint8_t *p_buf, const uint32_t size)
+//{
+//    if (s_p_func_cfg->dfu_m_fw_read != NULL)
+//    {
+//        return s_p_func_cfg->dfu_m_fw_read(addr, p_buf, size);
+//    }
+//    else
+//    {
+//        return 0;
+//    }
+//}
+
+/**
+ *****************************************************************************************
  * @brief Function for start update firmware.
  *
  * @param[in]  security: Upgrade firmware is encrypted?.
@@ -206,6 +227,7 @@ static void dfu_m_event_handler(dfu_m_event_t event, uint8_t pre)
         s_p_func_cfg -> dfu_m_event_handler(event, pre);
     }
 }
+
 
 /**
  *****************************************************************************************
@@ -305,7 +327,7 @@ static void dfu_m_send_frame(uint8_t *data,uint16_t len,uint16_t cmd_type)
 static void dfu_m_program_flash(uint16_t len)
 {
     uint16_t i=0;
-    s_program_size += len;
+    program_size += len;
 
     dfu_m_get_img_data(s_page_start_addr, &s_receive_frame.data[7], len);
     for(i=0; i<len; i++)
@@ -314,46 +336,46 @@ static void dfu_m_program_flash(uint16_t len)
     }
     s_receive_frame.data[0] = 0x01;
 
-    s_receive_frame.data[1] = dfu_save_addr;
-    s_receive_frame.data[2] = dfu_save_addr>>8;
-    s_receive_frame.data[3] = dfu_save_addr>>16;
-    s_receive_frame.data[4] = dfu_save_addr>>24;
+    s_receive_frame.data[1] = s_dfu_save_addr;
+    s_receive_frame.data[2] = s_dfu_save_addr>>8;
+    s_receive_frame.data[3] = s_dfu_save_addr>>16;
+    s_receive_frame.data[4] = s_dfu_save_addr>>24;
 
     s_receive_frame.data[5] = len;
     s_receive_frame.data[6] = len>>8;
 
     dfu_m_send_frame(s_receive_frame.data, len+7, PROGRAME_FLASH);
-    dfu_save_addr += len;
+    s_dfu_save_addr += len;
     s_page_start_addr += len;
 }
 
 static void dfu_m_fast_program_flash(void)
 {
     uint16_t remain;
-    extern uint8_t ble_send_cplt_flag;
     uint16_t i = 0;
+    uint8_t pre = 0;
 
-    while (s_program_size != s_file_size)
+    while (program_size != s_file_size)
     {
-        if (ble_send_cplt_flag || s_program_size == 0)
+        if (ble_send_cplt_flag || program_size == 0)
         {
             ble_send_cplt_flag = 0;
 
             dfu_m_get_img_data(s_page_start_addr, &s_receive_frame.data[0], s_once_size);
 
-            if (s_program_size + s_once_size > s_file_size)
+            if (program_size + s_once_size > s_file_size)
             {
-                remain = s_file_size - s_program_size;
+                remain = s_file_size - program_size;
                 dfu_m_send(&s_receive_frame.data[0], remain);
                 for (i = 0; i < remain; i++)
                 {
                     s_all_check_sum += s_receive_frame.data[i];
                 }
-                s_program_size += remain;
+                program_size += remain;
             }
             else
             {
-                s_program_size += s_once_size;
+                program_size += s_once_size;
                 dfu_m_send(&s_receive_frame.data[0], s_once_size);
                 for (i = 0; i < s_once_size; i++)
                 {
@@ -361,6 +383,8 @@ static void dfu_m_fast_program_flash(void)
                 }
             }
 
+            pre = (program_size * 100) / s_file_size;
+            dfu_m_event_handler(FAST_DFU_PRO_FLASH_SUCCESS, pre);
             s_page_start_addr += s_once_size;
         }
     }
@@ -519,10 +543,18 @@ void dfu_m_program_start(bool security, bool run_fw)
     s_page_start_addr = 0;
     s_all_check_sum = 0;
     s_file_size = 0;
-    s_program_size = 0;
+    program_size = 0;
     s_receive_frame.data[0] = 0;
 
     dfu_m_get_img_info(&s_now_img_info);
+
+    if ((s_now_img_info.boot_info.load_addr < s_bootloader_boot_info.load_addr) || ((s_now_img_info.boot_info.load_addr >= s_bootloader_boot_info.load_addr) && \
+        (s_now_img_info.boot_info.load_addr <=  s_bootloader_boot_info.load_addr + s_bootloader_boot_info.bin_size + 48 + 856)) || \
+         (s_now_img_info.boot_info.load_addr >= s_dfu_save_addr && s_now_img_info.boot_info.load_addr <= s_dfu_save_addr + s_now_img_info.boot_info.bin_size + 48 + 856))
+    {
+        dfu_m_event_handler(IMG_INFO_LOAD_ADDR_ERROR, 0);
+        return;
+    }
 
     if((s_now_img_info.pattern != PATTERN_VALUE) || \
        (s_now_img_info.boot_info.load_addr % FLASH_OP_PAGE_SIZE != 0))
@@ -532,7 +564,7 @@ void dfu_m_program_start(bool security, bool run_fw)
 
     s_page_start_addr = (s_now_img_info.boot_info.load_addr & 0xfffff000);
 
-    s_now_img_info.boot_info.load_addr = dfu_save_addr;
+    s_now_img_info.boot_info.load_addr = s_dfu_save_addr;
 
     if(security)//security mode
     {
@@ -541,7 +573,7 @@ void dfu_m_program_start(bool security, bool run_fw)
     else
     {
         fw_sign_flag_addr = s_page_start_addr + s_now_img_info.boot_info.bin_size + 48 + FW_SIGN_FLAG_OFFSET;
-        hal_flash_read(fw_sign_flag_addr, fw_sign_flag, sizeof(fw_sign_flag));
+        dfu_m_get_img_data(fw_sign_flag_addr, fw_sign_flag, sizeof(fw_sign_flag));
 
         if (fw_sign_flag[0] == 0x53 && fw_sign_flag[1] == 0x49 && fw_sign_flag[2] == 0x47 && fw_sign_flag[3] == 0x4E)
         {
@@ -597,7 +629,7 @@ void dfu_m_system_info_get(void)
     s_receive_frame.data[3] = addr >> 16;
     s_receive_frame.data[4] = addr >> 24;
     //length
-    s_receive_frame.data[5] = 0x07;
+    s_receive_frame.data[5] = 0x30;
     s_receive_frame.data[6] = 0;
 
     dfu_m_send_frame(s_receive_frame.data, 7, SYSTEM_INFO);
@@ -625,12 +657,12 @@ void  dfu_m_schedule(dfu_m_rev_cmd_cb_t rev_cmd_cb)
             case PROGRAM_START:
                 if(s_receive_frame.data[0] == ACK_SUCCESS)
                 {
-                    if (0x00 == fast_dfu_mode)
+                    if (FAST_DFU_MODE_DISABLE == fast_dfu_mode)
                     {
                         dfu_m_program_flash(ONCE_SEND_LEN);
                         dfu_m_event_handler(PRO_START_SUCCESS, 0);
                     }
-                    else if (0x02 == fast_dfu_mode)
+                    else if (FAST_DFU_MODE_ENABLE == fast_dfu_mode)
                     {
                         switch (s_receive_frame.data[1])
                         {
@@ -683,10 +715,10 @@ void  dfu_m_schedule(dfu_m_rev_cmd_cb_t rev_cmd_cb)
             case PROGRAME_FLASH:
                 if(s_receive_frame.data[0] == ACK_SUCCESS)
                 {
-                    pre = (s_program_size * 100) / s_file_size;
+                    pre = (program_size * 100) / s_file_size;
                     dfu_m_event_handler(PRO_FLASH_SUCCESS, pre);
                     //pro success, precent
-                    if(s_program_size == s_file_size)
+                    if(program_size == s_file_size)
                     {
                         s_receive_frame.data[0] = s_run_fw_flag;
                         s_receive_frame.data[1] = s_all_check_sum;
@@ -695,9 +727,9 @@ void  dfu_m_schedule(dfu_m_rev_cmd_cb_t rev_cmd_cb)
                         s_receive_frame.data[4] = s_all_check_sum>>24;
                         dfu_m_send_frame(s_receive_frame.data, 5, PROGRAME_END);//progem end
                     }
-                    else if(s_program_size + ONCE_SEND_LEN > s_file_size)
+                    else if(program_size + ONCE_SEND_LEN > s_file_size)
                     {
-                        dfu_m_program_flash(s_file_size - s_program_size);
+                        dfu_m_program_flash(s_file_size - program_size);
                     }
                     else
                     {
@@ -713,7 +745,7 @@ void  dfu_m_schedule(dfu_m_rev_cmd_cb_t rev_cmd_cb)
             case PROGRAME_END:
                 if(s_receive_frame.data[0] == ACK_SUCCESS)
                 {
-                    if (fast_dfu_mode == 0x02)
+                    if (fast_dfu_mode == FAST_DFU_MODE_ENABLE)
                     {
                         uint32_t check_sum = 0;
                         check_sum |= (s_receive_frame.data[1] & 0xff);
@@ -730,7 +762,7 @@ void  dfu_m_schedule(dfu_m_rev_cmd_cb_t rev_cmd_cb)
                             dfu_m_event_handler(PRO_END_FAIL, 0);
                         }
                     }
-                    else if (fast_dfu_mode == 0x00)
+                    else if (fast_dfu_mode == FAST_DFU_MODE_DISABLE)
                     {
                         dfu_m_event_handler(PRO_END_SUCCESS, 0);
                     }
@@ -742,7 +774,7 @@ void  dfu_m_schedule(dfu_m_rev_cmd_cb_t rev_cmd_cb)
                 break;
 
             case GET_INFO:
-                dfu_save_addr = 0;
+                s_dfu_save_addr = 0;
                 if(s_receive_frame.data[0] == ACK_SUCCESS)
                 {
                     // dfu version
@@ -765,13 +797,24 @@ void  dfu_m_schedule(dfu_m_rev_cmd_cb_t rev_cmd_cb)
             case DFU_FW_INFO_GET:
                 if (s_receive_frame.data[0] == ACK_SUCCESS)
                 {
-                    dfu_save_addr = 0;
-                    dfu_save_addr |= (s_receive_frame.data[1] & 0xff);
-                    dfu_save_addr |= ((s_receive_frame.data[2] << 8) & 0xff00);
-                    dfu_save_addr |= ((s_receive_frame.data[3] << 16) & 0xff0000);
-                    dfu_save_addr |= ((s_receive_frame.data[4] << 24) & 0xff000000);
+                    s_dfu_save_addr = 0;
+                    s_dfu_save_addr |= (s_receive_frame.data[1] & 0xff);
+                    s_dfu_save_addr |= ((s_receive_frame.data[2] << 8) & 0xff00);
+                    s_dfu_save_addr |= ((s_receive_frame.data[3] << 16) & 0xff0000);
+                    s_dfu_save_addr |= ((s_receive_frame.data[4] << 24) & 0xff000000);
 
-                    dfu_m_dfu_mode_set(0x01);
+                    memcpy(&s_app_info, &s_receive_frame.data[6], sizeof(dfu_img_info_t));
+
+                    if (((s_dfu_save_addr >= s_app_info.boot_info.load_addr) && \
+                        (s_dfu_save_addr <= s_app_info.boot_info.load_addr + s_app_info.boot_info.bin_size + 48 + 856)) || \
+                         ((s_dfu_save_addr >= s_bootloader_boot_info.load_addr) && (s_dfu_save_addr <= s_bootloader_boot_info.load_addr + s_bootloader_boot_info.bin_size + 48 + 856))) 
+                    {
+                        dfu_m_event_handler(DFU_FW_SAVE_ADDR_CONFLICT, 0);
+                    }
+                    else
+                    {
+                        dfu_m_dfu_mode_set(0x01);
+                    }
                 }
                 else
                 {
@@ -791,6 +834,8 @@ void  dfu_m_schedule(dfu_m_rev_cmd_cb_t rev_cmd_cb)
                     {
                         s_sec_flag = false;
                     }
+
+                    memcpy(&s_bootloader_boot_info, &s_receive_frame.data[8], sizeof(boot_info_t));
 
                     if (s_version_flag)
                     {

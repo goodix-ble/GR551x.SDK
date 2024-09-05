@@ -1,13 +1,14 @@
 #include "grx_sys.h"
 #include "bootloader_config.h"
 
+#ifndef SOC_GR533X
 #if (BOOTLOADER_SIGN_ENABLE && !BOOTLOADER_BOOT_PORT_ENABLE)
 
 #include "drv_common.h"
 #include "drv_pkc.h"
-#include "dfu_port.h"
 
 #include "pkc.h"
+#include "dfu_port.h"
 
 #define REGS_PCK_BASE_ADDR                   (CHIP_REGS_BASE_ADDR_SEC + 0x4000)
 static gm_pkc_v1_config_t pkc_v1_config =
@@ -59,5 +60,7 @@ int bl_pkc_modular_exponet_65537(uint32_t word_bit_len, uint32_t in_a[],uint32_t
     err = drv_modular_exponet_65537(ecc, word_bit_len, in_a, in_prime, r_square, constq,out_result);
     return (int)err;
 }
+
+#endif
 
 #endif

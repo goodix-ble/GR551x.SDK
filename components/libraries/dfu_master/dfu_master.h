@@ -43,10 +43,14 @@
  */
 #include <stdbool.h>
 #include <stdint.h>
-#include "gr55xx_dfu.h"
 
-
+/**
+ * @defgroup DFU_MASTER_MAROC Defines
+ * @{
+ */
 #define DFU_VERSION                          0x02                 /**< The DFU Version. */
+#define FAST_DFU_MODE_ENABLE                 0x02                 /**< Fast DFU Mode Enable. */
+#define FAST_DFU_MODE_DISABLE                0x00                 /**< Fast DFU Mode Disable. */
 
 /**
  * @defgroup DFU_MASTER_ENUM Enumerations
@@ -57,6 +61,7 @@ typedef enum
 {
     FRAM_CHECK_ERROR = 0,               /**< Frame check error event. */
     IMG_INFO_CHECK_FAIL,                /**< FW info check event. */
+    IMG_INFO_LOAD_ADDR_ERROR,           /**< img info load addr error. */
     GET_INFO_FAIL,                      /**< GET info error event. */
     PRO_START_ERROR,                    /**< FW program start error event. */
     PRO_START_SUCCESS,                  /**< FW program start success event. */
@@ -71,30 +76,52 @@ typedef enum
     ERASE_REGION_OVERLAP,               /**< Erase regions overlap. */
     ERASE_FLASH_FAIL,                   /**< Erase flash fail. */
     ERASE_REGION_NOT_EXIST,             /**< Erase region not exist. */
-    FAST_DFU_FLASH_FAIL                 /**< FW write flash error. */
+    FAST_DFU_PRO_FLASH_SUCCESS,         /**< fast dfu program flash sucess. */
+    FAST_DFU_FLASH_FAIL,                /**< FW write flash error. */
+    DFU_FW_SAVE_ADDR_CONFLICT           /**< DFU address confilct. */
 }dfu_m_event_t;
 /** @} */
+
+
 
 /**
  * @defgroup DFU_MASTER_STRUCT Structures
  * @{
  */
+/**@brief Boot information definition. */
+typedef struct
+{
+    uint32_t bin_size;
+    uint32_t check_sum;
+    uint32_t load_addr;
+    uint32_t run_addr ;
+    uint32_t xqspi_xip_cmd;
+    uint32_t xqspi_speed:4;           /*!< bit: 0..3  clock speed */
+    uint32_t code_copy_mode:1;        /*!< bit: 4 code copy mode */
+    uint32_t system_clk:3;            /*!< bit: 5..7 system clock */
+    uint32_t check_image:1;           /*!< bit: 8 check image */
+    uint32_t boot_delay:1;            /*!< bit: 9 boot delay time */
+    uint32_t signature_algorithm:2;   /*!< bit: 10..11 signature algorithm */
+    uint32_t reserved:20;             /*!< bit: 20 reserved */
+} boot_info_t;
+
 /**@brief IMG information definition. */
 typedef struct
 {
     uint16_t        pattern;           /**< IMG info pattern. */
     uint16_t        version;           /**< IMG version. */
-    dfu_boot_info_t boot_info;         /**< IMG boot info. */
+    boot_info_t     boot_info;         /**< IMG boot info. */
     uint8_t         comments[12];      /**< IMG comments. */
 }dfu_img_info_t;
 
 /**@brief DFU master used function config definition. */
 typedef struct
 {
-    void(*dfu_m_get_img_info)(dfu_img_info_t *img_info);                      /**< This function is used to get updated firmware information. */
-    void (*dfu_m_get_img_data)(uint32_t addr, uint8_t *data, uint16_t len);   /**< This function is used to get updated firmware data. */
-    void (*dfu_m_send_data)(uint8_t *data, uint16_t len);                     /**< This function is used to send data to peer device. */
-    void (*dfu_m_event_handler)(dfu_m_event_t event, uint8_t pre);            /**< This function is used to send event to app. */
+    void(*dfu_m_get_img_info)(dfu_img_info_t *img_info);                                    /**< This function is used to get updated firmware information. */
+    void (*dfu_m_get_img_data)(uint32_t addr, uint8_t *data, uint16_t len);                 /**< This function is used to get updated firmware data. */
+    void (*dfu_m_send_data)(uint8_t *data, uint16_t len);                                   /**< This function is used to send data to peer device. */
+    uint32_t (*dfu_m_fw_read)(const uint32_t addr, uint8_t *p_buf, const uint32_t size);    /**< This function is used to read firmware data. */
+    void (*dfu_m_event_handler)(dfu_m_event_t event, uint8_t pre);                          /**< This function is used to send event to app. */
 }dfu_m_func_cfg_t;
 /** @} */
 

@@ -318,6 +318,8 @@ static void bps_sim_measurement(void *p_arg)
     sim_meas.pulse_rate.mantissa = s_bl_meas_sim_val[s_ndx].pulse_rate.mantissa;
     sim_meas.pulse_rate.exponent = s_bl_meas_sim_val[s_ndx].pulse_rate.exponent;
 
+    sim_meas.user_id = 0;
+
     sim_meas.meas_status = BP_FEATURE_BODY_MOVEMENT_BIT | BP_FEATURE_MEASUREMENT_POSITION_BIT;
 
     // Update index to simulated measurements.

@@ -150,7 +150,7 @@ static void services_init(void)
 
 static void app_disconnected_handler(uint8_t conn_idx)
 {
-    ble_gap_adv_start(conn_idx, &s_gap_adv_time_param);
+    ble_gap_adv_start(0, &s_gap_adv_time_param);
 }
 
 /*

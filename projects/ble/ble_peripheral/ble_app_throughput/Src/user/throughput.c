@@ -185,6 +185,8 @@ void thrpt_counter_handler(void *p_arg)
         s_throughput_1s_counter++;
         instant_ths = ((s_all_get_bytes + s_all_send_bytes) - (s_last_all_get_bytes + s_last_all_send_bytes)) / 125;
         average_ths =  (s_all_get_bytes + s_all_send_bytes) / s_throughput_1s_counter / 125;
+        UNUSED_VARIABLE(instant_ths);
+        UNUSED_VARIABLE(average_ths);
         APP_LOG_INFO("The instant throughput:  %dkbs", instant_ths);
         APP_LOG_INFO("The average throughput:  %dkbs(%ds)\r\n",average_ths, s_throughput_1s_counter);
     }

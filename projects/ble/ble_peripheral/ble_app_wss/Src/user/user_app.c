@@ -933,7 +933,7 @@ static void app_disconnected_handler(uint8_t conn_idx, uint8_t reason)
     app_timer_stop(s_cts_timer_id);
     app_timer_stop(s_battery_level_timer_id);
 
-    error_code = ble_gap_adv_start(conn_idx, &s_gap_adv_time_param);
+    error_code = ble_gap_adv_start(0, &s_gap_adv_time_param);
     APP_ERROR_CHECK(error_code);
 }
 

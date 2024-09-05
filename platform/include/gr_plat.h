@@ -24,10 +24,18 @@ typedef struct __attribute((packed))
 #define APP_INFO_ADDR           (APP_CODE_RUN_ADDR+0x200)
 #define APP_INFO_PATTERN_VALUE  0x47525858
 #define APP_INFO_VERSION        0x1
+#define APP_INFO_RESERVED       0x0
 #define CHECK_SUM               (APP_INFO_PATTERN_VALUE+APP_INFO_VERSION+CHIP_VER+APP_CODE_LOAD_ADDR+APP_CODE_RUN_ADDR)
+
+
+extern const APP_INFO_t BUILD_IN_APP_INFO;
 
 extern void __main(void);
 
 extern void sdk_init(void);
+
+extern void main_init(void);
+
+extern void system_platform_init(void);
 
 #endif

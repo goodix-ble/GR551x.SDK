@@ -167,13 +167,13 @@ typedef struct _aes_handle
 /**
   * @brief HAL AES Callback function definition
   */
-typedef struct _aes_callback
+typedef struct _hal_aes_callback
 {
     void (*aes_msp_init)(aes_handle_t *p_aes);                  /**< AES init MSP callback                  */
     void (*aes_msp_deinit)(aes_handle_t *p_aes);                /**< AES de-init MSP callback               */
     void (*aes_error_callback)(aes_handle_t *p_aes);            /**< AES error callback                     */
     void (*aes_done_callback)(aes_handle_t *p_aes);             /**< AES encrypt or decrypt done callback   */
-} aes_callback_t;
+} hal_aes_callback_t;
 
 /** @} */
 

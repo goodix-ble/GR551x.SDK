@@ -147,24 +147,26 @@ void tim_gpio_init(void)
 {
     app_io_init_t io_init = APP_IO_DEFAULT_CONFIG;
 
+    // Note：User need to configure the capture_pin of APP_TIM as an input mode.
     io_init.pull = APP_IO_NOPULL;
     io_init.mode = APP_IO_MODE_INPUT;
-    io_init.pin  = APP_IO_PIN_2;
+    io_init.pin  = APP_IO_PIN_6;
     io_init.mux  = APP_IO_MUX;
-    app_io_init(APP_IO_TYPE_GPIOA, &io_init);
+    app_io_init(APP_IO_TYPE_MSIO, &io_init);
 
     io_init.pull = APP_IO_NOPULL;
     io_init.mode = APP_IO_MODE_OUTPUT;
-    io_init.pin  = APP_IO_PIN_3;
+    io_init.pin  = APP_IO_PIN_7;
     io_init.mux  = APP_IO_MUX;
-    app_io_init(APP_IO_TYPE_GPIOA, &io_init);
+    app_io_init(APP_IO_TYPE_MSIO, &io_init);
 }
 
 void tim_io_capture(void)
 {
     p_params_tim0.id = APP_TIM_ID_0;
     p_params_tim0.init.auto_reload = SystemCoreClock - 1;
-    p_params_tim0.init.capture_channel0.capture_pin = HAL_TIMER_CAPTURE_GPIO_PIN_2;
+    // Note：User need to configure the capture_pin of APP_TIM as an input mode.
+    p_params_tim0.init.capture_channel0.capture_pin = HAL_TIMER_CAPTURE_MSIO_PIN_6;
     p_params_tim0.init.capture_channel0.edge_capture = HAL_TIMER_CAPTURE_BOTH;
 
     app_tim_init(&p_params_tim0, app_tim0_event_handler);
@@ -174,7 +176,7 @@ void tim_io_capture(void)
 
     for (int i = 0;i < 10;i++)
     {
-        app_io_toggle_pin(APP_IO_TYPE_GPIOA, APP_IO_PIN_3);
+        app_io_toggle_pin(APP_IO_TYPE_MSIO, APP_IO_PIN_7);
         delay_ms(500);
     }
 

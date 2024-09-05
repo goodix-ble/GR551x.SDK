@@ -52,7 +52,11 @@
 #ifndef _APP_QSPI_H_
 #define _APP_QSPI_H_
 
+#include "app_drv_config.h"
+#if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5405) && (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5332X)
 #include "gr55xx_hal.h"
+#endif
+
 #include "app_io.h"
 #include "app_dma.h"
 #include "app_drv_error.h"
@@ -88,12 +92,50 @@ extern "C" {
 /** @defgroup APP_MAX_XFER MAX_XREF Defines
   * @{
   */
-#define QSPI_MAX_XFER_SIZE_ONCE                 (0xFFFCu)            /**< max xfer beat in evary qspi xfer */
-#define DMA_MAX_XFER_SIZE_ONCE                  (4095u)              /**< max xfer beat in evary dma xfer  */
+#define QSPI_MAX_XFER_SIZE_ONCE                 (0xFFFCu)            /**< max xfer beat in every qspi xfer */
+#define DMA_MAX_XFER_SIZE_ONCE                  (4095u)              /**< max xfer beat in every dma xfer  */
 /** @} */
 
-#define APP_STORAGE_RAM_ID    0xf                  /**< Special ID to handle RAM Source */
+//#define APP_STORAGE_RAM_ID    0xf                  /**< Special ID to handle RAM Source */
 #endif
+
+/** @addtogroup QSPI_SMART_CS_ENABLE smart cs enable defines. NOTE: If QSPI_DATA_MODE_SPI, enable smart cs
+  * @{
+  */
+#ifndef QSPI_SMART_CS_ENABLE
+  #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
+    #define  QSPI_SMART_CS_ENABLE  1  /**< CS pin is controlled by software */
+  #else
+    #define  QSPI_SMART_CS_ENABLE  0  /**< CS pin is controlled by hardware */
+  #endif
+#endif
+
+#if QSPI_SMART_CS_ENABLE
+  #define QSPI_SMART_CS_LOW(id)                                           \
+      do {                                                                \
+              if(p_qspi_env[id]->p_pin_cfg->cs.enable == APP_QSPI_PIN_ENABLE) \
+              {                                                           \
+                  app_io_write_pin(p_qspi_env[id]->p_pin_cfg->cs.type,    \
+                                  p_qspi_env[id]->p_pin_cfg->cs.pin,      \
+                                  APP_IO_PIN_RESET);                      \
+              }                                                           \
+          } while(0)
+
+  #define QSPI_SMART_CS_HIGH(id)                                          \
+      do {                                                                \
+              if(p_qspi_env[id]->p_pin_cfg->cs.enable == APP_QSPI_PIN_ENABLE) \
+              {                                                           \
+                  app_io_write_pin(p_qspi_env[id]->p_pin_cfg->cs.type,    \
+                                  p_qspi_env[id]->p_pin_cfg->cs.pin,      \
+                                  APP_IO_PIN_SET);                        \
+              }                                                           \
+      } while(0)
+#else
+  #define QSPI_SMART_CS_LOW(id)
+  #define QSPI_SMART_CS_HIGH(id)
+#endif /* QSPI_SMART_CS_ENABLE */
+/** @} */
+
 /** @} */
 
 /** @} */
@@ -113,7 +155,9 @@ typedef enum
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X)
     APP_QSPI_ID_2,              /**< QSPI module 2 */
 #endif
-    APP_QSPI_ID_MAX             /**< Only for check parameter, not used as input parameters. */
+    APP_QSPI_ID_MAX,             /**< Only for check parameter, not used as input parameters. */
+
+    APP_STORAGE_RAM_ID = 0xf,
 } app_qspi_id_t;
 
 /**
@@ -227,7 +271,7 @@ typedef enum {
   */
 typedef enum {
     BLIT_BY_DMA_SG  = 0,             /**< need enable BLIT_IMAGE_FEATURE_SUPPORT */
-    BLIT_BY_DMA_LLP = 1,             /**< need enable PSRAM_LLP_FEATUTE_SUPPORT */
+    BLIT_BY_DMA_LLP = 1,             /**< need enable PSRAM_LLP_FEATURE_SUPPORT */
 } blit_xfer_type_e;
 
 /** @} */
@@ -285,7 +329,7 @@ typedef struct
     dma_regs_t *                dma_instance;        /**< Specifies the dma instance of QSPI.   */
     dma_channel_t               dma_channel;         /**< Specifies the dma channel of QSPI.    */
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X)
-    uint32_t                    wait_timeout_ms;     /**< Specifies timout time of polling and dead wait, ms. */
+    uint32_t                    wait_timeout_ms;     /**< Specifies timeout time of polling and dead wait, ms. */
     uint32_t                    extend;              /**< Specifies extend segment, to use */
 #endif
 } app_qspi_dma_cfg_t;
@@ -361,7 +405,8 @@ typedef struct
   * @brief Screen Info. structure definition
   */
 typedef struct {
-    unsigned int scrn_pixel_width;               /**< screen pixel width, such as 390 */
+    unsigned int scrn_pixel_stride;              /**< screen pixel stride, such as 390 */
+    unsigned int scrn_pixel_width;               /**< screen pixel width, such as 390, width must be less or equal than stride */
     unsigned int scrn_pixel_height;              /**< screen pixel height, such as 390 */
     unsigned int scrn_pixel_depth;               /**< pixel depth, unit: byte, such as 2 */
 } app_qspi_screen_info_t;
@@ -409,7 +454,7 @@ typedef struct {
 } dual_screen_scroll_t;
 
 /**
-  * @brief Veritical Linked List Screen-Scroll Structure, just used for inner driver
+  * @brief Vertical Linked List Screen-Scroll Structure, just used for inner driver
   */
 typedef struct {
     app_qspi_screen_veri_link_scroll_t   vl_scroll;         /**< Start AHB address for current frame */
@@ -443,9 +488,9 @@ typedef struct {
     uint32_t src_img_w;                 /**< pixel width of source image */
     uint32_t src_img_h;                 /**< pixel height of source image */
     uint32_t src_img_x;                 /**< x-coordinate of source image, left-top point is Coordinate origin */
-    uint32_t src_img_x_delta;           /**< blit image width in pixel, do not multiple pexel depth */
+    uint32_t src_img_x_delta;           /**< blit image width in pixel, do not multiple pixel depth */
     uint32_t src_img_y;                 /**< y-coordinate of source image, left-top point is Coordinate origin */
-    uint32_t src_img_y_delta;           /**< blit image height in pixel, do not multiple pexel depth */
+    uint32_t src_img_y_delta;           /**< blit image height in pixel, do not multiple pixel depth */
     uint32_t dst_buff_address;          /**< destination buffer address */
     uint32_t dst_buff_width;            /**< pixel width of destination buffer */
     uint32_t dst_buff_height;           /**< pixel height of destination buffer */
@@ -496,33 +541,33 @@ typedef enum
   * @brief QSPI device structure definition
   */
 typedef struct {
-    qspi_handle_t           handle;                             /**< QSPI handle Structure.      */
+    qspi_handle_t           handle;                             /**< QSPI handle Structure. */
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X)
-    app_qspi_dma_cfg_t      dma_cfg;                            /**< QSPI DMA configuration structure.      */
+    app_qspi_dma_cfg_t      dma_cfg;                            /**< QSPI DMA configuration structure. */
 #endif
-    app_qspi_pin_cfg_t      *p_pin_cfg;                         /**< QSPI configuration Structures.      */
-    dma_id_t                dma_id;                             /**< DMA id.      */
-    app_qspi_state_t        qspi_state;                         /**< App qspi state types.      */
-    app_qspi_dma_state_t    qspi_dma_state;                     /**< App qspi dma_state types.      */
-    volatile bool           start_flag;                         /**< start flag.      */
-    app_qspi_evt_handler_t  evt_handler;                        /**< QSPI event callback .      */
+    app_qspi_pin_cfg_t      *p_pin_cfg;                         /**< QSPI configuration Structures. */
+    dma_id_t                dma_id;                             /**< DMA id. */
+    app_qspi_state_t        qspi_state;                         /**< App qspi state types. */
+    app_qspi_dma_state_t    qspi_dma_state;                     /**< App qspi dma_state types. */
+    volatile bool           start_flag;                         /**< start flag. */
+    app_qspi_evt_handler_t  evt_handler;                        /**< QSPI event callback. */
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X)
-    app_qspi_mmap_device_t  mounted_mmap_device;                /**< QSPI memory-mapped configuration Structures.      */
+    app_qspi_mmap_device_t  mounted_mmap_device;                /**< QSPI memory-mapped configuration Structures. */
 
-    volatile uint8_t        mmap_endian_mode;                   /**< mmap endian mode.      */
-    volatile bool           is_mmap_inited;                     /**< mmap inited.      */
-    volatile bool           is_mmap_prefetch_en;                /**< mmap prefetch.      */
+    volatile uint8_t        mmap_endian_mode;                   /**< mmap endian mode. */
+    volatile bool           is_mmap_inited;                     /**< mmap inited. */
+    volatile bool           is_mmap_prefetch_en;                /**< mmap prefetch. */
 #endif
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X)
-    volatile bool           is_used_dma;                        /**< used dma.      */
-    volatile bool           is_dma_mode_m2m;                    /**< dma mode.      */
+    volatile bool           is_used_dma;                        /**< used dma. */
+    volatile bool           is_dma_mode_m2m;                    /**< dma mode. */
 #endif
-    volatile bool           is_rx_done;                         /**< rx done.      */
-    volatile bool           is_tx_done;                         /**< tx done.      */
-    volatile bool           is_xfer_err;                        /**< xfer err.      */
+    volatile bool           is_rx_done;                         /**< rx done. */
+    volatile bool           is_tx_done;                         /**< tx done. */
+    volatile bool           is_xfer_err;                        /**< xfer err. */
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X)
-    volatile bool           is_dma_done;                        /**< dma done.      */
-    volatile bool           is_async_write_screen;              /**< async write screen.      */
+    volatile bool           is_dma_done;                        /**< dma done. */
+    volatile bool           is_async_write_screen;              /**< async write screen. */
 #endif
 }qspi_env_t;
 
@@ -531,11 +576,11 @@ typedef struct {
   */
 typedef struct
 {
-    app_qspi_id_t      id;       /**< specified QSPI module ID.                                        */
+    app_qspi_id_t      id;       /**< specified QSPI module ID. */
     app_qspi_pin_cfg_t pin_cfg;  /**< the pin configuration information for the specified QSPI module. */
-    app_qspi_dma_cfg_t dma_cfg;  /**< QSPI DMA configuration.                                               */
-    qspi_init_t        init;     /**< QSPI communication parameters.                                   */
-    qspi_env_t         qspi_env;  /**< QSPI device structure definition.                                   */
+    app_qspi_dma_cfg_t dma_cfg;  /**< QSPI DMA configuration. */
+    qspi_init_t        init;     /**< QSPI communication parameters. */
+    qspi_env_t         qspi_env;  /**< QSPI device structure definition. */
 } app_qspi_params_t;
 /** @} */
 
@@ -546,7 +591,7 @@ typedef struct
   */
 
 /**
-  * @brief The Referrence to pin groups define
+  * @brief The Reference to pin groups define
   */
 extern const app_qspi_pin_cfg_t g_qspi_pin_groups[QSPIx_PIN_GROUP_MAX];
 
@@ -602,7 +647,7 @@ uint16_t app_qspi_abort(app_qspi_id_t id);
  * @brief  Config the memory mapped mode (also called XIP mode) and Active the mode
  *
  * @param[in]  id : QSPI module ID.
- * @param[in]  dev: device config for mmaped mode
+ * @param[in]  dev: device config for mmapped mode
  *
  * @return true/false
  ****************************************************************************************

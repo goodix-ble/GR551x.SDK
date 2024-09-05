@@ -63,7 +63,7 @@ extern "C" {
 #ifdef HAL_UART_MODULE_ENABLED
 
 /* Exported functions --------------------------------------------------------*/
-/** @addtogroup APP_DMA_DRIVER_FUNCTIONS Functions
+/** @addtogroup APP_UART_DRIVER_FUNCTIONS Functions
   * @{
   */
 

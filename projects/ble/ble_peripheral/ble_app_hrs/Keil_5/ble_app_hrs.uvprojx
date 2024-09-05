@@ -590,7 +590,7 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\components\libraries\app_error\cortex_backtrace.c</FilePath>
             </File>
-          </Files>
+          <File><FileName>ble.c</FileName><FileType>1</FileType><FilePath>..\..\..\..\..\components\sdk\ble.c</FilePath></File></Files>
         </Group>
         <Group>
           <GroupName>gr_profiles</GroupName>

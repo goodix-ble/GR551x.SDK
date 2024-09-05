@@ -38,11 +38,12 @@
 #include <stdbool.h>
 #include "grx_hal.h"
 #include "app_io.h"
-#include "app_qspi.h"
-#include "app_qspi_dma.h"
 #include "app_spi.h"
 #include "app_spi_dma.h"
-
+#if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5332X)
+#include "app_qspi.h"
+#include "app_qspi_dma.h"
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -51,40 +52,48 @@ extern "C" {
   * @{
   */
 
-#define SPI_FLASH_CMD_WRSR              0x01
-#define SPI_FLASH_CMD_WRSR1             0x31
-#define SPI_FLASH_CMD_RDSR              0x05
+#define SPI_FLASH_CMD_WRSR              0x01    /* Write status register s0-s7 */
+#define SPI_FLASH_CMD_WRSR1             0x31    /* Write status register s8-s15 */
+#define SPI_FLASH_CMD_WRSR2             0x11    /* Write status register s16-s23 */
+#define SPI_FLASH_CMD_RDSR              0x05    /* Read status register s0-s7 */
+#define SPI_FLASH_CMD_RDSR1             0x35    /* Read status register s8-s15 */
+#define SPI_FLASH_CMD_RDSR2             0x15    /* Read status register s16-s23 */
 
-#define SPI_FLASH_CMD_WREN              0x06
-#define SPI_FLASH_CMD_WRDI              0x04
+#define SPI_FLASH_CMD_WREN              0x06    /* Write enable register */
+#define SPI_FLASH_CMD_WRDI              0x04    /* Write disable register */
 
-#define SPI_FLASH_CMD_READ              0x03
-#define SPI_FLASH_CMD_FREAD             0x0B
-#define SPI_FLASH_CMD_DOFR              0x3B
-#define SPI_FLASH_CMD_DIOFR             0xBB
-#define SPI_FLASH_CMD_QOFR              0x6B
-#define SPI_FLASH_CMD_QIOFR             0xEB
-#define SPI_FLASH_CMD_READ_RESET        0xFF
-#define SPI_FLASH_CMD_DPP               0xA2
-#define SPI_FLASH_CMD_DREAD             0x3B
-#define SPI_FLASH_CMD_PP                0x02
-#define SPI_FLASH_CMD_SE                0x20
-#define SPI_FLASH_CMD_BE_32             0x52
-#define SPI_FLASH_CMD_BE_64             0xD8
-#define SPI_FLASH_CMD_CE                0xC7
-#define SPI_FLASH_CMD_PES               0x75
-#define SPI_FLASH_CMD_PER               0x7A
+#define SPI_FLASH_CMD_READ              0x03    /* Read data bytes */
+#define SPI_FLASH_CMD_FREAD             0x0B    /* Fast read data bytes */
+#define SPI_FLASH_CMD_DOFR              0x3B    /* Dual out read data bytes */
+#define SPI_FLASH_CMD_DIOFR             0xBB    /* Dual io read data bytes */
+#define SPI_FLASH_CMD_QOFR              0x6B    /* Qual out read data bytes */
+#define SPI_FLASH_CMD_QIOFR             0xEB    /* Qual io read data bytes */
+#define SPI_FLASH_CMD_DPP               0xA2    /* Dual page program */
+#define SPI_FLASH_CMD_DREAD             0x3B    /* Dual out read data bytes */
+#define SPI_FLASH_CMD_PP                0x02    /* Page program */
+#define SPI_FLASH_CMD_SE                0x20    /* Sector Erase 4k bytes */
+#define SPI_FLASH_CMD_BE_32             0x52    /* Sector Erase 32k bytes */
+#define SPI_FLASH_CMD_BE_64             0xD8    /* Sector Erase 64k bytes */
+#define SPI_FLASH_CMD_CE                0xC7    /* Chip erase */
+#define SPI_FLASH_CMD_PES               0x75    /* Program/Erase suspend */
+#define SPI_FLASH_CMD_PER               0x7A    /* Program/Erase resume */
 
-#define SPI_FLASH_CMD_RDI               0xAB
-#define SPI_FLASH_CMD_REMS              0x90
-#define SPI_FLASH_CMD_RDID              0x9F
+#define SPI_FLASH_CMD_REMS              0x90    /* Read manufacture ID */
+#define SPI_FLASH_CMD_RDID              0x9F    /* Read manufacturer/device ID */
 
-#define SPI_FLASH_CMD_RSTEN             0x66
-#define SPI_FLASH_CMD_RST               0x99
-#define SPI_FLASH_CMD_DP                0xB9
-#define SPI_FLASH_CMD_RDP               0xAB
+#define SPI_FLASH_CMD_RSTEN             0x66    /* Reset enable */
+#define SPI_FLASH_CMD_RST               0x99    /* Reset */
+#define SPI_FLASH_CMD_DP                0xB9    /* Deep power-down */
+#define SPI_FLASH_CMD_RDP               0xAB    /* Release deep power-down */
+#define SPI_FLASH_CMD_ADDR_32BIT_EN     0xB7    /* enable 32bit addr */
+#define SPI_FLASH_CMD_ADDR_32BIT_DIS    0xE9    /* disable 32bit addr */
 
-#define SPI_FLASH_CMD_SFUD              0x5A
+#define SPI_FLASH_CMD_SFDP              0x5A    /* Read SFDP */
+/** @} */
+
+/** @addtogroup Spi flash macro definition
+  * @{
+  */
 
 #define DUMMY_BYTE                      0xFF
 
@@ -93,6 +102,25 @@ extern "C" {
 #define SPI_FLASH_BLOCK_SIZE            0x10000
 #define SPI_FLASH_ADDRESS_MAX           0xFFFFF
 
+#define SPI_FLASH_ERASE_SECTOR          0 /* sector erase */
+#define SPI_FALSH_ERASE_CHIP            1 /* chip erase */
+
+#define SPI_FLASH_USING_SFDP            1
+
+#define SPI_FLASH_SPI_SUCCESS           ((uint32_t)0x00000000) /* spi/qspi init success */
+#define SPI_FLASH_SPI_FAIL              ((uint32_t)0x00000001) /* spi/qspi init fail */
+#define SPI_FLASH_SPI_DMA_FAIL          ((uint32_t)0x00000002) /* spi/qspi dma init fail */
+#if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5332X)
+#define SPI_FLASH_TRANSMIT_SUCCESS      ((uint32_t)0x00000001) /* spi flash transmit success */
+#define SPI_FLASH_TRANSMIT_FAIL         ((uint32_t)0x00000000) /* spi flash transmit fail */
+#define SPI_FLASH_ERASE_SUCCESS         (1)                    /* spi flash erase success */
+#define SPI_FLASH_ERASE_FAIL            (0)                    /* spi flash erase fail */
+#else
+#define SPI_FLASH_TRANSMIT_SUCCESS      ((uint32_t)0x00000000) /* GR533X spi flash operatoon success */
+#define SPI_FLASH_TRANSMIT_FAIL         ((uint32_t)0x00000001) /* GR533X spi flash operatoon fail */
+#define SPI_FLASH_ERASE_SUCCESS         (0)                    /* spi flash erase success */
+#define SPI_FLASH_ERASE_FAIL            (1)                    /* spi flash erase fail */
+#endif
 /** @} */
 
 /**
@@ -135,19 +163,32 @@ typedef struct _flash_io
     spi_io_t qspi_io3;
 } flash_io_t;
 
+#if (SPI_FLASH_USING_SFDP == 0)
+typedef enum
+{
+    SPI_FLASH_USING_24BIT_ADDR,
+    SPI_FLASH_USING_32BIT_ADDR,
+} spi_addr_size_t;
+#endif
+
 typedef struct _flash_init
 {
-    spi_type_t spi_type;
-    flash_io_t flash_io;
+    spi_type_t  spi_type;
+    flash_io_t  flash_io;
     bool        is_dual_line;
     bool        is_high_freq;
+#if (SPI_FLASH_USING_SFDP == 0)
+    spi_addr_size_t spi_flash_addr_size;
+#endif
 } flash_init_t;
 
 typedef struct flash_control
 {
+#if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5332X)
     uint8_t         qspi_tmt_done;
     uint8_t         qspi_rcv_done;
     app_qspi_id_t   qspi_id;
+#endif
     uint8_t         spi_tmt_done;
     uint8_t         spi_rcv_done;
     uint8_t         spi_tx_rx_done;
@@ -168,9 +209,21 @@ typedef struct flash_control
  *
  * @param[in]  p_params: Pointer to spi_flash_io_t parameter.
  *
+ * @retval true: SPI_FLASH_SPI_SUCCESS.
+ * @retval false: SPI_FLASH_SPI_FAIL/SPI_FLASH_SPI_DMA_FAIL.
  ****************************************************************************************
  */
-void spi_flash_init(flash_init_t *p_flash_init);
+uint32_t spi_flash_init(flash_init_t *p_flash_init);
+
+/**
+ ****************************************************************************************
+ * @brief  Deinitialize the SPI FLASH DRIVER.
+ *
+ * @retval SPI_FLASH_SPI_SUCCESS: If successful.
+ * @retval SPI_FLASH_SPI_FAIL/SPI_FLASH_SPI_DMA_FAIL: If failure.
+ ****************************************************************************************
+ */
+uint32_t spi_flash_deinit(void);
 
 /**
  *******************************************************************************
@@ -180,7 +233,8 @@ void spi_flash_init(flash_init_t *p_flash_init);
  * @param[in,out]   buffer: buffer of data to write.
  * @param[in]       nbytes: number of bytes to write.
  *
- * @return          number of bytes written
+ * @retval SPI_FLASH_SUCCESS: If successful.
+ * @retval SPI_FLASH_FAIL: If failure.
  *******************************************************************************
  */
 uint32_t spi_flash_write(uint32_t address, uint8_t *buffer, uint32_t nbytes);
@@ -211,8 +265,8 @@ uint32_t spi_flash_read(uint32_t address, uint8_t *buffer, uint32_t nbytes);
  * @param[in] address: start address in flash to write data to.
  * @param[in] size: number of bytes to write.
  *
- * @retval true: If successful.
- * @retval false: If failure.
+ * @retval SPI_FLASH_SUCCESS: If successful.
+ * @retval SPI_FLASH_FAIL: If failure.
  *******************************************************************************
  */
 bool spi_flash_sector_erase(uint32_t address, uint32_t size);
@@ -221,8 +275,8 @@ bool spi_flash_sector_erase(uint32_t address, uint32_t size);
  *******************************************************************************
  * @brief Erase flash chip.
  *
- * @retval true: If successful.
- * @retval false: If failure.
+ * @retval SPI_FLASH_SUCCESS: If successful.
+ * @retval SPI_FLASH_FAIL: If failure.
  *******************************************************************************
  */
 bool spi_flash_chip_erase(void);
@@ -254,6 +308,24 @@ uint32_t spi_flash_device_id(void);
  *******************************************************************************
  */
 void spi_flash_device_info(uint32_t *id, uint32_t *size);
+
+#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
+/**
+ *******************************************************************************
+ * @brief Erase flash region.
+ *
+ * @param[in] erase_type: erase flash with sector/chip.
+ *                  @arg @ref SPI_FLASH_ERASE_SECTOR
+ *                  @arg @ref SPI_FALSH_ERASE_CHIP
+ * @param[in] address: start address in flash to write data to.
+ * @param[in] size: number of bytes to write.
+ *
+ * @retval SPI_FLASH_SUCCESS: If successful.
+ * @retval SPI_FLASH_FAIL: If failure.
+ *******************************************************************************
+ */
+bool spi_flash_erase(uint32_t erase_type, uint32_t address, uint32_t size);
+#endif
 
 /** @} */
 

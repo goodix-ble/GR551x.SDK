@@ -105,6 +105,7 @@ enum  BLE_GAPM_EVTS
     BLE_GAPM_EVT_SYNC_STOP,                           /**< Periodic Advertising Synchronization Stop event. */
     BLE_GAPM_EVT_SYNC_LOST,                           /**< Periodic Advertising Synchronization Lost event. */
     BLE_GAPM_EVT_READ_RSLV_ADDR,                      /**< Read Resolvable Address event. */
+    BLE_GAPM_EVT_RSLV_ADDR_REPORT,                    /**< Resolvable Address report event. */
     BLE_GAPM_EVT_MAX,
 };
 
@@ -141,6 +142,7 @@ enum BLE_GATTS_EVTS
     BLE_GATTS_EVT_PREP_WRITE_REQUEST,                    /**< GATTS Prepare Write Request event .*/
     BLE_GATTS_EVT_NTF_IND,                               /**< GATTS Notify or Indicate Complete event .*/
     BLE_GATTS_EVT_CCCD_RECOVERY,                         /**< GATTS CCCD Recovery event .*/
+    BLE_GATTS_EVT_DATABASE_INITED_IND,
     BLE_GATTS_EVT_MAX,
 };
 

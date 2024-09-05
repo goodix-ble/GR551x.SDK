@@ -370,14 +370,18 @@ typedef struct
     uint16_t handle;                       /**< Handle of the attribute for whose value is requested. */
 } ble_gatts_evt_prep_write_t;
 
-/**@brief Gatt Notification or indication event for @ref BLE_GATTS_EVT_NTF_IND. */
+/**
+ * @brief Gatt Notification or indication event for @ref BLE_GATTS_EVT_NTF_IND.
+ */
 typedef struct
-{   
+{
     ble_gatt_evt_type_t type;               /**< Notification or indication event type. */
     uint16_t            handle;             /**< Handle of the write operation, or notification/indication operation. */
 } ble_gatts_evt_ntf_ind_t;
 
-/**@brief Gatt cccd recovery event for @ref BLE_GATTS_EVT_CCCD_RECOVERY. */
+/**
+ * @brief Gatt cccd recovery event for @ref BLE_GATTS_EVT_CCCD_RECOVERY.
+ */
 typedef struct
 {
     ble_gap_bdaddr_t    peer_addr;          /**< Pointer to peer address. */
@@ -385,7 +389,18 @@ typedef struct
     uint16_t            cccd_val;           /**< CCCD value. */
 } ble_gatts_evt_cccd_rec_t;
 
-/**@brief BLE GATTS event structure. */
+/**
+ * @brief GATTS Database Inited Indication event structure.
+ */
+typedef struct
+{
+    uint16_t        start_hdl;              /**< Start handle of database inited. */
+    uint16_t        end_hdl;                /**< End handle of database inited. */
+} ble_gatts_evt_inited_ind_t;
+
+/**
+ * @brief BLE GATTS event structure.
+ */
 typedef struct
 {
     uint8_t  index;                                         /**< Index of connection. */
@@ -396,6 +411,7 @@ typedef struct
         ble_gatts_evt_prep_write_t      prep_wr_req;        /**< Prepare write request event. */
         ble_gatts_evt_ntf_ind_t         ntf_ind_sended;     /**< Notification or indication sened event. */
         ble_gatts_evt_cccd_rec_t        cccd_recovery;      /**< Gatt cccd recovery event . */
+        ble_gatts_evt_inited_ind_t      inited_ind;         /**< Gatt database inited indication send event. */
     } params;                                               /**< Event Parameters. */
 } ble_gatts_evt_t;
 
@@ -570,6 +586,45 @@ uint16_t ble_gatts_noti_ind(uint8_t conn_idx, const ble_gatts_noti_ind_t *p_para
  ****************************************************************************************
  */
 void ble_gatts_service_changed(void);
+
+/**
+ ****************************************************************************************
+ * @brief Set a service discoverable or not.
+ *
+ * @param[in] conn_idx:       Current connection index.
+ * @param[in] start_hdl:      Start handle of the service.
+ * @param[in] discoverable:   Flag for discoverable(true: discoverable, false: hide)
+ *
+ * @retval ::SDK_SUCCESS: Set this service hide or not successfully.
+ * @retval ::SDK_ERR_INVALID_CONN_IDX: Conidx is invalid.
+ ****************************************************************************************
+ */
+uint16_t ble_gatts_service_discoverable_set(uint8_t conn_idx, uint16_t start_hdl, bool discoverable);
+
+/**
+ ****************************************************************************************
+ * @brief Set all service discoverable.
+ *
+ * @param[in] conn_idx:       Current connection index.
+ *
+ * @retval ::SDK_SUCCESS:  Set all service discoverable successfully.
+ * @retval ::SDK_ERR_INVALID_CONN_IDX: Conidx is invalid.
+ ****************************************************************************************
+ */
+uint16_t ble_gatts_service_discover_all(uint8_t conn_idx);
+
+/**
+ ****************************************************************************************
+ * @brief Hide all service.
+ *
+ * @param[in] conn_idx:       Current connection index.
+ *
+ * @retval ::SDK_SUCCESS:  Hide all service successfully.
+ * @retval ::SDK_ERR_INVALID_CONN_IDX: Conidx is invalid.
+ ****************************************************************************************
+ */
+uint16_t ble_gatts_service_hide_all(uint8_t conn_idx);
+
 /** @} */
 
 #endif // BLE_SDK_GATTS_H_

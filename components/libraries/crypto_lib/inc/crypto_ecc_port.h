@@ -50,7 +50,7 @@ extern "C" {
 #endif
 
 uint32_t hw_ecc_rng32(void);
-void hw_ecc_point_mul(algo_ecc_config_t *ecc_calc_options,
+int hw_ecc_point_mul(algo_ecc_config_t *ecc_calc_options,
                       uint32_t k[ECC_U32_LENGTH],
                       algo_ecc_point_t *Q,
                       algo_ecc_point_t *result);

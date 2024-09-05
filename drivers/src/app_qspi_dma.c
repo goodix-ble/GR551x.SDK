@@ -53,31 +53,6 @@
  * DEFINES
  *****************************************************************************************
  */
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
-#define QSPI_SMART_CS_LOW(id)                                           \
-    do {                                                                \
-            if(p_qspi_env[id]->p_pin_cfg->cs.enable == APP_QSPI_PIN_ENABLE) \
-            {                                                           \
-                app_io_write_pin(p_qspi_env[id]->p_pin_cfg->cs.type,    \
-                                p_qspi_env[id]->p_pin_cfg->cs.pin,      \
-                                APP_IO_PIN_RESET);                      \
-            }                                                           \
-        } while(0)
-
-#define QSPI_SMART_CS_HIGH(id)                                          \
-    do {                                                                \
-            if(p_qspi_env[id]->p_pin_cfg->cs.enable == APP_QSPI_PIN_ENABLE) \
-            {                                                           \
-                app_io_write_pin(p_qspi_env[id]->p_pin_cfg->cs.type,    \
-                                 p_qspi_env[id]->p_pin_cfg->cs.pin,     \
-                                 APP_IO_PIN_SET);                       \
-            }                                                           \
-    } while(0)
-#else
-#define QSPI_SMART_CS_LOW(id)
-#define QSPI_SMART_CS_HIGH(id)
-#endif
-
 #define APP_QSPI_EXCEPT_DEBUG_EN            1u
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
 /********************************************************************
@@ -151,7 +126,7 @@ static void app_qspi_config_dma_qwrite_32b_patch(app_qspi_id_t id, bool enable_p
  */
 uint16_t app_qspi_dma_init(app_qspi_params_t *p_params)
 {
-    app_qspi_id_t id = p_params->id;
+    app_qspi_id_t id;
     app_drv_err_t app_err_code;
 
     if (NULL == p_params)
@@ -159,14 +134,16 @@ uint16_t app_qspi_dma_init(app_qspi_params_t *p_params)
         return APP_DRV_ERR_POINTER_NULL;
     }
 
-    if (id >= APP_QSPI_ID_MAX)
-    {
-        return APP_DRV_ERR_INVALID_ID;
-    }
+    id = p_params->id;
 
     if ((p_qspi_env[id] == NULL) || (p_qspi_env[id]->qspi_state == APP_QSPI_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
+    }
+
+    if (p_qspi_env[id]->qspi_dma_state != APP_QSPI_DMA_INVALID)
+    {
+        return APP_DRV_ERR_INVALID_INIT;
     }
 
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
@@ -192,8 +169,9 @@ uint16_t app_qspi_dma_init(app_qspi_params_t *p_params)
     p_qspi_env[id]->dma_cfg.wait_timeout_ms = p_params->dma_cfg.wait_timeout_ms;
     p_qspi_env[id]->dma_cfg.dma_instance = p_params->dma_cfg.dma_instance;
     p_qspi_env[id]->dma_cfg.dma_channel  = p_params->dma_cfg.dma_channel;
-    p_qspi_env[id]->qspi_dma_state = APP_QSPI_DMA_ACTIVITY;
+    // p_qspi_env[id]->qspi_dma_state = APP_QSPI_DMA_ACTIVITY;
 #endif
+    p_qspi_env[id]->qspi_dma_state = APP_QSPI_DMA_ACTIVITY;
 
     return APP_DRV_SUCCESS;
 }
@@ -212,13 +190,7 @@ uint16_t app_qspi_dma_deinit(app_qspi_id_t id)
 
     app_dma_deinit(p_qspi_env[id]->dma_id);
 
-    GLOBAL_EXCEPTION_DISABLE();
     p_qspi_env[id]->qspi_dma_state = APP_QSPI_DMA_INVALID;
-    GLOBAL_EXCEPTION_ENABLE();
-    if (p_qspi_env[id]->qspi_state == APP_QSPI_INVALID)
-    {
-        p_qspi_env[id] = NULL;
-    }
 
     return APP_DRV_SUCCESS;
 }
@@ -232,7 +204,7 @@ uint16_t app_qspi_dma_command_receive_async(app_qspi_id_t id, app_qspi_command_t
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_qspi_env[id] == NULL) || (p_qspi_env[id]->qspi_state == APP_QSPI_INVALID))
+    if ((p_qspi_env[id] == NULL) || (p_qspi_env[id]->qspi_dma_state == APP_QSPI_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -280,7 +252,7 @@ uint16_t app_qspi_dma_command_transmit_async(app_qspi_id_t id, app_qspi_command_
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_qspi_env[id] == NULL) || (p_qspi_env[id]->qspi_state == APP_QSPI_INVALID))
+    if ((p_qspi_env[id] == NULL) || (p_qspi_env[id]->qspi_dma_state == APP_QSPI_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -332,7 +304,7 @@ uint16_t app_qspi_dma_command_async(app_qspi_id_t id, app_qspi_command_t *p_cmd)
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_qspi_env[id] == NULL) || (p_qspi_env[id]->qspi_state == APP_QSPI_INVALID))
+    if ((p_qspi_env[id] == NULL) || (p_qspi_env[id]->qspi_dma_state == APP_QSPI_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -381,7 +353,7 @@ uint16_t app_qspi_dma_transmit_in_qpi_async(app_qspi_id_t id, uint32_t data_widt
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_qspi_env[id] == NULL) || (p_qspi_env[id]->qspi_state == APP_QSPI_INVALID))
+    if ((p_qspi_env[id] == NULL) || (p_qspi_env[id]->qspi_dma_state == APP_QSPI_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -426,7 +398,7 @@ uint16_t app_qspi_dma_transmit_async_ex(app_qspi_id_t id, uint32_t qspi_mode, ui
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_qspi_env[id] == NULL) || (p_qspi_env[id]->qspi_state == APP_QSPI_INVALID))
+    if ((p_qspi_env[id] == NULL) || (p_qspi_env[id]->qspi_dma_state == APP_QSPI_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -486,7 +458,7 @@ uint16_t app_qspi_dma_receive_async_ex(app_qspi_id_t id, uint32_t qspi_mode, uin
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_qspi_env[id] == NULL) || (p_qspi_env[id]->qspi_state == APP_QSPI_INVALID))
+    if ((p_qspi_env[id] == NULL) || (p_qspi_env[id]->qspi_dma_state == APP_QSPI_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }

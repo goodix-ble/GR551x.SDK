@@ -46,6 +46,7 @@
 #include "app_log.h"
 #include "at_cmd_utils.h"
 #include "utility.h"
+#include "ring_buffer.h"
 
 /*
  * DEFINES
@@ -80,6 +81,8 @@ ble_gap_scan_param_t     g_gap_scan_param;       /**< Scanning parameters. */
 ble_gap_init_param_t     g_gap_connect_param;
 bool                     g_master_set_cccd_flag;
 static bool is_connected;
+extern ring_buffer_t     s_uart_to_ble_buffer;
+extern ring_buffer_t     s_ble_to_uart_buffer;
 
 uint8_t g_adv_data_set[28] =
 {
@@ -368,8 +371,20 @@ void ble_evt_handler(const ble_evt_t *p_evt)
                                 p_evt->evt.gapc_evt.params.connected.peer_addr.addr[1],
                                 p_evt->evt.gapc_evt.params.connected.peer_addr.addr[0]);
             }
-
             at_cmd_execute_cplt(&cmd_rsp);
+            GLOBAL_EXCEPTION_DISABLE();
+            memset(s_uart_to_ble_buffer.p_buffer, 0, sizeof(s_uart_to_ble_buffer.buffer_size));
+            memset(s_ble_to_uart_buffer.p_buffer, 0, sizeof(s_ble_to_uart_buffer.buffer_size));
+            s_uart_to_ble_buffer.write_index = 0;
+            s_uart_to_ble_buffer.read_index  = 0;
+            s_ble_to_uart_buffer.write_index = 0;
+            s_ble_to_uart_buffer.read_index  = 0;
+            transport_flag_set(BLE_TX_CPLT, true);
+            transport_flag_set(GUS_TX_NTF_ENABLE, false);
+            transport_flag_set(BLE_FLOW_CTRL_ENABLE, false);
+            transport_flag_set(BLE_TX_FLOW_ON, true);
+            transport_flag_set(BLE_RX_FLOW_ON, true);
+            GLOBAL_EXCEPTION_ENABLE();
             break; 
 
         case BLE_GAPC_EVT_DISCONNECTED:
@@ -382,10 +397,9 @@ void ble_evt_handler(const ble_evt_t *p_evt)
                 uart_at_dev_state_set(STANDBY);
                 APP_LOG_INFO("Disconnected (0x%02X)", p_evt->evt.gapc_evt.params.disconnected.reason);
             }
-
             at_cmd_execute_cplt(&cmd_rsp);
             break;
-            
+
         case BLE_GAPC_EVT_CONNECT_CANCLE:
             if (BLE_SUCCESS == p_evt->evt_status)
             {

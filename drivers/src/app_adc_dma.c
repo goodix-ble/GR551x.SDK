@@ -52,10 +52,7 @@ extern void adc_wake_up(void);
 #endif
 
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
-static const uint32_t s_io_to_input_src[ADC_INPUT_SRC_REF + 1] =
-{
-    MSIO_PIN_0, MSIO_PIN_1, MSIO_PIN_2, MSIO_PIN_3, MSIO_PIN_4, NULL, NULL, NULL
-};
+extern const uint32_t s_io_to_input_src[ADC_INPUT_SRC_REF + 1];
 #endif
 
 /*
@@ -104,22 +101,32 @@ uint16_t app_adc_dma_init(app_adc_params_t *p_params)
 {
     app_drv_err_t app_err_code;
 
+    if (NULL == p_params)
+    {
+        return APP_DRV_ERR_POINTER_NULL;
+    }
+
     if ((p_adc_env == NULL) || (p_adc_env->adc_state == APP_ADC_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
 
+    if (p_adc_env->adc_dma_state != APP_ADC_DMA_INVALID)
+    {
+        return APP_DRV_ERR_INVALID_INIT;
+    }
+
     GLOBAL_EXCEPTION_DISABLE();
-    p_adc_env->dma_id = -1;
     app_err_code = adc_config_dma(p_params);
-    GLOBAL_EXCEPTION_ENABLE();
-    APP_DRV_ERR_CODE_CHECK(app_err_code);
-
-    GLOBAL_EXCEPTION_DISABLE();
+    if (app_err_code != APP_DRV_SUCCESS)
+    {
+        goto __exit;
+    }
     p_adc_env->adc_dma_state = APP_ADC_DMA_ACTIVITY;
+__exit:
     GLOBAL_EXCEPTION_ENABLE();
 
-    return APP_DRV_SUCCESS;
+    return app_err_code;
 }
 
 uint16_t app_adc_dma_deinit(void)
@@ -131,109 +138,10 @@ uint16_t app_adc_dma_deinit(void)
 
     app_dma_deinit(p_adc_env->dma_id);
 
-    GLOBAL_EXCEPTION_DISABLE();
     p_adc_env->adc_dma_state = APP_ADC_DMA_INVALID;
-    GLOBAL_EXCEPTION_ENABLE();
-    if (p_adc_env->adc_state == APP_ADC_INVALID)
-    {
-        p_adc_env = NULL;
-    }
 
     return APP_DRV_SUCCESS;
 }
-
-uint16_t app_adc_dma_conversion_async(uint16_t *p_data, uint32_t length)
-{
-    hal_status_t err_code;
-
-    if ((p_adc_env == NULL) || (p_adc_env->adc_state == APP_ADC_INVALID))
-    {
-        return APP_DRV_ERR_NOT_INIT;
-    }
-
-    if (p_data == NULL || length == 0)
-    {
-        return APP_DRV_ERR_INVALID_PARAM;
-    }
-
-#ifdef APP_DRIVER_WAKEUP_CALL_FUN
-    adc_wake_up();
-#endif
-
-    err_code = hal_adc_start_dma(&p_adc_env->handle, p_data, length);
-    HAL_ERR_CODE_CHECK(err_code);
-
-    return APP_DRV_SUCCESS;
-}
-
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
-uint16_t app_adc_dma_multi_channel_conversion_async(app_adc_sample_node_t *p_begin_node, uint32_t total_nodes)
-{
-    hal_status_t err_code;
-    uint32_t check_node_num;
-    app_adc_sample_node_t *p_check_node;
-
-    if ((p_adc_env == NULL) || (p_adc_env->adc_state == APP_ADC_INVALID))
-    {
-        return APP_DRV_ERR_NOT_INIT;
-    }
-
-    if (p_begin_node == NULL || total_nodes == 0)
-    {
-        return APP_DRV_ERR_INVALID_PARAM;
-    }
-
-    check_node_num = total_nodes;
-    p_check_node = p_begin_node;
-    while (check_node_num) //check samle link node
-    {
-        if ((p_check_node->channel > ADC_INPUT_SRC_REF) || (p_check_node->p_buf == NULL) || ((check_node_num>1)&&(p_check_node->next == NULL)))
-        {
-            return APP_DRV_ERR_INVALID_PARAM;
-        }
-
-        if (--check_node_num)
-        {
-            p_check_node = p_check_node->next;
-        }
-    }
-
-#ifdef APP_DRIVER_WAKEUP_CALL_FUN
-    adc_wake_up();
-#endif
-
-    app_io_init_t io_init = APP_IO_DEFAULT_CONFIG;
-    io_init.mode = APP_IO_MODE_ANALOG;
-    io_init.mux  = APP_IO_MUX_7;
-    check_node_num = total_nodes;
-    p_check_node = p_begin_node;
-    while (check_node_num)//config all msios
-    {
-        if (s_io_to_input_src[p_check_node->channel] != NULL)
-        {
-            io_init.pin  = s_io_to_input_src[p_check_node->channel];
-            app_io_init(APP_IO_TYPE_MSIO, &io_init);
-        }
-
-        if (--check_node_num)
-        {
-            p_check_node = p_check_node->next;
-        }
-    }
-
-    p_adc_env->handle.init.input_mode = ADC_INPUT_SINGLE;//multi sample must under single mode
-    p_adc_env->handle.init.channel_n = p_begin_node->channel;
-    err_code = hal_adc_init(&p_adc_env->handle);
-    HAL_ERR_CODE_CHECK(err_code);
-
-    p_adc_env->p_current_sample_node = p_begin_node;
-    p_adc_env->multi_channel = total_nodes;
-    err_code = hal_adc_start_dma(&p_adc_env->handle, p_begin_node->p_buf, p_begin_node->len);
-    HAL_ERR_CODE_CHECK(err_code);
-
-    return APP_DRV_SUCCESS;
-}
-#endif
 
 #endif
 

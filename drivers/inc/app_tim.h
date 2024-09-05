@@ -80,26 +80,30 @@ typedef enum
   */
 typedef enum
 {
-    APP_TIM_EVT_ERROR,           /**< Error reported by TIMER peripheral.  */
-    APP_TIM_EVT_DONE,            /**< Countdone event by TIMER peripheral. */
+    APP_TIM_EVT_ERROR,           /**< Error reported by TIMER peripheral. */
+    APP_TIM_EVT_DONE,            /**< Count done event by TIMER peripheral. */
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
-    APP_TIM_EVT_CHANNEL0,        /**< Channle0 event by TIMER peripheral.  */
-    APP_TIM_EVT_CHANNEL1,        /**< Channle1 event by TIMER peripheral.  */
-    APP_TIM_EVT_CHANNEL2,        /**< Channle2 event by TIMER peripheral.  */
-    APP_TIM_EVT_CHANNEL3,        /**< Channle3 event by TIMER peripheral.  */
+    APP_TIM_EVT_CHANNEL0,        /**< Channle0 event by TIMER peripheral. */
+    APP_TIM_EVT_CHANNEL1,        /**< Channle1 event by TIMER peripheral. */
+    APP_TIM_EVT_CHANNEL2,        /**< Channle2 event by TIMER peripheral. */
+    APP_TIM_EVT_CHANNEL3,        /**< Channle3 event by TIMER peripheral. */
 #endif
 } app_tim_evt_t;
 /** @} */
 
-/** @addtogroup APP_TIM_STRUCTURES Structures
+/** @addtogroup APP_TIM_TYPEDEFS Type definitions
   * @{
   */
-
 /**
   * @brief TIM event callback definition
   */
 typedef void (*app_tim_evt_handler_t)(app_tim_evt_t *p_evt);
 
+/** @} */
+
+/** @addtogroup APP_TIM_ENUM Enumerations
+  * @{
+  */
 /**@brief App tim state types. */
 typedef enum
 {
@@ -110,6 +114,11 @@ typedef enum
 #endif
 } app_tim_state_t;
 
+/** @} */
+
+/** @addtogroup APP_TIM_STRUCTURES Structures
+  * @{
+  */
 /**
   * @brief TIM device structure definition
   */

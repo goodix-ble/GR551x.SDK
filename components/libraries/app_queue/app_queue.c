@@ -63,7 +63,7 @@ sdk_err_t app_queue_init(app_queue_t *p_queue, void *p_buffer, uint16_t queue_si
     }
 
     p_queue->element_size = element_size;
-    p_queue->queue_size   = queue_size;
+    p_queue->queue_size   = queue_size - 1;
     p_queue->p_buffer     = p_buffer;
     p_queue->start_idx    = 0;
     p_queue->end_idx      = 0;

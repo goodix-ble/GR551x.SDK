@@ -465,6 +465,9 @@ static void print_response_from_peer(uint8_t *p_data, uint16_t length)
             interval = BUILD_U16(p_data[2], p_data[3]);
             latency  = BUILD_U16(p_data[4], p_data[5]);
             time_out = BUILD_U16(p_data[6], p_data[7]);
+            UNUSED_VARIABLE(interval);
+            UNUSED_VARIABLE(latency);
+            UNUSED_VARIABLE(time_out);
             APP_LOG_INFO("Connection parameter setted.Interval:%d(%0.2fms); Latency:%d; Time out:%d(%dms).",
                          interval,
                          interval * 1.25,
@@ -545,6 +548,9 @@ void thrpt_counter_handler(void *p_arg)
         s_throughput_1s_counter++;
         instant_ths = ((s_all_get_bytes + s_all_send_bytes) - (s_last_all_get_bytes + s_last_all_send_bytes)) / 125;
         average_ths =  (s_all_get_bytes + s_all_send_bytes) / s_throughput_1s_counter / 125;
+        UNUSED_VARIABLE(instant_ths);
+        UNUSED_VARIABLE(average_ths);
+        UNUSED_VARIABLE(s_rssi);
         APP_LOG_INFO("The RSSI:                %ddBm", s_rssi);
         APP_LOG_INFO("The instant throughput:  %dkbs", instant_ths);
         APP_LOG_INFO("The average throughput:  %dkbs(%ds)\r\n",average_ths, s_throughput_1s_counter);

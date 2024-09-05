@@ -41,6 +41,7 @@
 #define DUMMY_BYTE                      0xFF
 
 void spi_flash_init(uint32_t clock_prescaler);
+void spi_flash_deinit(void);
 uint32_t spi_flash_read_id(void);
 void spi_flash_sector_erase(uint32_t dst);
 void spi_flash_chip_erase(void);

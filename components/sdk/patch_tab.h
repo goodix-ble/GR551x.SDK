@@ -1,14 +1,6 @@
 #ifndef __PATCH_TAB_H_
 #define __PATCH_TAB_H_
 
-// WEAK Functions for platform init & code size optimization
-__WEAK void  ble_con_env_init(void){};
-__WEAK void  ble_adv_env_init(void){};
-__WEAK void  ble_per_adv_env_init(void){};
-__WEAK void  ble_scan_env_init(void){};
-__WEAK void  ble_sync_env_init(void){};
-__WEAK void  ble_adv_param_init(uint8_t max_connections){};
-
 typedef uint16_t ke_task_id_t;
 typedef uint16_t ke_msg_id_t;
 
@@ -129,6 +121,8 @@ extern int sec_rcv_sec_req_ind_handler_patch(ke_msg_id_t const msgid, void const
     ke_task_id_t const dest_id, ke_task_id_t const src_id);
 extern int sec_rcv_encrypt_req_ind_handler_patch(ke_msg_id_t const msgid, void const *param,
     ke_task_id_t const dest_id, ke_task_id_t const src_id);
+extern int gap_set_dev_info_req_ind_handler_patch(ke_msg_id_t const msgid, void const *param,
+    ke_task_id_t const dest_id, ke_task_id_t const src_id);
 
 #if CFG_MUL_LINK_WITH_SAME_DEV
 extern int sec_rcv_bond_req_ind_handler_patch(ke_msg_id_t const msgid, void *param,
@@ -178,6 +172,15 @@ extern int hci_le_cmd_cmp_evt_scan_handler_patch(uint16_t opcode, void const *p_
 
 #if CFG_MUL_LINK_WITH_SAME_DEV
 extern int hci_le_adv_set_term_evt_handler_patch(uint16_t opcode, void const *p_event);
+#endif
+
+#if CFG_CAR_KEY_SUPPORT
+// llm task for car key
+extern int llm_pub_key_gen_ind_handler_patch(ke_msg_id_t const msgid, void const *param,
+    ke_task_id_t const dest_id, ke_task_id_t const src_id);
+
+// llm hci cmd handler for car key
+extern int hci_le_rd_local_p256_public_key_cmd_handler_patch(void const *param, uint16_t opcode);
 #endif
 
 // gapm cfg
@@ -239,11 +242,9 @@ msg_tab_item_t msg_tab[] =
     {(ke_msg_func_t)0x0003679d, (ke_msg_func_t)llc_auth_payl_nearly_to_handler_patch},
     {(ke_msg_func_t)0x00036801, (ke_msg_func_t)llc_auth_payl_real_to_handler_patch},
     {(ke_msg_func_t)0x000398a1, (ke_msg_func_t)llc_op_dl_upd_ind_handler_patch},
-
     //llm init for conn
     {(ke_msg_func_t)0x00047ca1, (ke_msg_func_t)lld_init_end_ind_handler_patch},
     {(ke_msg_func_t)0x0005199f, (ke_msg_func_t)llm_ch_map_to_handler_patch},
-
     // l2cc task for conn
     {(ke_msg_func_t)0x0002b281, (ke_msg_func_t)hci_nb_cmp_pkts_evt_handler_patch},
     // gapc task for conn
@@ -254,6 +255,7 @@ msg_tab_item_t msg_tab[] =
     {(ke_msg_func_t)0x0007ac89, (ke_msg_func_t)sec_rcv_sec_req_ind_handler_patch},
     {(ke_msg_func_t)0x00071519, (ke_msg_func_t)gap_cmp_evt_handler_patch},
     {(ke_msg_func_t)0x0007ab15, (ke_msg_func_t)sec_rcv_encrypt_req_ind_handler_patch},
+    {(ke_msg_func_t)0x00073655, (ke_msg_func_t)gap_set_dev_info_req_ind_handler_patch},
 
     #if CFG_MUL_LINK_WITH_SAME_DEV
     {(ke_msg_func_t)0x0007a881, (ke_msg_func_t)sec_rcv_bond_req_ind_handler_patch},
@@ -279,6 +281,11 @@ msg_tab_item_t msg_tab[] =
     #if CFG_MUL_LINK_WITH_SAME_DEV
     {(ke_msg_func_t)0x0000e99d, (ke_msg_func_t)gapc_bond_cfm_handler_patch},
     #endif
+
+    #if CFG_CAR_KEY_SUPPORT
+    // llm task for car key
+    {(ke_msg_func_t)0x00052309, (ke_msg_func_t)llm_pub_key_gen_ind_handler_patch},
+    #endif
 };
 
 hci_cmd_tab_item_t hci_cmd_tab[] =
@@ -292,19 +299,24 @@ hci_cmd_tab_item_t hci_cmd_tab[] =
     {(llm_hci_cmd_hdl_func_t)0x00024681, (llm_hci_cmd_hdl_func_t)hci_le_add_dev_to_rslv_list_cmd_handler_patch},
     {(llm_hci_cmd_hdl_func_t)0x0002a99d, (llm_hci_cmd_hdl_func_t)hci_le_set_priv_mode_cmd_handler_patch},
 
+    #if CFG_MUL_LINK_WITH_SAME_DEV
+    {(llm_hci_cmd_hdl_func_t)0x00029731, (llm_hci_cmd_hdl_func_t)hci_le_set_ext_adv_en_cmd_handler_patch},
+    #endif
+
     #if CFG_MAX_SCAN
     {(llm_hci_cmd_hdl_func_t)0x0002677d, (llm_hci_cmd_hdl_func_t)hci_le_ext_create_con_cmd_handler_patch},
     {(llm_hci_cmd_hdl_func_t)0x0002a081, (llm_hci_cmd_hdl_func_t)hci_le_set_ext_scan_param_cmd_handler_patch},
     {(llm_hci_cmd_hdl_func_t)0x00029e5d, (llm_hci_cmd_hdl_func_t)hci_le_set_ext_scan_en_cmd_handler_patch},
     #endif
 
-    #if CFG_MUL_LINK_WITH_SAME_DEV
-    {(llm_hci_cmd_hdl_func_t)0x00029731, (llm_hci_cmd_hdl_func_t)hci_le_set_ext_adv_en_cmd_handler_patch},
-    #endif
-
     #if DTM_TEST_ENABLE
     {(llm_hci_cmd_hdl_func_t)0x000233f7, (llm_hci_cmd_hdl_func_t)hci_dbg_ble_reg_wr_cmd_handler_patch},
     {(llm_hci_cmd_hdl_func_t)0x000233c9, (llm_hci_cmd_hdl_func_t)hci_dbg_ble_reg_rd_cmd_handler_patch},
+    #endif
+
+    #if CFG_CAR_KEY_SUPPORT
+    // llm hci cmd for car key
+    {(llm_hci_cmd_hdl_func_t)0x00027455, (llm_hci_cmd_hdl_func_t)hci_le_rd_local_p256_public_key_cmd_handler_patch},
     #endif
 };
 
@@ -328,9 +340,5 @@ gapm_hci_evt_tab_item_t gapm_hci_evt_tab[] =
     {(gapm_hci_evt_hdl_func_t)0x000248cd, (gapm_hci_evt_hdl_func_t)hci_le_adv_set_term_evt_handler_patch},
     #endif
 };
-
-extern void reg_hci_cmd_patch_tab(hci_cmd_tab_item_t *hci_cmd_tab, uint16_t hci_cmd_cnt);
-extern void reg_msg_patch_tab(msg_tab_item_t *msg_tab, uint16_t msg_cnt);
-extern void reg_gapm_hci_evt_patch_tab(gapm_hci_evt_tab_item_t *gapm_hci_evt_tab, uint16_t gapm_hci_evt_cnt);
 
 #endif

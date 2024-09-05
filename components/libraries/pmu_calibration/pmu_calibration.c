@@ -86,10 +86,9 @@ uint32_t pmu_interval_get(uint32_t is_init)
     {
         interval = pmu_interval_init;
     }
-    
+
     return interval;
 }
-
 
 uint32_t lfrc32k_interval_get(uint32_t use_interval,uint16_t ppm,uint32_t original_interval)
 {
@@ -199,6 +198,9 @@ void pmu_timer_handler(void* p_arg)
         app_timer_delete(&s_pmu_calibration_timer_id);
         app_timer_create(&s_pmu_calibration_timer_id, ATIMER_REPEAT, pmu_timer_handler);
         app_timer_start(s_pmu_calibration_timer_id, interval_new, NULL);
+    #if CFG_LPCLK_INTERNAL_EN
+        pmu_interval_prev = interval_new;
+    #endif
     }
 }
 #endif
@@ -225,13 +227,13 @@ void system_pmu_calibration_init(uint32_t interval)
         uint32_t interval_new;
 #if CFG_LPCLK_INTERNAL_EN
         pmu_interval_init = interval;
-        interval_new = pmu_interval_get(1);
+        interval_new = PMU_SMALL_INTERVAL_MS;// pmu_interval_get(1);//
 #else
         interval_new = interval;
 #endif
 
         app_timer_delete(&s_pmu_calibration_timer_id);
-        app_timer_create(&s_pmu_calibration_timer_id, ATIMER_REPEAT, 
+        app_timer_create(&s_pmu_calibration_timer_id, ATIMER_REPEAT,
 #if CFG_LPCLK_INTERNAL_EN
                          pmu_timer_handler
 #else
@@ -244,6 +246,7 @@ void system_pmu_calibration_init(uint32_t interval)
         pmu_interval_prev = interval_new;
 #endif
     }
+    lfrc32k_calibration();    //
     return;
 }
 

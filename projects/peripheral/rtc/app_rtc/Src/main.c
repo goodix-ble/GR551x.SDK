@@ -72,8 +72,8 @@ void app_rtc_evt_handler(app_rtc_evt_t * p_evt)
         if ((interval % 100) == 0)
         {
             app_rtc_get_time(&time);
-            printf("Tick alarm, %02d.%02d.%02d %s %02d:%02d:%02d, %d.\r\n",
-            time.mon, time.date, time.year, weeday_str[time.week], time.hour, time.min, time.sec,interval);
+            printf("Tick alarm, %02d.%02d.%02d %s %02d:%02d:%02d:%03d, %d.\r\n",
+            time.mon, time.date, time.year, weeday_str[time.week], time.hour, time.min, time.sec, time.ms, interval);
         }
     }
 }
@@ -100,8 +100,8 @@ void app_rtc(void)
     {
         delay_ms(1000);
         app_rtc_get_time(&time);
-        printf("App current time: %02d.%02d.%02d %s %02d:%02d:%02d\r\n",
-               time.mon, time.date, time.year, weeday_str[time.week], time.hour, time.min, time.sec);
+        printf("App current time: %02d.%02d.%02d %s %02d:%02d:%02d:%03d\r\n",
+               time.mon, time.date, time.year, weeday_str[time.week], time.hour, time.min, time.sec, time.ms);
     }
 
     alarm.alarm_sel = CALENDAR_ALARM_SEL_WEEKDAY;
@@ -114,8 +114,8 @@ void app_rtc(void)
     {
         delay_ms(1000);
         app_rtc_get_time(&time);
-        printf("APP current time: %02d.%02d.%02d %s %02d:%02d:%02d\r\n",
-               time.mon, time.date, time.year, weeday_str[time.week], time.hour, time.min, time.sec);
+        printf("APP current time: %02d.%02d.%02d %s %02d:%02d:%02d:%03d\r\n",
+               time.mon, time.date, time.year, weeday_str[time.week], time.hour, time.min, time.sec, time.ms);
     }
 
     printf("Set an tick alarm every 10 ms.\r\n");
@@ -125,8 +125,8 @@ void app_rtc(void)
     {
         delay_ms(1000);
         app_rtc_get_time(&time);
-        printf("App current time: %02d.%02d.%02d %s %02d:%02d:%02d\r\n",
-               time.mon, time.date, time.year, weeday_str[time.week], time.hour, time.min, time.sec);
+        printf("App current time: %02d.%02d.%02d %s %02d:%02d:%02d:%03d\r\n",
+               time.mon, time.date, time.year, weeday_str[time.week], time.hour, time.min, time.sec, time.ms);
     }
 #endif
 }

@@ -102,11 +102,12 @@ void platform_sdk_init(void);
 
 /**
  ****************************************************************************************
- * @brief  set the memory power state to full. This function is mainly used in some
- *         scenarios where all SRAMs need to be powered on
+ * @brief  Set the memory power management mode, which can be automatic mode or full power on mode.
+ * @param[in] mem_pwr_mode : MEM_POWER_FULL_MODE or MEM_POWER_AUTO_MODE.
+ * @retval : void
  ****************************************************************************************
  */
-void mem_pwr_mgmt_full_power_set(void);
+void mem_pwr_mgmt_mode_set(mem_power_t mem_pwr_mode);
 
 /**
  ****************************************************************************************
@@ -116,13 +117,6 @@ void mem_pwr_mgmt_full_power_set(void);
  ****************************************************************************************
  */
 void mem_pwr_mgmt_mode_set_from(uint32_t start_addr, uint32_t size);
-
-/**
- ****************************************************************************************
- * @brief  memory check process
- ****************************************************************************************
- */
-void mem_pwr_mgmt_init(void);
 
 /**
  ****************************************************************************************
@@ -338,51 +332,11 @@ void lfrc32k_calibration(void);
 
 /**
  ****************************************************************************************
- * @brief  protection platform timeout through watchdog.
- ****************************************************************************************
- */
-void platform_init_push(void);
-
-/**
- ****************************************************************************************
- * @brief  protection platform timeout through watchdog.
- ****************************************************************************************
- */
-void platform_init_pop(void);
-
-/**
- ****************************************************************************************
  * @brief  write flash QE
  * @return HAL status ::hal_status_t
  ****************************************************************************************
  */
 hal_status_t platform_flash_enable_quad(void);
-
-/**
- ****************************************************************************************
- * @brief  During Flash erase/write operation, Disable external interrupts with a priority less
- *         than or equal to base_priority in the system.
- * @param[in] base_priority: Base Priority value to set.
- * @return HAL status ::hal_status_t
- ****************************************************************************************
- */
-hal_status_t platform_flash_protection(uint32_t base_priority);
-
-/**
- ****************************************************************************************
- * @brief  protection interrupt handler during writing/erasing flash.
- * @return HAL status ::hal_status_t
- ****************************************************************************************
- */
-hal_status_t platform_interrupt_protection_push(void);
-
-/**
- ****************************************************************************************
- * @brief  protection interrupt handler during writing/erasing flash.
- * @return HAL status ::hal_status_t
- ****************************************************************************************
- */
-hal_status_t platform_interrupt_protection_pop(void);
 
 /**
  ****************************************************************************************

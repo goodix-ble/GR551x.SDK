@@ -60,7 +60,7 @@
 #define APP_CONN_SUP_TIMEOUT                400             /**< Connection supervisory timeout(in unit of 10 ms). */
 #define UPDATE_APP_CONN_INTERVAL_MIN        59               /**< Update minimal connection interval(in units of 1.25 ms). */
 #define UPDATE_APP_CONN_INTERVAL_MAX        59              /**< Update maximal connection interval(in units of 1.25 ms). */
-#define MAX_NB_LECB_DEFUALT                 10              /**< Defualt length of maximal number of LE Credit based connection. */
+#define MAX_NB_LECB_DEFUALT                 2              /**< Defualt length of maximal number of LE Credit based connection. */
 #define MAX_TX_OCTET_DEFUALT                251             /**< Default maximum transmitted number of payload octets. */
 #define MAX_TX_TIME_DEFUALT                 2120            /**< Defualt maximum packet transmission time. */
 
@@ -74,9 +74,9 @@ static ble_gap_init_param_t     gap_connect_param;
 static uint8_t                  adv_header = 0;
 static uint32_t                 adv_crc    = 0;
 static uint16_t                 slave_receive_packet_num = 0;
-static uint8_t                  adv_data[510] = {0};
+static uint8_t                  adv_data[247] = {0};
 
-uint8_t            rx_buffer[CFG_BOND_DEVS][516];               /**< Buffer used to receiving data. */
+uint8_t            rx_buffer[CFG_BOND_DEVS][247];               /**< Buffer used to receiving data. */
 
 /**< security parameters. */
 static ble_sec_param_t s_sec_param =
@@ -144,22 +144,22 @@ static void receieve_packet_check_init(void)
     uint8_t len = 10;
     memcpy(buffer, tmp, 7);
     buffer += 7;
-    for(int i = 0; i < 50; i++)
+    for(int i = 0; i < 23; i++)
     {
         memcpy(buffer, tmp, len);
         buffer += len;
     }
-    memcpy(buffer, tmp, 3);
+    memcpy(buffer, tmp, 4);
 }
 
 static void rx_packet_right_rate(uint16_t length, uint8_t *p_data)
 {
     if (memcmp(&(p_data[0]), &adv_header, 1) == 0 &&
-        memcmp(&(p_data[3]), adv_data, 500) == 0 &&
-        memcmp(&(p_data[513]), &adv_crc, 3) == 0)
+        memcmp(&(p_data[3]), adv_data, 241) == 0 &&
+        memcmp(&(p_data[244]), &adv_crc, 3) == 0)
     {
         slave_receive_packet_num++;
-        memset(p_data, 0, 516);
+        memset(p_data, 0, 247);
     }
 }
 
@@ -245,6 +245,7 @@ static void mlmr_c_evt_process(mlmr_c_evt_t *p_evt)
             break;
 
         case MLMR_C_EVT_PEER_DATA_RECEIVE:
+            APP_LOG_INFO("The master successfully accepts peer data.");
             mlmr_c_tx_data_send(0,p_evt->p_data, p_evt->length);
             rx_packet_right_rate(p_evt->length,p_evt->p_data);
             break;
@@ -501,7 +502,7 @@ void ble_evt_handler(const ble_evt_t *p_evt)
             break;
 
         case BLE_SEC_EVT_LINK_ENCRYPTED:
-            APP_LOG_DEBUG("Pair complete, result = 0x%02x", p_evt->evt.sec_evt.params.enc_ind);
+            APP_LOG_DEBUG("Pair complete, result = 0x%02x", p_evt->evt_status);
             break;
     }
 }

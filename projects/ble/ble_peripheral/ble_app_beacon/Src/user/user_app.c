@@ -144,7 +144,7 @@ static void gap_params_init(void)
     s_gap_adv_param.adv_mode     = BLE_GAP_ADV_TYPE_ADV_NONCONN_IND;
     s_gap_adv_param.disc_mode    = BLE_GAP_DISC_MODE_BROADCASTER;
 #else
-    s_gap_adv_param.adv_mode     = GAP_ADV_TYPE_ADV_SCAN_IND;
+    s_gap_adv_param.adv_mode     = BLE_GAP_ADV_TYPE_ADV_SCAN_IND;
     s_gap_adv_param.disc_mode    = BLE_GAP_DISC_MODE_GEN_DISCOVERABLE;
 #endif
 

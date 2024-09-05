@@ -107,6 +107,7 @@ typedef enum
     THS_C_SETTINGS_TYPE_PHY,          /**< Radio Phy mode, 1M, 2M, Encoded. */
     THS_C_SETTINGS_TYPE_TRANS_MODE,   /**< Data transmission mode. */
     THS_C_SETTINGS_TYPE_TX_POWER,     /**< Connect Tx power. */
+    THS_C_SETTINGS_TYPE_RANGING_PARAM,
 } ths_c_settings_type_t;
 
 /**@brief Throughput Service Client event type. */

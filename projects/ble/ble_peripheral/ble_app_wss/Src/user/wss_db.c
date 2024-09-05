@@ -263,9 +263,10 @@ void wss_db_init(void)
     memset(&s_wss_db_env, 0, sizeof(wss_db_env_t));
     memset(&wss_rec, 0, sizeof(wss_rec));
 
-    uint16_t temp_len = sizeof(s_wss_db_env);
-    status = nvds_get(WSS_DB_ENV_TAG, &temp_len, (uint8_t *)&s_wss_db_env);
-    
+    uint16_t temp_env_len = sizeof(s_wss_db_env);
+    uint16_t temp_rec_len = sizeof(wss_rec);
+
+    status = nvds_get(WSS_DB_ENV_TAG, &temp_env_len, (uint8_t *)&s_wss_db_env);
     if (status) // No record
     {
         /* Initialized the database. */
@@ -290,7 +291,7 @@ void wss_db_init(void)
 
         for (uint8_t i = 0; i < WSS_DB_RECORDS_MAX; i++)
         {   
-            status = nvds_get(s_wss_db_env.tag[i], &temp_len, (uint8_t *)&wss_rec);
+            status = nvds_get(s_wss_db_env.tag[i], &temp_rec_len, (uint8_t *)&wss_rec);
             if (status)
             {
                 nvds_del(s_wss_db_env.tag[i]);

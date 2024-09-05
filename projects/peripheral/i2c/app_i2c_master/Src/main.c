@@ -121,12 +121,13 @@ static void app_i2c_master_evt_handler(app_i2c_evt_t * p_evt)
 void app_i2c_master_interrupt(void)
 {
     uint32_t i;
-    uint16_t ret = 0;
+    uint16_t ret = APP_DRV_SUCCESS;
     uint8_t  wdata[256] = {0};
     uint8_t  rdata[256] = {0};
 
+    /* Note: Initialization is not allowed during the transmission process. */
     ret = app_i2c_init(&master_params, app_i2c_master_evt_handler);
-    if (ret != 0)
+    if (ret != APP_DRV_SUCCESS)
     {
         printf("\r\nI2C master initial failed! Please check the input parameters.\r\n");
         return;
@@ -175,19 +176,21 @@ void app_i2c_master_interrupt(void)
 void app_i2c_master_dma(void)
 {
     uint32_t i;
-    uint16_t ret = 0;
+    uint16_t ret = APP_DRV_SUCCESS;
     uint8_t  wdata[256] = {0};
     uint8_t  rdata[256] = {0};
 
+    /* Please initialize DMA in the following order. */
+    /* Note: Initialization is not allowed during the transmission process. */
     ret = app_i2c_init(&master_params, app_i2c_master_evt_handler);
-    if (ret != 0)
+    if (ret != APP_DRV_SUCCESS)
     {
         printf("\r\nI2C master initial failed! Please check the input parameters.\r\n");
         return;
     }
 
     ret = app_i2c_dma_init(&master_params);
-    if (ret != 0)
+    if (ret != APP_DRV_SUCCESS)
     {
         printf("\r\nI2C master initial dma failed! Please check the input parameters.\r\n");
         return;
@@ -233,6 +236,7 @@ void app_i2c_master_dma(void)
     }
     printf("\r\n");
 
+    /* Please deinitialize DMA in the following order. */
     app_i2c_dma_deinit(MASTER_I2C_ID);
     app_i2c_deinit(MASTER_I2C_ID);
 }

@@ -59,13 +59,24 @@
 #include "app_qspi.h"
 #include "app_drv_error.h"
 #include "app_drv_config.h"
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X)
+#if ((APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X))
 #include "app_qspi_user_config.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #ifdef HAL_QSPI_MODULE_ENABLED
+
+/**
+  * @brief One block of a screen Structure
+  */
+typedef struct scroll_read_info_t{
+    uint32_t    src_start_address;            /**< source address for current block */
+    uint32_t    dst_start_address;            /**< dist address for current block */
+    uint32_t    length;                       /**< read length beats(byte/half word/word) for current block; Must 0<length<4096*/
+    struct scroll_read_info_t* next;
+} app_qspi_scroll_read_info_t;
+
 /* Exported functions --------------------------------------------------------*/
 /** @addtogroup APP_GRAPHICS_QSPI_DRIVER_FUNCTIONS Functions
   * @{
@@ -82,6 +93,23 @@ extern "C" {
  ****************************************************************************************
  */
 bool app_qspi_dma_mmap_read_block(app_qspi_id_t id, uint32_t address, uint8_t * buffer, uint32_t length);
+
+/**
+ ****************************************************************************************
+ * @brief  Read some blocks data in Memory mapped Mode(XIP Mode) by DMA LLP, The Data is ordered by the order in flash/psram device
+ *
+ * @param[in]  id : QSPI module ID.
+ * @param[in]  data_size : @ref QSPI_DATASIZE_08_BITS
+ *                         @ref QSPI_DATASIZE_16_BITS
+ *                         @ref QSPI_DATASIZE_32_BITS
+ * @param[in]  llp_src_en : enable source-address llp function or not
+ * @param[in]  llp_dst_en : enable destination-address llp function or not
+ * @param[in]  p_link_scroll_read  : the link node of llp-read
+ * @param[in]  link_len  : the total number of link nodes. Note:link_len must less than 95
+ * @return true/false
+ ****************************************************************************************
+ */
+bool app_qspi_dma_llp_scroll_read(app_qspi_id_t id, uint8_t data_size, uint32_t llp_src_en, uint32_t llp_dst_en, app_qspi_scroll_read_info_t* p_link_scroll_read, uint32_t link_len);
 
 /**
  ****************************************************************************************
@@ -150,6 +178,40 @@ bool app_qspi_async_llp_draw_block(app_qspi_id_t screen_id,
                                          const app_qspi_screen_info_t *const p_screen_info,
                                          app_qspi_screen_block_t *p_block_info,
                                          bool is_first_call);
+
+/**
+ ****************************************************************************************
+ * @brief  transfer big block data from sram to screen device in dma llp mode. Must override _q_malloc and _q_free in application layer
+ *
+ * @param[in]  screen_id: which QSPI module want to transmit.
+ * @param[in]  p_screen_cmd: Pointer to screen command configuration
+ * @param[in]  p_screen_info: Pointer to screen configure information
+ * @param[in]  p_buff: Pointer to data buffer to transfer
+ *
+ * @return Result of operation.
+ ****************************************************************************************
+ */
+uint16_t app_qspi_send_display_frame(app_qspi_id_t screen_id,
+                                     const app_qspi_screen_command_t *const p_screen_cmd,
+                                     const app_qspi_screen_info_t *const p_screen_info, const uint8_t * p_buff);
+
+/**
+ ****************************************************************************************
+ * @brief  transfer big block data from sram to screen device in dma llp mode. using when scrn_pixel_width == scrn_pixel_stride, 
+ *         This API costs less time than app_qspi_send_display_frame
+ *
+ * @param[in]  screen_id: which QSPI module want to transmit.
+ * @param[in]  p_screen_cmd: Pointer to screen command configuration
+ * @param[in]  p_screen_info: Pointer to screen configure information
+ * @param[in]  p_buff: Pointer to data buffer to transfer
+ *
+ * @return Result of operation.
+ ****************************************************************************************
+ */
+SECTION_RAM_CODE uint16_t app_qspi_send_display_frame_simp(app_qspi_id_t screen_id,
+                                     const app_qspi_screen_command_t *const p_screen_cmd,
+                                     const app_qspi_screen_info_t *const p_screen_info, const uint8_t * p_buff);
+
 /**
  ****************************************************************************************
  * @brief  Special API to Blit Image from memory mapped device to RAM Buffer

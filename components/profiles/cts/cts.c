@@ -221,7 +221,7 @@ static void cts_read_att_evt_handler(uint8_t conn_idx, const ble_gatts_evt_read_
         {
             uint8_t encoded_buffer[CTS_REF_TIME_INFO_VAL_LEN];
             cts_ref_time_info_read_handler(&cfm, encoded_buffer);
-            APP_LOG_INFO("Read refence time success.");
+            APP_LOG_INFO("Read reference time success.");
             break;
         }
 
@@ -497,7 +497,8 @@ void cts_exact_time_update(cts_init_t *p_cts_exact_time)
    s_cts_updata.current_time_sec  = s_cts_env.cts_init.cur_time.day_date_time.date_time.sec;
 
    if( s_cts_updata.current_time_min > s_cts_updata.expected_time_1min_adapt ||
-       (s_cts_updata.current_time_min == s_cts_updata.expected_time_1min_adapt && s_cts_updata.current_time_sec > s_cts_updata.before_updata_sec)
+       s_cts_updata.current_time_min+1 < s_cts_updata.expected_time_1min_adapt ||
+       ( s_cts_updata.current_time_min == s_cts_updata.expected_time_1min_adapt && s_cts_updata.current_time_sec > s_cts_updata.before_updata_sec)
      )
     {
       s_cts_updata.updata_time_flag =1;
@@ -575,19 +576,19 @@ void cts_c_data_parse(uint8_t *p_data, uint16_t length)
 {
     if (0 == memcmp(p_data, "RW:", 3))
     {
-        reference_time_encode(&p_data[3], length-3);
+        reference_time_encode(&p_data[2], length-2);
         return;
     }
 
     else if(0 == memcmp(p_data, "CW:", 3))
     {
-        current_time_encode(&p_data[3], length-3);
+        current_time_encode(&p_data[2], length-2);
         return;
     }
 
     else if (0 == memcmp(p_data, "LW:", 3))
     {
-        local_time_encode(&p_data[3], length-3);
+        local_time_encode(&p_data[2], length-2);
         return;
     }
 }
@@ -622,10 +623,6 @@ void reference_time_encode(uint8_t *p_data, uint16_t length)
        s_cts_ref_info.ref_time_info.days_since_update  =  time_param_check[CTS_SERIAL_DAY_SINCE];
        s_cts_ref_info.ref_time_info.hours_since_update = time_param_check[CTS_SERIAL_HOURS_SINCE];
        s_cts_ref_info.ref_time_info.accuracy           = time_param_check[CTS_SERIAL_DATA_ACCURACY];
-       APP_LOG_INFO("SOURCE=%d  ACCURACY=%d  DAY_SINCE=%d  HOURS_SINCE=%d",s_cts_ref_info.ref_time_info.source,
-                                                                         s_cts_ref_info.ref_time_info.accuracy ,
-                                                                         s_cts_ref_info.ref_time_info.days_since_update,
-                                                                         s_cts_ref_info.ref_time_info.hours_since_update);
      }
      else
      {
@@ -637,12 +634,17 @@ void reference_time_encode(uint8_t *p_data, uint16_t length)
        memcpy(&s_cts_record_time.cts_init.cur_time.day_date_time,&s_cts_env.cts_init.cur_time.day_date_time, sizeof(cts_cur_time_t));
        s_cts_updata.before_updata_sec = s_cts_record_time.cts_init.cur_time.day_date_time.date_time.sec;
        s_cts_updata.expected_time_1min_adapt = s_cts_record_time.cts_init.cur_time.day_date_time.date_time.min + 1;
-
+       APP_LOG_INFO("From now on, wait 1 minute for the automatic update.");
+       APP_LOG_INFO("The time source before modification:   SOURCE=%d  ",s_cts_ref_info.ref_time_info.source);
        if(s_cts_updata.expected_time_1min_adapt > 59)
        {
          s_cts_updata.expected_time_1min_adapt = 0 ;
        }
      }
+    else
+    {
+       APP_LOG_INFO("The time source has not changed.");
+    }
 }
 
 void local_time_encode(uint8_t *p_data, uint8_t length)
@@ -690,16 +692,28 @@ void current_time_encode(uint8_t *p_data, uint16_t length)
 
    else
    {
-     APP_LOG_INFO("It is not updated for more than 1 minute\n.");
+     APP_LOG_INFO("It is not updated for more than 1 minute.\n");
      APP_LOG_INFO("Updatable time minutes:  %d seconds:=  %d.",s_cts_updata.expected_time_1min_adapt,s_cts_updata.before_updata_sec);
    }
 }
 
 uint8_t current_time_universal_decode(ble_gatts_write_cfm_t *p_cfm, cts_evt_t *p_evt)
 {
-    uint16_t data_length         =0;
+    uint8_t data_length         =0;
     uint8_t  time_param_check_idx = 0;
     uint16_t time_param_check[CTS_PEER_NB]  = {0};
+
+    if(p_evt->p_data[0]==':')
+    {
+        data_length=1;
+    }
+    else
+    {
+        APP_LOG_INFO("Data format error.\r\n");
+        p_cfm->status = CTS_ERROR_FIELDS_IGNORED;
+        p_evt->length = 0 ;
+        return p_evt->length;
+    }
 
     while (data_length < p_evt->length)
     {
@@ -715,7 +729,7 @@ uint8_t current_time_universal_decode(ble_gatts_write_cfm_t *p_cfm, cts_evt_t *p
         data_length++;
     }
 
-    if( CTS_TIME_YEAR_VALID_VAL_MIN<time_param_check[CTS_PEER_DATA_YEAR] &&
+    if( CTS_TIME_YEAR_VALID_VAL_MIN<=time_param_check[CTS_PEER_DATA_YEAR] &&
         CTS_TIME_YEAR_VALID_VAL_MAX>=time_param_check[CTS_PEER_DATA_YEAR] &&
         9>time_param_check[CTS_PEER_DATA_REASON] &&
         32>time_param_check[CTS_PEER_DATA_DAY] &&
@@ -754,6 +768,18 @@ uint8_t local_time_universal_decode(ble_gatts_write_cfm_t *p_cfm, cts_evt_t *p_e
     uint8_t   flag=0;                                 //Determine if the start bit is -
     uint8_t   zone_set_same=1;                        //Determines whether the time zone entered is the same
 
+    if(p_evt->p_data[0]==':')
+    {
+        data_length=1;
+    }
+    else
+    {
+        APP_LOG_INFO("Data format error.\r\n");
+        p_cfm->status = CTS_ERROR_FIELDS_IGNORED;
+        p_evt->length = 0 ;
+        return p_evt->length;
+    }
+
     while (data_length < p_evt->length)
     {
         if (p_evt->p_data[data_length] <= '9' && p_evt->p_data[data_length] >= '0')
@@ -762,7 +788,7 @@ uint8_t local_time_universal_decode(ble_gatts_write_cfm_t *p_cfm, cts_evt_t *p_e
         }
         else if ('-' == p_evt->p_data[data_length] )
         {
-            if (!data_length)
+            if (data_length<2)
             {
                 flag=1;
             }
@@ -831,7 +857,7 @@ uint8_t local_time_universal_decode(ble_gatts_write_cfm_t *p_cfm, cts_evt_t *p_e
 
     else
     {
-      APP_LOG_INFO("Invalid set parameter\r\n.");
+      APP_LOG_INFO("Invalid set parameter.\r\n");
       p_cfm->status = CTS_ERROR_FIELDS_IGNORED;
       p_evt->length = 0 ;
     }

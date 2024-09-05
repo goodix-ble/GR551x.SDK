@@ -486,7 +486,7 @@ uint16_t app_io_set_speed(app_io_type_t type, uint32_t pin, app_io_speed_t speed
     gpio_regs_t *p_handle  = NULL;
     uint32_t     io_speed;
 
-    if (speed > APP_IO_SPPED_MAX)
+    if (speed >= APP_IO_SPPED_MAX)
     {
         return APP_DRV_ERR_INVALID_PARAM;
     }
@@ -569,7 +569,7 @@ uint16_t app_io_set_intput_type(app_io_type_t type, uint32_t pin, app_io_input_t
     gpio_regs_t *p_handle  = NULL;
     uint32_t     io_input_type;
 
-    if (input_type > APP_IO_INPUT_TYPE_MAX)
+    if (input_type >= APP_IO_INPUT_TYPE_MAX)
     {
         return APP_DRV_ERR_INVALID_PARAM;
     }

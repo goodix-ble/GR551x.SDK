@@ -110,6 +110,7 @@ typedef enum
     OTAS_EVT_NOTIFY_COMPLETE,                   /**< notify complete event for ota service. */
     OTAS_EVT_DFU_TASK_ENTER,                    /**< set dfu task enter event for ota service. */
     OTAS_EVT_DFU_MODE_SET,                      /**< set dfu mode for ota service. */
+    OTAS_EVT_DISCONNECT,                        /**< link disconnected. */
 } otas_evt_type_t;
 /** @} */
 
@@ -142,7 +143,7 @@ typedef void (*otas_evt_handler_t)(otas_evt_t *p_evt);
  */
 /**@brief OTA Service initialization variable. */
 typedef struct
-{
+{ 
     otas_evt_handler_t evt_handler;          /**< Handler to handle otas event. */
 } otas_init_t;
 /** @} */

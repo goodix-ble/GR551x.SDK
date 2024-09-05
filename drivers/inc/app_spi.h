@@ -67,7 +67,7 @@ extern "C" {
   * @{
   */
 
-#define APP_SPI_PIN_ENABLE      1    /**< SPI pin enable  */
+#define APP_SPI_PIN_ENABLE      1    /**< SPI pin enable */
 #define APP_SPI_PIN_DISABLE     0    /**< SPI pin disable */
 
 /** @} */
@@ -81,7 +81,7 @@ extern "C" {
   */
 typedef enum
 {
-    APP_SPI_ID_SLAVE,                /**< SPI slave module.  */
+    APP_SPI_ID_SLAVE,                /**< SPI slave module. */
     APP_SPI_ID_MASTER,               /**< SPI master module. */
     APP_SPI_ID_MAX,                  /**< Only for check parameter, not used as input parameters. */
 } app_spi_id_t;
@@ -92,11 +92,11 @@ typedef enum
   */
 typedef enum
 {
-    APP_SPI_EVT_ERROR,                  /**< Error reported by UART peripheral.  */
-    APP_SPI_EVT_TX_CPLT,                /**< Requested TX transfer completed.    */
-    APP_SPI_EVT_RX_CPLT,                /**< Requested RX transfer completed.    */
+    APP_SPI_EVT_ERROR,                  /**< Error reported by UART peripheral. */
+    APP_SPI_EVT_TX_CPLT,                /**< Requested TX transfer completed. */
+    APP_SPI_EVT_RX_CPLT,                /**< Requested RX transfer completed. */
     APP_SPI_EVT_TX_RX_CPLT,             /**< Requested TX/RX transfer completed. */
-    APP_SPI_EVT_ABORT,                  /**< Abort reported by SPI peripheral.   */
+    APP_SPI_EVT_ABORT,                  /**< Abort reported by SPI peripheral. */
 } app_spi_evt_type_t;
 /** @} */
 
@@ -108,10 +108,10 @@ typedef enum
   */
 typedef struct
 {
-    app_io_type_t        type;       /**< Specifies the type of SPI IO.                                  */
+    app_io_type_t        type;       /**< Specifies the type of SPI IO. */
     app_io_mux_t         mux;        /**< Specifies the Peripheral to be connected to the selected pins. */
     uint32_t             pin;        /**< Specifies the IO pins to be configured.
-                                          This parameter can be any value of @ref GR5xxx_pins.           */
+                                          This parameter can be any value of @ref GR5xxx_pins. */
     app_io_mode_t        mode;       /**< Specifies the mode for the selected pins. */
     app_io_pull_t        pull;       /**< Specifies the Pull-up or Pull-Down activation for the selected pins. */
     uint8_t              enable;     /**< Enable or disable the pin. */
@@ -122,8 +122,8 @@ typedef struct
   */
 typedef struct
 {
-    app_spi_pin_t       cs;          /**< Set the configuration of SPI CS pin.   */
-    app_spi_pin_t       clk;         /**< Set the configuration of SPI CLK pin.  */
+    app_spi_pin_t       cs;          /**< Set the configuration of SPI CS pin. */
+    app_spi_pin_t       clk;         /**< Set the configuration of SPI CLK pin. */
     app_spi_pin_t       mosi;        /**< Set the configuration of SPI MOSI pin. */
     app_spi_pin_t       miso;        /**< Set the configuration of SPI MISO pin. */
 } app_spi_pin_cfg_t;
@@ -133,12 +133,12 @@ typedef struct
   */
 typedef struct
 {
-    dma_regs_t *        tx_dma_instance;        /**< Specifies the TX DMA inistall. */
-    dma_regs_t *        rx_dma_instance;        /**< Specifies the RX DMA inistall. */
+    dma_regs_t *        tx_dma_instance;        /**< Specifies the TX DMA instance. */
+    dma_regs_t *        rx_dma_instance;        /**< Specifies the RX DMA instance. */
     dma_channel_t       tx_dma_channel;         /**< Specifies the dma channel of SPI TX. */
     dma_channel_t       rx_dma_channel;         /**< Specifies the dma channel of SPI RX. */
 #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR551X)
-    uint32_t            wait_timeout_ms;        /**< Specifies timout time of polling and dead wait, ms. */
+    uint32_t            wait_timeout_ms;        /**< Specifies timeout time of polling and dead wait, ms. */
     uint32_t            extend;                 /**< Specifies extend segment, to use */
 #endif
 } app_spi_dma_cfg_t;
@@ -155,11 +155,22 @@ typedef struct
         uint16_t size;                 /**< SPI transmitted/received counter. */
     } data;                            /**< SPI data. */
 } app_spi_evt_t;
+
+/** @} */
+
+/** @addtogroup APP_SPI_TYPEDEFS Type definitions
+  * @{
+  */
 /**
   * @brief SPI event callback definition
   */
 typedef void (*app_spi_evt_handler_t)(app_spi_evt_t *p_evt);
 
+/** @} */
+
+/** @addtogroup APP_SPI_ENUM Enumerations
+  * @{
+  */
 /**@brief App spi state types. */
 typedef enum
 {
@@ -177,6 +188,11 @@ typedef enum
     APP_SPI_DMA_ACTIVITY,
 } app_spi_dma_state_t;
 
+/** @} */
+
+/** @addtogroup APP_SPI_STRUCTURES Structures
+  * @{
+  */
 /**
   * @brief SPI device structure definition
   */
@@ -201,12 +217,12 @@ typedef struct
   */
 typedef struct
 {
-    app_spi_id_t        id;              /**< specified SPI module ID.                                        */
+    app_spi_id_t        id;              /**< specified SPI module ID. */
     app_spi_pin_cfg_t   pin_cfg;         /**< the pin configuration information for the specified SPI module. */
-    app_spi_dma_cfg_t   dma_cfg;         /**< SPI DMA configuration.                                               */
-    spi_init_t          init;            /**< SPI communication parameters.                                   */
-    bool                is_soft_cs;      /**< config whether to control CS signal by software                 */
-    spi_env_t           spi_env;         /**< SPI device structure definition.                */
+    app_spi_dma_cfg_t   dma_cfg;         /**< SPI DMA configuration. */
+    spi_init_t          init;            /**< SPI communication parameters. */
+    bool                is_soft_cs;      /**< config whether to control CS signal by software */
+    spi_env_t           spi_env;         /**< SPI device structure definition. */
 } app_spi_params_t;
 
 /** @} */

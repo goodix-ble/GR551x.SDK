@@ -50,12 +50,10 @@
 #define __GRX_SYS_H__
 
 #include "gr55xx.h"
-#include "gr55xx_hal.h"
 #include "gr55xx_sys.h"
-#include "gr55xx_fpb.h"
+#include "gr5xx_fpb.h"
 #include "gr55xx_nvds.h"
 #include "gr55xx_pwr.h"
-#include "gr55xx_dfu.h"
 
 #include <stdint.h>
 #include <stdio.h>

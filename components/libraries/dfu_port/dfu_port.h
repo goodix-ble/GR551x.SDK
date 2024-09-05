@@ -39,15 +39,15 @@
 
 #include "gr_includes.h"
 #include "otas.h"
-
-#define ONCE_WRITE_DATA_LEN                 2048                                                          /**< The data length of flash write-once. */
-#define DFU_BUFFER_SIZE                     8192                                                          /**< The dfu buffer size. */
+#include "gr5xx_dfu.h"
 
 #define DFU_COPY_UPGRADE_MODE_PATTERN       0x44425942                                                    /**< Double Bank update mode. */
 #define DFU_NON_COPY_UPGRADE_MODE_PATTERN   0x53424e42                                                    /**< Single Bank update mode. */
 
 #define DFU_FLASH_SECTOR_SIZE               4096                                                          /**< Flash sector size. */
 #define DFU_INFO_START_ADDR                 (FLASH_START_ADDR + 0x3000)                                   /**< The start address of dfu info. */
+#define DFU_FW_IMG_INFO_ADDR                (DFU_INFO_START_ADDR + 4)                                     /**< The start address of img info. */
+#define DFU_MODE_PATTER_ADDR                (DFU_INFO_START_ADDR + 4 + sizeof(dfu_image_info_t))          /**< The address of update mode pattern. */
 #define APP_INFO_START_ADDR                 (FLASH_START_ADDR + 0x2000)                                   /**< The address of app info. */
 #define CHIP_REGS_BASE_ADDR_SEC             (PERIPH_BASE + 0x10000)                                       /**< The address of chip regs. */
 
@@ -84,9 +84,15 @@ void dfu_service_init(dfu_enter_callback dfu_enter);
  * @param[in] uart_send_data  : Function is used to send data to master by UART.
  * @param[in] dfu_fw_save_addr: The start address of the upgraded firmware stored in flash
  * @param[in] p_dfu_callback  : DFU program state callback functions.
+ * @param[in] p_buffer        : The buffer is allocated by user. Set it to NULL to disable DFU and then recycle buffer.
+ * @param[in] buffer_size     : The size of buffer. 6KB at least.
  *****************************************************************************************
  */
+#ifdef ENABLE_DFU_CUSTOM_BUFFER
+uint16_t dfu_port_init(dfu_uart_send_data uart_send_data, uint32_t dfu_fw_save_addr, dfu_pro_callback_t *p_dfu_callback, uint8_t * p_buffer, uint32_t buffer_size);
+#else
 uint16_t dfu_port_init(dfu_uart_send_data uart_send_data, uint32_t dfu_fw_save_addr, dfu_pro_callback_t *p_dfu_callback);
+#endif
 
 /**
  *****************************************************************************************
@@ -96,6 +102,16 @@ uint16_t dfu_port_init(dfu_uart_send_data uart_send_data, uint32_t dfu_fw_save_a
  *****************************************************************************************
  */
 void dfu_schedule(void);
+
+
+/**
+ *****************************************************************************************
+ * @brief Function for reset fast dfu state.
+ *
+ * @note This function should be called in dfu end or dfu cmd start.
+ *****************************************************************************************
+ */
+void fast_dfu_state_machine_reset(void);
 
 /**
  ****************************************************************************************
@@ -125,8 +141,17 @@ uint16_t dfu_fw_image_info_get(uint32_t dfu_fw_save_addr, uint32_t fw_image_size
  ****************************************************************************************
  */
 uint16_t dfu_info_update(uint32_t dfu_info_start_addr, dfu_image_info_t *p_image_info,  uint32_t dfu_fw_save_addr, uint32_t dfu_mode_pattern);
-/** @} */
 
+/**
+ ****************************************************************************************
+ * @brief  Update the dfu mode
+ *
+ * @param[in]  mode_pattern : DFU_COPY_UPGRADE_MODE_PATTERN or DFU_NON_COPY_UPGRADE_MODE_PATTERN
+ ****************************************************************************************
+ */
+void dfu_mode_update(uint32_t mode_pattern);
+
+/** @} */
 
 #endif
 

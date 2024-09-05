@@ -16,14 +16,16 @@ static bool ecc_is_zero_value(uint32_t *value, uint32_t len)
     return true;
 }
 
-static void ecc_init_config(algo_ecc_config_t *ecc_config, algo_ecc_curve_type_e curve)
+algo_ecc_ret_e crypto_ecc_init_config(algo_ecc_config_t *ecc_config, algo_ecc_curve_type_e curve)
 {
     if (NULL == ecc_config)
     {
-        return;
+        return ECC_ERROR_PARAMETER;
     }
 
     ecc_config->curve = (algo_ecc_curve_parameter_t *)pkc_set_curve_p256_params(curve);
+
+    return ECC_OK;
 }
 
 void crypto_ecc_ecdsa_init(algo_ecc_ecdsa_config_t *ecdsa_data, algo_ecc_curve_type_e curve)
@@ -37,7 +39,7 @@ void crypto_ecc_ecdsa_init(algo_ecc_ecdsa_config_t *ecdsa_data, algo_ecc_curve_t
     pkc_zeroize((void *)(&ecdsa_data->our_secret_value), ECC_U32_LENGTH);
     pkc_zeroize((void *)(&ecdsa_data->k), ECC_U32_LENGTH);
 
-    ecc_init_config(&ecdsa_data->calc_options, curve);
+    crypto_ecc_init_config(&ecdsa_data->calc_options, curve);
 }
 
 static void ecc_gen_rng(algo_ecc_config_t *ecc_config, uint32_t out[])
@@ -349,7 +351,7 @@ static algo_ecc_ret_e ecc_is_point_on_curve(algo_ecc_config_t *ecc_calc_options,
     return ECC_ERROR_POINT_NOT_ON_CURVE;
 }
 
-static void ecc_point_addition(algo_ecc_config_t *ecc_config,
+algo_ecc_ret_e crypto_ecc_point_addition(algo_ecc_config_t *ecc_config,
                         algo_ecc_point_t *pointA,
                         algo_ecc_point_t *pointB,
                         algo_ecc_point_t *out_result)
@@ -362,7 +364,7 @@ static void ecc_point_addition(algo_ecc_config_t *ecc_config,
 
     if (NULL == ecc_config)
     {
-        return;
+        return ECC_ERROR_PARAMETER;
     }
 
     algo_ecc_curve_parameter_t *ecc_curve = (algo_ecc_curve_parameter_t *)(ecc_config->curve);
@@ -370,19 +372,19 @@ static void ecc_point_addition(algo_ecc_config_t *ecc_config,
     // check input parameters
     if (NULL == pointA || NULL == pointB || NULL == out_result || NULL == ecc_curve)
     {
-        return;
+        return ECC_ERROR_PARAMETER;
     }
 
     if (ecc_is_infinite_point(pointA))
     {
         memcpy(out_result, pointB, sizeof(algo_ecc_point_t));
-        return;
+        return ECC_OK;
     }
 
     if (ecc_is_infinite_point(pointB))
     {
         memcpy(out_result, pointA, sizeof(algo_ecc_point_t));
-        return;
+        return ECC_OK;
     }
 
     if (memcmp(pointA, pointB, sizeof(algo_ecc_point_t)) == 0)
@@ -391,7 +393,7 @@ static void ecc_point_addition(algo_ecc_config_t *ecc_config,
         {
             // point of infinite
             memset(out_result, 0, sizeof(algo_ecc_point_t));
-            return;
+            return ECC_OK;
         }
         else
         {
@@ -434,7 +436,7 @@ static void ecc_point_addition(algo_ecc_config_t *ecc_config,
         {
             // return point of infinite
             memset(out_result, 0, sizeof(algo_ecc_point_t));
-            return;
+            return ECC_OK;
         }
         else
         {
@@ -477,6 +479,8 @@ static void ecc_point_addition(algo_ecc_config_t *ecc_config,
 
     // y3 = temp2 - y1 = s(x1-x3) - y1;
     hw_ecc_modular_sub(ecc_config, temp2, pointA->y, ecc_curve->p, out_result->y);
+
+    return ECC_OK;
 }
 
 static algo_ecc_ret_e ecc_ecdsa_verify_with_hash(algo_ecc_ecdsa_config_t *ecdsa_calc_options,
@@ -552,7 +556,7 @@ static algo_ecc_ret_e ecc_ecdsa_verify_with_hash(algo_ecc_ecdsa_config_t *ecdsa_
             return ECC_ERROR_POINT_NOT_ON_CURVE;
         }
 
-        ecc_point_addition(&ecdsa_calc_options->calc_options, &u1G, &u2Q, &A);
+        crypto_ecc_point_addition(&ecdsa_calc_options->calc_options, &u1G, &u2Q, &A);
 
         hw_ecc_modular_compare(&ecdsa_calc_options->calc_options, A.x, ecc_curve->n, x);
 
@@ -611,7 +615,7 @@ void crypto_ecc_ecdh_init(algo_ecc_ecdh_config_t *ecdh_data, algo_ecc_curve_type
     pkc_zeroize((void *)(&ecdh_data->shared_point), sizeof(algo_ecc_point_t) / 4);
     pkc_zeroize((void *)(&ecdh_data->our_secret_value), ECC_U32_LENGTH);
 
-    ecc_init_config(&ecdh_data->calc_options, curve);
+    crypto_ecc_init_config(&ecdh_data->calc_options, curve);
 }
 
 algo_ecc_ret_e crypto_ecc_ecdh_gen_secret_and_public(algo_ecc_ecdh_config_t *ecdh_data)

@@ -1,5 +1,5 @@
 ;/**************************************************************************//**
-; * @file     startup_gr55xx.s
+; * @file     Startup.s
 ; * @brief    CMSIS Cortex-M ARMv7-M based Core Device Startup File for
 ; *           Device GR55xx
 ; * @version  V1.00
@@ -71,19 +71,25 @@ __heap_limit
 ; Vector Table Mapped to Address 0 at Reset
 
                 AREA    RESET, DATA, READONLY
+
                 EXPORT  __Vectors
                 EXPORT  __Vectors_End
                 EXPORT  __Vectors_Size
+                IMPORT  NMI_Handler
+                IMPORT  HardFault_Handler
+                IMPORT  MemManage_Handler
+                IMPORT  BusFault_Handler
+                IMPORT  UsageFault_Handler
+                IMPORT  SVC_Handler
+                IMPORT  DebugMon_Handler
+                IMPORT  PendSV_Handler
+                IMPORT  SysTick_Handler
+
                 IF :DEF:NO_SCATTER
-
 __Vectors       DCD     __initial_sp              ; Top of Stack
-
                 ELSE
-
                 IMPORT  |Image$$ARM_LIB_STACK$$ZI$$Limit|
-
 __Vectors       DCD     |Image$$ARM_LIB_STACK$$ZI$$Limit| ; Top of Stack
- 
                 ENDIF
 
                 DCD     Reset_Handler             ; Reset Handler
@@ -118,50 +124,6 @@ Reset_Handler   PROC
                 BLX     R0
                 LDR     R0, =main_init
                 BX      R0
-                ENDP
-
-; Dummy Exception Handlers (infinite loops which can be modified)
-
-NMI_Handler     PROC
-                EXPORT  NMI_Handler               [WEAK]
-                B       .
-                ENDP
-HardFault_Handler\
-                PROC
-                EXPORT  HardFault_Handler         [WEAK]
-                B       .
-                ENDP
-MemManage_Handler\
-                PROC
-                EXPORT  MemManage_Handler         [WEAK]
-                B       .
-                ENDP
-BusFault_Handler\
-                PROC
-                EXPORT  BusFault_Handler          [WEAK]
-                B       .
-                ENDP
-UsageFault_Handler\
-                PROC
-                EXPORT  UsageFault_Handler        [WEAK]
-                B       .
-                ENDP
-DebugMon_Handler\
-                PROC
-                EXPORT  DebugMon_Handler          [WEAK]
-                B       .
-                ENDP
-PendSV_Handler  PROC
-                EXPORT  PendSV_Handler            [WEAK]
-                B       .
-                ENDP
-SVC_Handler     PROC
-                EXPORT  SVC_Handler               [WEAK]
-                B       .
-				ENDP
-SysTick_Handler PROC
-                EXPORT  SysTick_Handler           [WEAK]
-                B       .
                 ENDP
                 ALIGN
 

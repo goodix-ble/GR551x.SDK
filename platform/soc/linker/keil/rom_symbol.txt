@@ -331,7 +331,7 @@
 0x000637dd T BLE_IRQHandler
 0x00063839 T BLE_SDK_Handler
 0x000637e9 T BLE_IRQHandler_func
-0x000638b5 T SVC_handler_proc
+;0x000638b5 T SVC_handler_proc
 0x00064dbd T ble_activity_end_notify_cb_register
 0x00064dfd T ble_activity_start_notify_cb_register
 0x00064e19 T ble_aes_ccm
@@ -389,7 +389,7 @@
 0x00066ec5 T ble_gap_default_tx_power_set
 0x00066ec9 T ble_gap_dev_info_get
 0x00066f91 T ble_gap_device_name_get
-0x00067021 T ble_gap_device_name_set
+;0x00067021 T ble_gap_device_name_set
 0x000670c5 T ble_gap_disconnect
 0x00067149 T ble_gap_ext_adv_param_set
 0x00067429 T ble_gap_ext_connect
@@ -422,7 +422,7 @@
 0x00068629 T ble_gap_scan_stop
 0x00068841 T ble_gap_tx_power_get
 0x00068919 T ble_gap_tx_power_set
-0x00068a01 T ble_gap_update_adv_data
+;0x00068a01 T ble_gap_update_adv_data
 0x00068abd T ble_gap_whitelist_add
 0x00068bf1 T ble_gap_whitelist_clear
 0x00068c55 T ble_gap_whitelist_del
@@ -492,6 +492,8 @@
 0x0006c375 T ble_rf_match_circuit_set
 0x0006c379 T ble_rf_tx_mode_get
 0x0006c37d T ble_rf_tx_mode_set
+0x0006c38d T ble_rf_tx_power_get
+0x0006c39d T ble_rf_tx_power_set
 0x0006c3b1 T ble_rwip_reset
 0x0006c3b5 T ble_rwip_time_get
 0x0006c511 T ble_sch_alarm_clear
@@ -566,7 +568,7 @@
 0x00079bed T rf_set_recalibration_flag
 0x00079e1d T rom_simu
 0x0007a02d T sdk_register_assert_cb
-0x0007b759 T svc_func_register
+;0x0007b759 T svc_func_register
 0x0007b79d T svc_table_register
 0x0007b879 T sys_assert_cb_register
 0x0007b985 T sys_context_save
@@ -783,8 +785,21 @@
 0x00051665 T llm_adv_con_len_check
 0x00052261 T llm_per_adv_slot_dur
 0x00055961 T sch_plan_set
-0x0003e50d T lld_adv_stop
-0x00051731 T llm_adv_hdl_to_id
+
+0x008026e8 D p_func_fpb_save_state
+0x008026ec D p_func_fpb_load_state
+
+0x00053da5 T rwip_param_dummy_get
+0x00053da9 T rwip_param_dummy_set
+0x00053da1 T rwip_param_dummy_del
+
+0x0001511d T gattc_get_operation_ptr
+0x0001518d T gattc_get_requester
+0x000159ed T gattc_send_complete_evt
+0x0002f849 T ke_check_malloc
+0x0003fff1 T lld_con_rate_is_coded_phy
+0x00071499 T gap_cmd_cmp_callback_to_app
+0x00074155 T gap_update_advertising_data
 #<SYMDEFS># ARM Linker
 0x000254a5 T hci_le_con_upd_cmd_handler
 0x00800290 D llc_hci_cmd_handler_tab_info
@@ -992,11 +1007,11 @@
 0x0006e09d T ble_sdk_l2cap_init
 0x0006e0b9 T ble_sdk_prf_init
 0x0006e1a5 T ble_sdk_sec_init
-0x0006e80d T ble_task_force_schedule
+0x0006e80d T BLE_SDK_Handler_func
 0x00802344 D default_sdk_adapt_present
 0x0007a1f1 T sdk_timer_init
 0x00802209 D add_whitelist_bong_flag
-0x0006c215 T ble_nvds_get
+;0x0006c215 T ble_nvds_get
 0x0007d388 D default_device_name
 0x00071079 T gap_cache_data_init
 0x00073079 T gap_reset
@@ -1463,7 +1478,20 @@
 0x0000863d T attmdb_get_uuid
 0x00800ef8 D gattm_env
 0x000090f5 T atts_find_end
-0x0001511d T gattc_get_operation_ptr
-0x0001518d T gattc_get_requester
-0x000159ed T gattc_send_complete_evt
-0x0002f849 T ke_check_malloc
+0x0003e50d T lld_adv_stop
+0x00051731 T llm_adv_hdl_to_id
+0x00051805 T llm_adv_set_dft_params
+0x0000d681 T ecc_gen_new_public_key
+0x0000d69d T ecc_gen_new_secret_key
+0x00800c0c D rwip_param
+0x00800520 D smpc_confirm_gen_rand
+0x00057ff9 T smpc_f4_Init
+0x0005854d T smpc_generate_e1
+0x00058679 T smpc_generate_rand
+0x000588a5 T smpc_get_next_passkey_bit
+0x00058d21 T smpc_init_mac_key_calculation
+0x00005f69 T aes_alloc
+0x00006481 T aes_cmac_continue
+0x00006199 T aes_cmac_start
+
+

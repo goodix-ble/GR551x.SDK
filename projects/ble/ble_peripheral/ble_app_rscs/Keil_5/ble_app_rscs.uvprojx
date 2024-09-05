@@ -9,8 +9,7 @@
       <TargetName>GRxx_Soc</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060750::V5.06 update 6 (build 750)::ARMCC</pCCUsed>
-      <uAC6>0</uAC6>
+      <pCCUsed>5060183::V5.06 update 2 (build 183)::ARMCC</pCCUsed>
       <TargetOption>
         <TargetCommonOption>
           <Device>ARMCM4_FP</Device>
@@ -183,7 +182,6 @@
             <hadXRAM>0</hadXRAM>
             <uocXRam>0</uocXRam>
             <RvdsVP>2</RvdsVP>
-            <RvdsMve>0</RvdsMve>
             <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -324,7 +322,6 @@
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <uC99>1</uC99>
-            <uGnu>0</uGnu>
             <useXO>0</useXO>
             <v6Lang>1</v6Lang>
             <v6LangP>1</v6LangP>
@@ -332,7 +329,6 @@
             <vShortWch>1</vShortWch>
             <v6Lto>0</v6Lto>
             <v6WtE>0</v6WtE>
-            <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls/>
               <Define/>
@@ -350,7 +346,6 @@
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
             <useXO>0</useXO>
-            <uClangAs>0</uClangAs>
             <VariousControls>
               <MiscControls/>
               <Define>SVC_HANDLER_IN_PATCH_LIB</Define>
@@ -476,6 +471,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\drivers\src\app_uart_dma.c</FilePath>
             </File>
+            <File>
+              <FileName>app_rtc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\drivers\src\app_rtc.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -551,7 +551,7 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\components\libraries\app_assert\app_assert.c</FilePath>
             </File>
-          </Files>
+          <File><FileName>ble.c</FileName><FileType>1</FileType><FilePath>..\..\..\..\..\components\sdk\ble.c</FilePath></File></Files>
         </Group>
         <Group>
           <GroupName>gr_profiles</GroupName>
@@ -626,11 +626,5 @@
       </Groups>
     </Target>
   </Targets>
-
-  <RTE>
-    <apis/>
-    <components/>
-    <files/>
-  </RTE>
 
 </Project>

@@ -113,6 +113,7 @@ typedef enum
     THS_SETTINGS_TYPE_PHY,          /**< Radio Phy mode, 1M, 2M, Encoded. */
     THS_SETTINGS_TYPE_TRANS_MODE,   /**< Data transmission mode. */
     THS_SETTINGS_TYPE_TX_POWER,     /**< Connect Tx power. */
+    THS_SETTINGS_TYPE_RANGING_PARAM,
 }ths_settings_type_t;
 /** @} */
 

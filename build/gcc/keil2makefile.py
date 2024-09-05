@@ -113,7 +113,6 @@ COMMON_COMPILE_FLAGS += -ggdb3
 COMMON_COMPILE_FLAGS += -ffunction-sections -fdata-sections 
 COMMON_COMPILE_FLAGS += -mfloat-abi=softfp -mfpu=fpv4-sp-d16  -mapcs-frame -mthumb-interwork -mthumb -mcpu=cortex-m4
 COMMON_COMPILE_FLAGS += -gdwarf-2 -MD
-COMMON_COMPILE_FLAGS += -Wno-attributes
 
 ## Set CFLAGS
 # Set include path
@@ -203,9 +202,10 @@ mk_path :
 	mkdir -p  $(BUILD_OBJ)
 	mkdir -p  $(BUILD_LST)
 
-flash: $(BUILD)/$(MAKE_TARGET_APP).bin
+flash: $(BUILD)/$(MAKE_TARGET_NAME).bin
 	$(ECHO) "Writing $< to the GR55xx-SK board"
-	programer -t fw -p burn -i $(BUILD)/$(MAKE_TARGET_APP).bin
+	GR5xxx_console.exe eraseall 0 0
+	GR5xxx_console.exe program $(BUILD)/$(MAKE_TARGET_NAME).bin 'y' 0x200000 512 0 0
 
 clean:
 	rm -rf $(BUILD)
@@ -679,7 +679,7 @@ if __name__ == "__main__":
     file_5513 = "gr5513.lds"
     if ld_5513.make(ld_5513.get_lds_path(lds_path, file_5513)):
         print(">>> Generate gr5513 lds file finish ...")
-
+    
     ld_5515 = LinkerScript()
     if not ld_5515.get_config_args():
         sys.exit(0)

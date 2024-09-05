@@ -128,9 +128,7 @@ enum
  * EXTERNAL SYMBOLS DEFINITIONS
  *****************************************************************************************
  */
-extern void ble_gap_conn_local_addr_get(uint8_t conidx,uint8_t *p_addr);                  /**< Get the location mac address of the current connection. */
-extern uint16_t ble_gatts_service_hide_set(uint8_t conn_idx, uint16_t handle);                 /**< Set whether the corresponding service is discovered according to the service handle. */
-extern uint16_t ble_gatts_service_hide_clear(uint8_t conn_idx);                                /**< Clean the service hided setting. */
+extern void ble_gap_get_local_addr_by_conidx(uint8_t conidx,uint8_t *p_addr);  /**< Get the location mac address of the current connection. */
 
 static void fast_adv_start(void);
 static void low_latency_adv_start(ble_gap_bdaddr_t *p_peer_bdaddr);
@@ -185,9 +183,9 @@ static bool                          s_bas_cccd_set[CFG_MAX_CONNECTIONS];
 static const uint8_t s_adv_hrs_data_set[] =                         /**< Advertising data. */
 {
     // Complete Name
-    0x0b,
+    0x0d,
     BLE_GAP_AD_TYPE_COMPLETE_NAME,
-    'G', 'o', 'o', 'd', 'i', 'x', '_', 'H', 'R', 'S',
+    'G', 'R', '_', 'H', 'R', 'M', '_', 'M', 'L', 'I', 'N', 'K',
 
     // Device appearance
     0x03,
@@ -1040,23 +1038,32 @@ static void app_connected_handler(uint8_t conn_idx, const ble_gap_evt_connected_
 {
     sdk_err_t error_code;
     uint8_t local_con_addr[6];
-    ble_gap_conn_local_addr_get(conn_idx,local_con_addr);
+    ble_gap_get_local_addr_by_conidx(conn_idx,local_con_addr);
 
     if(memcmp(s_multi_s_mgr[HRS_ADV_INDEX].adv_addr.gap_addr.addr,local_con_addr,6) == 0)
     {
+        ble_gatts_service_discoverable_set(conn_idx, dis_service_start_handle_get(), false);
+        ble_gatts_service_discoverable_set(conn_idx, bas_service_start_handle_get(), true);
+        ble_gatts_service_discoverable_set(conn_idx, hids_service_start_handle_get(), false);
+        ble_gatts_service_discoverable_set(conn_idx, hrs_service_start_handle_get(), true);
         s_multi_s_mgr[HRS_ADV_INDEX].conn_idx = conn_idx;
-        ble_gatts_service_hide_clear(conn_idx);
-        ble_gatts_service_hide_set(conn_idx, dis_service_start_handle_get());
-        ble_gatts_service_hide_set(conn_idx, hids_service_start_handle_get());
+        s_multi_s_mgr[HRS_ADV_INDEX].peer_bond_addr.gap_addr = p_param->peer_addr;
+        s_multi_s_mgr[HIDS_ADV_INDEX].peer_bond_addr.addr_type = p_param->peer_addr_type;
+        BONDING_PEER_BD_ADDR_PUT(HRS_ADV_INDEX,p_param->peer_addr.addr);
         APP_LOG_INFO("dev hrs connected %d\r\n",conn_idx);
     }
 
-    if(memcmp(s_multi_s_mgr[HIDS_ADV_INDEX].adv_addr.gap_addr.addr,local_con_addr,6) == 0)
+    if(memcmp(s_multi_s_mgr[HIDS_ADV_INDEX].adv_addr.gap_addr.addr,local_con_addr,6) == 0 || 
+       memcmp(s_multi_s_mgr[HIDS_ADV_INDEX].peer_bond_addr.gap_addr.addr,p_param->peer_addr.addr,6) == 0)
     {
+        ble_gatts_service_discoverable_set(conn_idx, dis_service_start_handle_get(), true);
+        ble_gatts_service_discoverable_set(conn_idx, bas_service_start_handle_get(), false);
+        ble_gatts_service_discoverable_set(conn_idx, hids_service_start_handle_get(), true);
+        ble_gatts_service_discoverable_set(conn_idx, hrs_service_start_handle_get(), false);
         s_multi_s_mgr[HIDS_ADV_INDEX].conn_idx = conn_idx;
-        ble_gatts_service_hide_clear(conn_idx);
-        ble_gatts_service_hide_set(conn_idx, bas_service_start_handle_get());
-        ble_gatts_service_hide_set(conn_idx, hrs_service_start_handle_get());
+        s_multi_s_mgr[HIDS_ADV_INDEX].peer_bond_addr.addr_type = p_param->peer_addr_type;
+        s_multi_s_mgr[HIDS_ADV_INDEX].peer_bond_addr.gap_addr = p_param->peer_addr;
+        BONDING_PEER_BD_ADDR_PUT(HIDS_ADV_INDEX,p_param->peer_addr.addr);
         APP_LOG_INFO("dev hids connected %d\r\n",conn_idx);
     }
 
@@ -1121,16 +1128,6 @@ static void app_disconnected_handler(uint8_t conn_idx, uint8_t reason)
         DEV_ENTITY(conn_idx)->pair_status_flag = UNPAIR_STATUS;
         DEV_ENTITY(conn_idx)->conn_idx = BLE_GAP_INVALID_CONN_INDEX;
     }
-}
-
-/**
- *****************************************************************************************
- * @brief Pair success handler callback
- *****************************************************************************************
- */
-static void app_paring_succeed_handler(void)
-{
-    ble_gap_privacy_mode_set(s_bonded_bdaddr, BLE_GAP_PRIVACY_MODE_DEVICE);
 }
 
 /**
@@ -1245,7 +1242,6 @@ void ble_evt_handler(const ble_evt_t *p_evt)
             {
                 APP_LOG_DEBUG("Link has been successfully encrypted.");
                 DEV_ENTITY(p_evt->evt.sec_evt.index)->pair_status_flag = PAIRED_STATUS;
-                app_paring_succeed_handler();
             }
             else
             {

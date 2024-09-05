@@ -68,7 +68,7 @@
 #define RING_BUFFER_SIZE                    5120       /**< Size of ring buffer. */
 #define UART_ONCE_SEND_SIZE                 244        /**< Size of uart once send. */
 
-
+#define UART_BAUD_RATE_MAX                  2000000    /**< Configure the maximum baud rate of the serial port. */
 #define UART_AT_VERSION                     "1.0.0"    /**< Uart AT version number. */
 
 /*
@@ -306,8 +306,15 @@ void uart_at_baud_set(at_cmd_parse_t *p_cmd_param)
                                  p_cmd_param->arg_length[0],
                                  &baud_set))
     {
-        uart_init(baud_set);
-        cmd_rsp.error_code = at_cmd_hal_err_convert(HAL_OK);
+        if(0<baud_set && baud_set<=UART_BAUD_RATE_MAX)
+        {
+          uart_init(baud_set);
+          cmd_rsp.error_code = at_cmd_hal_err_convert(HAL_OK);
+        }
+        else
+        {
+          cmd_rsp.error_code = AT_CMD_ERR_INVALID_PARAM;
+        }
     }
     else
     {
@@ -320,6 +327,7 @@ void uart_at_baud_set(at_cmd_parse_t *p_cmd_param)
     }
 
     at_cmd_execute_cplt(&cmd_rsp);
+
 }
 
 void uart_at_bd_addr_get(at_cmd_parse_t *p_cmd_param)

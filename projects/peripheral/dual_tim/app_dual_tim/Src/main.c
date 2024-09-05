@@ -51,18 +51,21 @@
  */
 #define DEFAULT_AUTO_RELOAD  63999999
 #define TIMER_MS(X) (SystemCoreClock / 1000 *(X) - 1)
+#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
+#define CMP_TIMER_MS(X) (SystemCoreClock / 1000 *(X))
+#endif
 
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
-#define DUAL_TIM0_CHANNAL_A_PARAM { {APP_IO_TYPE_GPIOA, APP_IO_PIN_2}, \
-                                    {HAL_DUAL_TIMER_CHANNEL_A, TIMER_MS(600), TIMER_MS(400), DUAL_TIMER_IO_INIT_RESET, \
+#define DUAL_TIM0_CHANNAL_A_PARAM { {APP_IO_TYPE_MSIO, APP_IO_PIN_5}, \
+                                    {HAL_DUAL_TIMER_CHANNEL_A, CMP_TIMER_MS(600), CMP_TIMER_MS(400), DUAL_TIMER_IO_INIT_RESET, \
                                      DUAL_TIMER_IO_ACTION_TOGGLE, DUAL_TIMER_IO_ACTION_TOGGLE, DUAL_TIMER_IO_ACTION_TOGGLE, DUAL_TIMER_IO_ACTION_TOGGLE, DUAL_TIMER_IO_ACTION_TOGGLE, \
                                      ENABLE, ENABLE, ENABLE, ENABLE, ENABLE} }
-#define DUAL_TIM0_CHANNAL_B_PARAM { {APP_IO_TYPE_GPIOA, APP_IO_PIN_3}, \
-                                    {HAL_DUAL_TIMER_CHANNEL_B, TIMER_MS(600), TIMER_MS(400), DUAL_TIMER_IO_INIT_RESET, \
+#define DUAL_TIM0_CHANNAL_B_PARAM { {APP_IO_TYPE_MSIO, APP_IO_PIN_6}, \
+                                    {HAL_DUAL_TIMER_CHANNEL_B, CMP_TIMER_MS(600), CMP_TIMER_MS(400), DUAL_TIMER_IO_INIT_RESET, \
                                      DUAL_TIMER_IO_ACTION_TOGGLE, DUAL_TIMER_IO_ACTION_TOGGLE, DUAL_TIMER_IO_ACTION_TOGGLE, DUAL_TIMER_IO_ACTION_TOGGLE, DUAL_TIMER_IO_ACTION_TOGGLE, \
                                      ENABLE, ENABLE, ENABLE, ENABLE, ENABLE} }
-#define DUAL_TIM0_CHANNAL_C_PARAM { {APP_IO_TYPE_GPIOA, APP_IO_PIN_4}, \
-                                    {HAL_DUAL_TIMER_CHANNEL_C, TIMER_MS(600), TIMER_MS(400), DUAL_TIMER_IO_INIT_RESET, \
+#define DUAL_TIM0_CHANNAL_C_PARAM { {APP_IO_TYPE_MSIO, APP_IO_PIN_7}, \
+                                    {HAL_DUAL_TIMER_CHANNEL_C, CMP_TIMER_MS(600), CMP_TIMER_MS(400), DUAL_TIMER_IO_INIT_RESET, \
                                      DUAL_TIMER_IO_ACTION_TOGGLE, DUAL_TIMER_IO_ACTION_TOGGLE, DUAL_TIMER_IO_ACTION_TOGGLE, DUAL_TIMER_IO_ACTION_TOGGLE, DUAL_TIMER_IO_ACTION_TOGGLE, \
                                      ENABLE, ENABLE, ENABLE, ENABLE, ENABLE} }
 #endif
@@ -91,7 +94,7 @@ app_dual_tim_params_t p_params_tim1 = {
  */
 volatile uint32_t g_tim0_cnt = 0;
 volatile uint32_t g_tim1_cnt = 0;
-uint8_t g_tim1_done_flag = 0;
+volatile uint8_t g_tim1_done_flag = 0;
 
 /*
  * GLOBAL FUNCTION DEFINITIONS

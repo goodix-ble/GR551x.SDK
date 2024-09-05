@@ -3,7 +3,7 @@
  *
  * @file    app_aon_wdt.h
  * @author  BLE Driver Team
- * @brief   Header file containing functions prototypes of BOD app library.
+ * @brief   Header file containing functions prototypes of AON_WDT app library.
  *
  ****************************************************************************************
  * @attention
@@ -62,12 +62,12 @@ extern "C" {
 
 #ifdef HAL_AON_WDT_MODULE_ENABLED
 
-/** @addtogroup APP_AON_WDT_TYPEDEFS Typedefs
+/** @addtogroup APP_AON_WDT_TYPEDEFS Type definitions
   * @{
   */
 
 /**
-  * @brief BOD event callback definition
+  * @brief AON_WDT event callback definition
   */
 typedef void (*app_aon_wdt_evt_handler_t)(void);
 /** @} */
@@ -99,7 +99,7 @@ typedef struct
 }aon_aon_wdt_env_t;
 
 /**
-  * @brief BOD parameters structure definition
+  * @brief AON_WDT parameters structure definition
   */
 typedef struct
 {
@@ -127,7 +127,7 @@ uint16_t app_aon_wdt_init(app_aon_wdt_params_t *p_params, app_aon_wdt_evt_handle
 
 /**
  ****************************************************************************************
- * @brief De-initialize the app aon wdt.
+ * @brief De-initialize the APP AON WDT DRIVER.
  *
  * @return Result of De-initialization.
  ****************************************************************************************
@@ -136,7 +136,7 @@ uint16_t app_aon_wdt_deinit(void);
 
 /**
  ****************************************************************************************
- * @brief  Refresh the app aon wdt.
+ * @brief  Refresh the AON WDT.
  *
  * @return Result of operation.
  ****************************************************************************************

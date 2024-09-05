@@ -57,7 +57,7 @@
                 .error_type       = APP_ERROR_API_RET,      \
                 .value.error_code = ERROR_CODE,             \
                 .file             = __FILE__,               \
-                .func             = __FUNCTION__,           \
+                .func             = __func__,               \
                 .line             = __LINE__,               \
             };                                              \
             app_error_fault_handler(&error_info);           \
@@ -75,7 +75,7 @@
                 .error_type = APP_ERROR_BOOL_COMPARE,   \
                 .value.expr = #BOOL_VAL,                \
                 .file       = __FILE__,                 \
-                .func       = __FUNCTION__,             \
+                .func       = __func__,                 \
                 .line       = __LINE__,                 \
             };                                          \
             app_error_fault_handler(&error_info);       \

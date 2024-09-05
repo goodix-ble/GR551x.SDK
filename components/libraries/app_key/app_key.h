@@ -78,7 +78,7 @@ typedef void (*app_key_evt_cb_t)(uint8_t key_id, app_key_click_type_t key_click_
  * @param[in] key_num:      The number of key instance.
  * @param[in] key_click_cb: App key click event callback.
  *
- * @return Result of app key inlitialization.
+ * @return Result of app key initialization.
  *****************************************************************************************
  */
 bool app_key_init(app_key_gpio_t key_inst[], uint8_t key_num, app_key_evt_cb_t key_click_cb);

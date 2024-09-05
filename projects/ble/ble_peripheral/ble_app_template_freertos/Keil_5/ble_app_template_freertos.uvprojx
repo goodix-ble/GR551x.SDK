@@ -87,7 +87,7 @@
             <nStopA1X>0</nStopA1X>
             <nStopA2X>0</nStopA2X>
           </AfterMake>
-          <SelectedForBatchBuild>1</SelectedForBatchBuild>
+          <SelectedForBatchBuild>0</SelectedForBatchBuild>
           <SVCSIdString/>
         </TargetCommonOption>
         <CommonProperty>
@@ -546,7 +546,7 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\components\libraries\dfu_port\dfu_port.c</FilePath>
             </File>
-          </Files>
+          <File><FileName>ble.c</FileName><FileType>1</FileType><FilePath>..\..\..\..\..\components\sdk\ble.c</FilePath></File></Files>
         </Group>
         <Group>
           <GroupName>gr_profiles</GroupName>
@@ -557,14 +557,14 @@
               <FilePath>..\..\..\..\..\components\profiles\common\ble_prf_utils.c</FilePath>
             </File>
             <File>
-              <FileName>lms.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\profiles\lms\lms.c</FilePath>
-            </File>
-            <File>
               <FileName>otas.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\components\profiles\otas\otas.c</FilePath>
+            </File>
+            <File>
+              <FileName>lms.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\profiles\lms\lms.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -47,7 +47,9 @@
 // <h> Basic configuration
 
 // <o> Chip version
+#ifndef SOC_GR5515
 #define SOC_GR5515
+#endif
 
 // <o> Select chip type
 // <0=> GR5515IGND
@@ -62,19 +64,6 @@
 #define CHIP_TYPE  4
 #endif
 
-// <o> Platform support sleep function
-// <0=> not support
-// <1=> support
-#ifndef PLAT_SUPPORT_SLEEP
-#define PLAT_SUPPORT_SLEEP    1
-#endif
-
-// <o> Platform support ble function
-// <0=> not support
-// <1=> support
-#ifndef PLAT_SUPPORT_BLE
-#define PLAT_SUPPORT_BLE      1
-#endif
 // <o> Enable encrypt chip
 // <0=> DISABLE
 // <1=> ENABLE
@@ -101,6 +90,12 @@
 // <1=> ENABLE
 #ifndef SYS_FAULT_TRACE_ENABLE
 #define SYS_FAULT_TRACE_ENABLE    1
+#endif
+
+// <o> Enable callstack backtrace function
+// <i> Default: 0
+#ifndef ENABLE_BACKTRACE_FEA
+#define ENABLE_BACKTRACE_FEA      0
 #endif
 
 // <o> Enable APP driver module
@@ -155,13 +150,6 @@
 #define DTM_TEST_ENABLE           0
 #endif
 
-// <o> Enable BLE DFU support
-// <0=> DISABLE
-// <1=> ENABLE
-#ifndef DFU_ENABLE
-#define DFU_ENABLE                1
-#endif
-
 // <o> Protection priority level
 // <i> Default:  0
 #ifndef FLASH_PROTECT_PRIORITY
@@ -197,26 +185,33 @@
 #define SYSTEM_HEAP_SIZE        0x8000
 #endif
 
-// <o> Enable callstack backtrace function
-// <i> Default: 0
-#ifndef ENABLE_BACKTRACE_FEA
-#define ENABLE_BACKTRACE_FEA      0
-#endif
-
 // </h>
 
 // <h> Boot info configuration
 // <o> Chip version
 // <i> Default: 0x00
+
+// <o> Chip version
+// <i> Default: 0x00
+#ifndef CHIP_VER
 #define CHIP_VER                0x5515
+#endif
 
 // <o> Code load address
+// <0x30004100=> SRAM address
+// <0x01002000=> Flash address
 // <i> Default:  0x01002000
+#ifndef APP_CODE_LOAD_ADDR
 #define APP_CODE_LOAD_ADDR      0x01002000
+#endif
 
 // <o> Code run address
+// <0x30004100=> SRAM address
+// <0x01002000=> Flash address
 // <i> Default:  0x01002000
+#ifndef APP_CODE_RUN_ADDR
 #define APP_CODE_RUN_ADDR       0x01002000
+#endif
 
 // <ol.0..5> System clock
 // <0=> 64MHZ
@@ -225,16 +220,22 @@
 // <3=> 24MHZ
 // <4=> 16MHZ
 // <5=> 32MHZ-CPLL
+#ifndef SYSTEM_CLOCK
 #define SYSTEM_CLOCK            0
+#endif
 
 // <o> External clock accuracy used in the LL to compute timing  <1-500>
 // <i> Range: 1-500
+#ifndef CFG_LF_ACCURACY_PPM
 #define CFG_LF_ACCURACY_PPM     500
+#endif
 
 // <o> Enable internal osc as low power clock
 // <0=> Default: Disable internal osc as low power clock
 // <1=> Enable internal osc as low power clock and force CFG_LF_ACCURACY_PPM to 500ppm
+#ifndef CFG_LPCLK_INTERNAL_EN
 #define CFG_LPCLK_INTERNAL_EN   0
+#endif
 
 // <o> Delay time for Crystal stabilization time
 // <i> Default:  100
@@ -247,12 +248,16 @@
 // <o> Delay time for Boot startup
 // <0=> Not Delay
 // <1=> Delay 1s
+#ifndef BOOT_LONG_TIME
 #define BOOT_LONG_TIME          1
+#endif
 
 // <o> In xip mode, check image during cold boot startup
 // <0=> Not check
 // <1=> Check image
+#ifndef BOOT_CHECK_IMAGE
 #define BOOT_CHECK_IMAGE        1
+#endif
 
 // <o> Delay time between flash wakeup and read chip id in warm boot
 // <i> Default:  0
@@ -284,10 +289,10 @@
 #define CFG_MAX_BOND_DEVS        4
 #endif
 
-// <o> Config scan duplicate filter list number
+// <o> Support the configuration of the number of scan duplicate filter lists
 // <i> Range: 0-50
 #ifndef CFG_SCAN_DUP_FILT_LIST_NUM
-#define CFG_SCAN_DUP_FILT_LIST_NUM       10
+#define CFG_SCAN_DUP_FILT_LIST_NUM       0
 #endif
 
 // <o> Support maximum number of BLE Links <1-10>
@@ -329,7 +334,7 @@
 #define CFG_MAX_SCAN             1
 #endif
 
-// <o>  support
+// <o>  Support BT-BR/EDR
 // <0=> NOT SUPPORT
 // <1=> SUPPORT
 #ifndef CFG_BT_BREDR
@@ -343,7 +348,7 @@
 #define CFG_MUL_LINK_WITH_SAME_DEV        0
 #endif
 
-// <o>  support
+// <o>  Support car key needs
 // <0=> NOT SUPPORT
 // <1=> SUPPORT
 #ifndef CFG_CAR_KEY_SUPPORT
@@ -351,8 +356,8 @@
 #endif
 // </h>
 
-// <h> MESH support configuration
-// <o> MESH support
+// <h>  MESH support configuration
+// <o>  Support MESH
 // <0=> NOT SUPPORT
 // <1=> SUPPORT
 #ifndef CFG_MESH_SUPPORT
@@ -360,8 +365,8 @@
 #endif
 // </h>
 
-// <h> LCP support configuration
-// <o> LCP support
+// <h>  LCP support configuration
+// <o>  Support LCP
 // <0=> NOT SUPPORT
 // <1=> SUPPORT
 #ifndef CFG_LCP_SUPPORT
@@ -369,8 +374,8 @@
 #endif
 // </h>
 
-// <h> security configuration
-// <o> algorithm security level
+// <h>  Security configuration
+// <o>  Algorithm security level
 // <0=> Enable algorithm level one
 // <1=> Enable algorithm level two
 #ifndef SECURITY_CFG_VAL

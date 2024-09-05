@@ -94,12 +94,12 @@ static uint32_t s_channel_idx = 0;
 static uint8_t s_random_nums[10];
 static uint8_t s_random_idx = 0;
 
-SECTION_RAM_CODE static void app_idt_direct_timer_stop(void)
+static void app_idt_direct_timer_stop(void)
 {
     app_dual_tim_stop(APP_DUAL_TIM_ID_0);
 }
 
-SECTION_RAM_CODE static void app_idt_direct_timer_start(uint32_t timeout_us)
+static void app_idt_direct_timer_start(uint32_t timeout_us)
 {
     app_dual_tim_params_t p_params_tim0 = DUAL_TIM0_PARAM;
 
@@ -108,7 +108,7 @@ SECTION_RAM_CODE static void app_idt_direct_timer_start(uint32_t timeout_us)
     app_dual_tim_start(APP_DUAL_TIM_ID_0);
 }
 
-SECTION_RAM_CODE static void direct_data_transport_transmit_cfm_cb(void)
+static void direct_data_transport_transmit_cfm_cb(void)
 {
     uint32_t time = 0;
     
@@ -135,7 +135,7 @@ SECTION_RAM_CODE static void direct_data_transport_transmit_cfm_cb(void)
     APP_LOG_INFO("RTT Time = %d us", (time/64));
 }
 
-SECTION_RAM_CODE static void app_idt_transmit_timeout_handler(app_dual_tim_evt_t *p_evt)
+static void app_idt_transmit_timeout_handler(app_dual_tim_evt_t *p_evt)
 {
     if (*p_evt == APP_DUAL_TIM_EVT_DONE)
     {
@@ -151,7 +151,7 @@ SECTION_RAM_CODE static void app_idt_transmit_timeout_handler(app_dual_tim_evt_t
     }
 }
 
-SECTION_RAM_CODE static void direct_data_transport_receive_cb(uint8_t packet_length, uint8_t *packet_data)
+static void direct_data_transport_receive_cb(uint8_t packet_length, uint8_t *packet_data)
 {
     if (packet_data[0] != 0xA5)
     {
@@ -199,7 +199,7 @@ static bool rand_num_generator(uint8_t *p_buf, uint8_t len)
  *****************************************************************************************
  */
 
-SECTION_RAM_CODE void idt_data_send(uint16_t length, uint8_t *p_data)
+void idt_data_send(uint16_t length, uint8_t *p_data)
 {
     app_io_toggle_pin(APP_IO_TYPE_NORMAL, APP_IO_PIN_29);
     //hal_aon_gpio_write_pin(AON_GPIO_PIN_1, AON_GPIO_PIN_SET);

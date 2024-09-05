@@ -233,7 +233,7 @@ void app_i2ss_callback(app_i2s_evt_t *p_evt)
 
 void i2s_interrupt(void)
 {
-    uint16_t ret = 0;
+    uint16_t ret = APP_DRV_SUCCESS;
     uint8_t  type_szie = 2;
 
     uint16_t wdata[TEST_LENGTH] = {0};
@@ -246,14 +246,14 @@ void i2s_interrupt(void)
     }
 
     ret = app_i2s_init(&i2sm_params, app_i2sm_callback);
-    if (ret != 0)
+    if (ret != APP_DRV_SUCCESS)
     {
         printf("\r\nI2SM initial failed! Please check the input paraments.\r\n");
         return;
     }
 
     ret = app_i2s_init(&i2ss_params, app_i2ss_callback);
-    if (ret != 0)
+    if (ret != APP_DRV_SUCCESS)
     {
         printf("\r\nI2SM initial failed! Please check the input paraments.\r\n");
         return;
@@ -289,25 +289,30 @@ void i2s_interrupt(void)
     delay_ms(2);
     app_i2s_disable_clock(APP_I2S_ID_MASTER);
     print_buf("Please check I2SM Received: ", (void *)rdata, sizeof(rdata), type_szie);
+
+    app_i2s_deinit(APP_I2S_ID_MASTER);
+    app_i2s_deinit(APP_I2S_ID_SLAVE);
 }
 
 void i2s_dma(void)
 {
-    uint16_t ret = 0;
+    uint16_t ret = APP_DRV_SUCCESS;
     uint8_t  type_szie = 2;
 
     uint16_t wdata[TEST_LENGTH] = {0};
     uint16_t rdata[TEST_LENGTH] = {0};
 
+    /* Please initialize DMA in the following order. */
+    /* Note: Initialization is not allowed during the transmission process. */
     ret = app_i2s_init(&i2sm_params, app_i2sm_callback);
-    if (ret != 0)
+    if (ret != APP_DRV_SUCCESS)
     {
         printf("\r\nI2SM initial failed! Please check the input paraments.\r\n");
         return;
     }
 
     ret = app_i2s_init(&i2ss_params, app_i2ss_callback);
-    if (ret != 0)
+    if (ret != APP_DRV_SUCCESS)
     {
         printf("\r\nI2SM initial failed! Please check the input paraments.\r\n");
         return;
@@ -319,13 +324,13 @@ void i2s_dma(void)
     }
 
     ret = app_i2s_dma_init(&i2sm_params);
-    if (ret != 0)
+    if (ret != APP_DRV_SUCCESS)
     {
         printf("\r\nI2SM initial failed! Please check the input paraments.\r\n");
         return;
     }
     ret = app_i2s_dma_init(&i2ss_params);
-    if (ret != 0)
+    if (ret != APP_DRV_SUCCESS)
     {
         printf("\r\nI2SM initial failed! Please check the input paraments.\r\n");
         return;
@@ -362,6 +367,12 @@ void i2s_dma(void)
     delay_ms(2);
     app_i2s_disable_clock(APP_I2S_ID_MASTER);
     print_buf("Please check I2SM Received: ", (void *)rdata, sizeof(rdata), type_szie);
+
+    /* Please deinitialize DMA in the following order. */
+    app_i2s_dma_deinit(APP_I2S_ID_MASTER);
+    app_i2s_deinit(APP_I2S_ID_MASTER);
+    app_i2s_dma_deinit(APP_I2S_ID_SLAVE);
+    app_i2s_deinit(APP_I2S_ID_SLAVE);
 }
 
 #endif  /* HAL_I2S_MODULE_ENABLED */

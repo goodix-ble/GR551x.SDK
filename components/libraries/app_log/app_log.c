@@ -41,7 +41,6 @@
  */
 #include "app_log.h"
 #include <string.h>
-#include <stdarg.h>
 #include <stdio.h>
 
 /*
@@ -110,7 +109,7 @@ struct app_log_env_t
     bool                 is_filter_set; /**< App log filter is set or not. */
     app_log_trans_func_t trans_func;    /**< App log transmit function. */
     app_log_flush_func_t flush_func;    /**< App log flush function. */
-
+    app_log_assert_flush_func_t assert_flush_func; /**< App log flush function for assert. */
 };
 
 /*
@@ -255,6 +254,11 @@ sdk_err_t app_log_init(app_log_init_t *p_log_init, app_log_trans_func_t trans_fu
     s_app_log_env.flush_func    = flush_func;
 
     return SDK_SUCCESS;
+}
+
+void app_log_assert_flush_init(app_log_assert_flush_func_t assert_flush_func)
+{
+    s_app_log_env.assert_flush_func = assert_flush_func;
 }
 
 void app_log_output(uint8_t level, const char *tag, const char *file, const char *func, const long line, const char *format, ...)
@@ -407,6 +411,63 @@ void app_log_raw_info(const char *format, ...)
     app_log_data_trans(s_log_encode_buf, log_length);
 
     APP_LOG_UNLOCK();
+
+    va_end(ap);
+}
+
+void app_log_raw_info_va_list(const char *format, va_list ap)
+{
+    int      fmt_result = 0;
+    uint16_t log_length = 0;
+
+    APP_LOG_LOCK();
+
+    fmt_result = vsnprintf((char *)s_log_encode_buf, APP_LOG_LINE_BUF_SIZE, format, ap);
+
+    if ((fmt_result > -1) && (fmt_result) <= APP_LOG_LINE_BUF_SIZE)
+    {
+        log_length = fmt_result;
+    }
+    else
+    {
+        log_length = APP_LOG_LINE_BUF_SIZE;
+    }
+
+    app_log_data_trans(s_log_encode_buf, log_length);
+
+    APP_LOG_UNLOCK();
+}
+
+void app_log_raw_info_append_newline(const char *format, ...)
+{
+    int      fmt_result = 0;
+    uint16_t log_length = 0;
+    uint8_t  newline_length = strlen(APP_LOG_NEWLINE_SIGN);
+    va_list  ap;
+
+    va_start(ap, format);
+
+    APP_LOG_LOCK();
+
+    fmt_result = vsnprintf((char *)s_log_encode_buf, APP_LOG_LINE_BUF_SIZE, format, ap);
+
+    if ((fmt_result > -1) && (fmt_result) <= (APP_LOG_LINE_BUF_SIZE - newline_length))
+    {
+        log_length = fmt_result;
+
+        // Encode newline sign.
+        log_length += app_log_strcpy(log_length, s_log_encode_buf, APP_LOG_NEWLINE_SIGN);
+    }
+    else
+    {
+        log_length = APP_LOG_LINE_BUF_SIZE;
+    }
+
+    app_log_data_trans(s_log_encode_buf, log_length);
+
+    APP_LOG_UNLOCK();
+
+    va_end(ap);
 }
 
 void app_log_hex_dump(void *p_data, uint16_t length)
@@ -510,14 +571,23 @@ void app_log_flush(void)
     }
 }
 
+void app_log_assert_flush(void)
+{
+    if (s_app_log_env.assert_flush_func)
+    {
+        s_app_log_env.assert_flush_func();
+    }
+}
 
 #if IO_REDIRECT == 0
-#if defined(__CC_ARM)
+#if defined(__CC_ARM) || defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6100100)
 
+#if !(defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6100100))
 struct __FILE
 {
     int handle;
 };
+#endif
 
 FILE __stdout;
 FILE __stdin;

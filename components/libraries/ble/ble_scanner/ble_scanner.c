@@ -51,7 +51,6 @@
 struct ble_scanner_env_t
 {
     bool                      connect_auto;
-    bool                      is_matched;
     ble_gap_scan_param_t      scan_param;
     ble_gap_init_param_t      conn_param;
     ble_scanner_evt_handler_t evt_handler;
@@ -60,6 +59,7 @@ struct ble_scanner_env_t
     uint8_t                   filter_type;
     ble_scanner_filter_mode_t filter_mode;
     ble_scanner_filter_data_t target_data;
+    bool                      is_matched;
 };
 
 /*
@@ -502,8 +502,11 @@ void ble_scanner_evt_on_ble_capture(const ble_evt_t *p_evt)
             break;
 
         case BLE_GAPM_EVT_ADV_REPORT:
-            on_scanner_adv_report(&p_evt->evt.gapm_evt.params.adv_report);
-            break;
+            if (p_evt->evt.gapm_evt.params.adv_report.adv_type <= BLE_GAP_REPORT_TYPE_PER_ADV)
+            {
+                on_scanner_adv_report(&p_evt->evt.gapm_evt.params.adv_report);
+                break;
+            }
 
         case BLE_GAPC_EVT_CONNECTED:
             on_scanner_connected(p_evt->evt.gapc_evt.index);

@@ -88,7 +88,7 @@
             <nStopA1X>0</nStopA1X>
             <nStopA2X>0</nStopA2X>
           </AfterMake>
-          <SelectedForBatchBuild>0</SelectedForBatchBuild>
+          <SelectedForBatchBuild>1</SelectedForBatchBuild>
           <SVCSIdString/>
         </TargetCommonOption>
         <CommonProperty>
@@ -530,6 +530,11 @@
               <FileName>fault_trace.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\components\libraries\fault_trace\fault_trace.c</FilePath>
+            </File>
+            <File>
+              <FileName>ble.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\sdk\ble.c</FilePath>
             </File>
           </Files>
         </Group>

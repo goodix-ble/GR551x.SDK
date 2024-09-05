@@ -205,22 +205,24 @@ static uint16_t app_i2s_config_dma(app_i2s_params_t *p_params)
  */
 uint16_t app_i2s_dma_init(app_i2s_params_t *p_params)
 {
-    app_i2s_id_t id = p_params->id;
+    app_i2s_id_t id;
     app_drv_err_t app_err_code;
 
-    if (p_params == NULL)
+    if (NULL == p_params)
     {
         return APP_DRV_ERR_POINTER_NULL;
     }
 
-    if (id >= APP_I2S_ID_MAX)
-    {
-        return APP_DRV_ERR_INVALID_ID;
-    }
+    id = p_params->id;
 
-    if ((p_i2s_env[id] == NULL) ||  (p_i2s_env[id]->i2s_state == APP_I2S_INVALID))
+    if ((p_i2s_env[id] == NULL) || (p_i2s_env[id]->i2s_state == APP_I2S_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
+    }
+
+    if ((p_i2s_env[id]->i2s_dma_state != APP_I2S_DMA_INVALID))
+    {
+        return APP_DRV_ERR_INVALID_INIT;
     }
 
     GLOBAL_EXCEPTION_DISABLE();
@@ -252,13 +254,7 @@ uint16_t app_i2s_dma_deinit(app_i2s_id_t id)
     app_dma_deinit(p_i2s_env[id]->dma_id[0]);
     app_dma_deinit(p_i2s_env[id]->dma_id[1]);
 
-    GLOBAL_EXCEPTION_DISABLE();
     p_i2s_env[id]->i2s_dma_state = APP_I2S_DMA_INVALID;
-    GLOBAL_EXCEPTION_ENABLE();
-    if (p_i2s_env[id]->i2s_state == APP_I2S_INVALID)
-    {
-        p_i2s_env[id] = NULL;
-    }
 
     return APP_DRV_SUCCESS;
 }
@@ -272,7 +268,7 @@ uint16_t app_i2s_dma_receive_async(app_i2s_id_t id, uint16_t *p_data, uint16_t s
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_i2s_env[id] == NULL) ||  (p_i2s_env[id]->i2s_state == APP_I2S_INVALID))
+    if ((p_i2s_env[id] == NULL) ||  (p_i2s_env[id]->i2s_dma_state == APP_I2S_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -313,7 +309,7 @@ uint16_t app_i2s_dma_transmit_async(app_i2s_id_t id, uint16_t *p_data, uint16_t 
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_i2s_env[id] == NULL) ||  (p_i2s_env[id]->i2s_state == APP_I2S_INVALID))
+    if ((p_i2s_env[id] == NULL) ||  (p_i2s_env[id]->i2s_dma_state == APP_I2S_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -357,7 +353,7 @@ uint16_t app_i2s_dma_transmit_receive_async(app_i2s_id_t id,
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_i2s_env[id] == NULL) ||  (p_i2s_env[id]->i2s_state == APP_I2S_INVALID))
+    if ((p_i2s_env[id] == NULL) ||  (p_i2s_env[id]->i2s_dma_state == APP_I2S_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }

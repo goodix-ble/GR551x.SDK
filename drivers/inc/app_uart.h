@@ -81,15 +81,15 @@ extern "C" {
   */
 typedef enum
 {
-    APP_UART_ID_0,                     /**< UART module 0 */
-    APP_UART_ID_1,                     /**< UART module 1 */
+    APP_UART_ID_0,                     /**< UART module 0. */
+    APP_UART_ID_1,                     /**< UART module 1. */
 #if ((APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X))
-    APP_UART_ID_2,                     /**< UART module 2 */
-    APP_UART_ID_3,                     /**< UART module 3 */
+    APP_UART_ID_2,                     /**< UART module 2. */
+    APP_UART_ID_3,                     /**< UART module 3. */
 #endif
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X)
-    APP_UART_ID_4,                     /**< UART module 4 */
-    APP_UART_ID_5,                     /**< UART module 5 */
+    APP_UART_ID_4,                     /**< UART module 4. */
+    APP_UART_ID_5,                     /**< UART module 5. */
 #endif
     APP_UART_ID_MAX,                   /**< Only for check parameter, not used as input parameters. */
 } app_uart_id_t;
@@ -100,11 +100,11 @@ typedef enum
 typedef enum
 {
     APP_UART_EVT_ERROR,                /**< Error reported by UART peripheral. */
-    APP_UART_EVT_TX_CPLT,              /**< Requested TX transfer completed.   */
-    APP_UART_EVT_RX_DATA,              /**< Requested RX transfer completed.   */
-    APP_UART_EVT_ABORT_TX,             /**< Requested TX abort completed.      */
-    APP_UART_EVT_ABORT_RX,             /**< Requested RX abort completed.      */
-    APP_UART_EVT_ABORT_TXRX,           /**< Requested TX, RX abort completed.  */
+    APP_UART_EVT_TX_CPLT,              /**< Requested TX transfer completed. */
+    APP_UART_EVT_RX_DATA,              /**< Requested RX transfer completed. */
+    APP_UART_EVT_ABORT_TX,             /**< Requested TX abort completed. */
+    APP_UART_EVT_ABORT_RX,             /**< Requested RX abort completed. */
+    APP_UART_EVT_ABORT_TXRX,           /**< Requested TX, RX abort completed. */
 } app_uart_evt_type_t;
 
 /**@brief App uart state types. */
@@ -152,13 +152,17 @@ typedef struct
   */
 typedef struct
 {
-    dma_regs_t        *tx_dma_instance;/**< Specifies the TX DMA inistall.*/
-    dma_regs_t        *rx_dma_instance;/**< Specifies the RX DMA inistall.*/
+    dma_regs_t        *tx_dma_instance;/**< Specifies the TX DMA instance.*/
+    dma_regs_t        *rx_dma_instance;/**< Specifies the RX DMA instance.*/
     dma_channel_t     tx_dma_channel;  /**< Specifies the dma channel of UART TX. */
     dma_channel_t     rx_dma_channel;  /**< Specifies the dma channel of UART RX. */
 } app_uart_dma_cfg_t;
 
+/** @} */
 
+/** @addtogroup APP_UART_ENUMERATIONS Enumerations
+  * @{
+  */
 /**@brief App uart dma state types. */
 typedef enum
 {
@@ -166,6 +170,11 @@ typedef enum
     APP_UART_DMA_ACTIVITY,
 } app_uart_dma_state_t;
 
+/** @} */
+
+/** @addtogroup APP_UART_STRUCTURES Structures
+  * @{
+  */
 /**
   * @brief UART event structure definition
   */
@@ -234,6 +243,7 @@ typedef struct
   */
 typedef struct
 {
+    //lint -e18 A symbol was declared in a typedef differently in two different modules is necessary
     uint8_t * tx_buf;      /**< Pointer to the TX buffer. */
     uint32_t  tx_buf_size; /**< Size of the TX buffer. */
 } app_uart_tx_buf_t;

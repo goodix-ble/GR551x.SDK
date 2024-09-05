@@ -143,6 +143,7 @@ static uint8_t user_fw_img_info_get(dfu_img_info_t s_fw_img_info[])
     uint8_t once_img_size = 40;
     uint8_t read_buffer[FW_IMG_INFO_SIZE];
 
+#ifndef SOC_GR533X
     bool flash_security_status = false;
     uint32_t sys_security = sys_security_enable_status_check();
     if(sys_security)
@@ -150,11 +151,16 @@ static uint8_t user_fw_img_info_get(dfu_img_info_t s_fw_img_info[])
         flash_security_status = hal_flash_get_security();
         hal_flash_set_security(true);
     }
+#endif
+
     hal_flash_read(FW_IMG_INFO_ADDR, read_buffer, FW_IMG_INFO_SIZE);//read decoded data
+
+#ifndef SOC_GR533X
     if(sys_security)
     {
         hal_flash_set_security(flash_security_status);
     }
+#endif
 
     for(i=0; i<FW_MAX_IMG_CNT; i++)
     {
@@ -185,12 +191,11 @@ uint8_t user_master_status_get(void)
 
 void user_master_idle(uint8_t select)
 {
-    extern uint32_t dfu_save_addr;
     extern uint8_t fast_dfu_mode;
 
     if(select ==  1)
     {
-        fast_dfu_mode = 0x00;
+        fast_dfu_mode = FAST_DFU_MODE_DISABLE;
         user_dfu_m_init(DFU_MODE_UART, DFU_DATA_SEND_SIZE);
         dfu_m_get_info();
         user_master_status_set(MASTER_UART_SELECT_IMG);
@@ -232,11 +237,11 @@ void user_fast_dfu_mode_set(uint8_t select)
 
     if (select == 1)
     {
-        fast_dfu_mode = 0x00;
+        fast_dfu_mode = FAST_DFU_MODE_DISABLE;
     }
     else if (select == 2)
     {
-        fast_dfu_mode = 0x02;
+        fast_dfu_mode = FAST_DFU_MODE_ENABLE;
     }
 
     user_master_status_set(MASTER_BLE_SELECT_IMG);
@@ -283,6 +288,7 @@ void user_prompt_message_output(void)
 
         case MASTER_BLE_CONNECTED:
             APP_LOG_DEBUG("BLE Device Connected");
+            otas_c_ctrl_data_send(0, 0x474f4f44);
             dfu_m_get_info();
             break;
 

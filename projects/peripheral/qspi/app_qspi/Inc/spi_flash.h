@@ -89,6 +89,8 @@
 #define SPI_FLASH_TYE_SST26             0xBF
 #define SPI_FLASH_TYE_XTX25             0x0B
 
+#define SPI_FLASH_TYE_PY25Q128          0x856018
+
 #define QSPI_POLLING                    APP_QSPI_TYPE_POLLING
 #define QSPI_DMA                        APP_QSPI_TYPE_DMA
 

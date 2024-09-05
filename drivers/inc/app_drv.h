@@ -2,13 +2,59 @@
 #define __APP_DRV_H__
 
 #include "app_drv_config.h"
+#include "app_drv_error.h"
 
-#if FLASH_PROTECT_PRIORITY
-#define protection_push() platform_interrupt_protection_push()
-#define protection_pop()  platform_interrupt_protection_pop()
+#ifndef APP_DRV_DEPRECATED
+#if defined ( __CC_ARM ) || defined ( __GNUC__ )
+    #define APP_DRV_DEPRECATED  __attribute__ ((deprecated))
 #else
-#define protection_push()
-#define protection_pop()
+    #define APP_DRV_DEPRECATED
+#endif
 #endif
 
+#ifndef APP_DRV_LOG_INFO
+#if APP_DRV_LOG_LEVEL >= APP_DVR_LOG_LVL_INFO
+    #define APP_DRV_LOG_INFO(format, ...) APP_DRV_LOG_INTERFACE(format, ##__VA_ARGS__)
+#else
+    #define APP_DRV_LOG_INFO(...)
 #endif
+#endif
+
+#ifndef APP_DRV_LOG_WARN
+#if APP_DRV_LOG_LEVEL >= APP_DVR_LOG_LVL_WARN
+    #define APP_DRV_LOG_WARN(format, ...) APP_DRV_LOG_INTERFACE(format, ##__VA_ARGS__)
+#else
+    #define APP_DRV_LOG_WARN(...)
+#endif
+#endif
+
+#ifndef APP_DRV_LOG_ERR
+#if APP_DRV_LOG_LEVEL >= APP_DVR_LOG_LVL_ERR
+    #define APP_DRV_LOG_ERR(format, ...) APP_DRV_LOG_INTERFACE(format, ##__VA_ARGS__)
+#else
+    #define APP_DRV_LOG_ERR(...)
+#endif
+#endif
+
+#ifndef APP_DRV_ASSERT
+#if APP_DRV_ASSERT_ENABLE
+    #define APP_DRV_ASSERT(x)  if(!(x)) { __set_PRIMASK(1); while(1); }
+#else
+    #define APP_DRV_ASSERT(ignore)  ((void)0)
+#endif
+#endif
+
+#ifndef HAL_MAX_DELAY
+    /* 20000ms is the max delay time in 96MHz system clock. */
+    #define  APP_DRV_MAX_TIMEOUT  (20000U)
+#else
+    #define APP_DRV_MAX_TIMEOUT  HAL_MAX_DELAY
+#endif
+
+#ifndef HAL_NEVER_TIMEOUT
+    #define APP_DRV_NEVER_TIMEOUT  (0xFFFFFFFFU)
+#else
+    #define APP_DRV_NEVER_TIMEOUT  HAL_NEVER_TIMEOUT
+#endif
+
+#endif /* __APP_DRV_H__ */

@@ -66,21 +66,18 @@ static void dma_wake_up_ind(void);
  * LOCAL VARIABLE DEFINITIONS
  *****************************************************************************************
  */
-static bool             s_sleep_cb_registered_flag = false;
 dma_env_t s_dma_env[DMA_HANDLE_MAX];
-static pwr_id_t         s_dma_pwr_id = -1;
 
 static const app_sleep_callbacks_t dma_sleep_cb =
 {
     .app_prepare_for_sleep  = dma_prepare_for_sleep,
-    .app_sleep_canceled     = NULL,
     .app_wake_up_ind        = dma_wake_up_ind,
 };
 
 #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR551X)
 SECTION_RAM_CODE void DMA0_IRQHandler(void)
 {
-    uint8_t i;
+    uint32_t i;
 
     for (i = 0; i < DMA_HANDLE_MAX; i++)
     {
@@ -95,7 +92,7 @@ SECTION_RAM_CODE void DMA0_IRQHandler(void)
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X)
 SECTION_RAM_CODE void DMA1_IRQHandler(void)
 {
-    uint8_t i;
+    uint32_t i;
 
     for (i = 0; i < DMA_HANDLE_MAX; i++)
     {
@@ -110,7 +107,7 @@ SECTION_RAM_CODE void DMA1_IRQHandler(void)
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
 SECTION_RAM_CODE void DMA_IRQHandler(void)
 {
-    uint8_t i;
+    uint32_t i;
 
     for (i = 0; i < DMA_HANDLE_MAX; i++)
     {
@@ -130,7 +127,7 @@ static bool dma_prepare_for_sleep(void)
 {
     hal_dma_state_t state;
 
-    for (uint8_t i = 0; i < DMA_HANDLE_MAX; i++)
+    for (uint32_t i = 0; i < DMA_HANDLE_MAX; i++)
     {
         if (s_dma_env[i].dma_state == APP_DMA_ACTIVITY)
         {
@@ -156,7 +153,7 @@ SECTION_RAM_CODE static void dma_wake_up_ind(void)
     bool find = false;
 #endif
 
-    for (uint8_t i = 0; i < DMA_HANDLE_MAX; i++)
+    for (uint32_t i = 0; i < DMA_HANDLE_MAX; i++)
     {
         if (s_dma_env[i].dma_state == APP_DMA_ACTIVITY)
         {
@@ -210,7 +207,7 @@ void dma_wake_up(dma_id_t id)
     {
         hal_dma_resume_reg(&s_dma_env[id].handle);
         s_dma_env[id].dma_state = APP_DMA_ACTIVITY;
-        
+
 #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR551X)
         if(DMA0 == s_dma_env[id].handle.p_instance)
         {
@@ -250,7 +247,7 @@ void dma_wake_up(dma_id_t id)
  */
 void dma_tfr_callback(struct _dma_handle *hdma)
 {
-    uint8_t i;
+    uint32_t i;
 
     for (i = 0; i < DMA_HANDLE_MAX; i++)
     {
@@ -272,7 +269,7 @@ void dma_tfr_callback(struct _dma_handle *hdma)
 
 void dma_err_callback(struct _dma_handle * hdma)
 {
-    uint8_t i;
+    uint32_t i;
 
     for (i = 0; i < DMA_HANDLE_MAX; i++)
     {
@@ -295,7 +292,7 @@ void dma_err_callback(struct _dma_handle * hdma)
 
 void dma_blk_callback(struct _dma_handle * hdma)
 {
-    uint8_t i;
+    uint32_t i;
 
     for (i = 0; i < DMA_HANDLE_MAX; i++)
     {
@@ -317,7 +314,7 @@ void dma_blk_callback(struct _dma_handle * hdma)
 
 dma_id_t app_dma_init(app_dma_params_t *p_params, app_dma_evt_handler_t evt_handler)
 {
-    uint8_t      i  = 0;
+    uint32_t      i  = 0;
     dma_id_t     id = -1;
     hal_status_t status = HAL_ERROR;
 
@@ -371,11 +368,7 @@ dma_id_t app_dma_init(app_dma_params_t *p_params, app_dma_evt_handler_t evt_hand
 
         if (i < DMA_HANDLE_MAX)
         {
-            if (s_sleep_cb_registered_flag == false)// register sleep callback
-            {
-                s_sleep_cb_registered_flag = true;
-                s_dma_pwr_id = pwr_register_sleep_cb(&dma_sleep_cb, APP_DRIVER_DMA_WAPEUP_PRIORITY);
-            }
+            pwr_register_sleep_cb(&dma_sleep_cb, APP_DRIVER_DMA_WAKEUP_PRIORITY, DMA_PWR_ID);
 #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR551X)
             s_dma_env[i].handle.p_instance = p_params->p_instance;
 #endif
@@ -429,7 +422,7 @@ dma_id_t app_dma_init(app_dma_params_t *p_params, app_dma_evt_handler_t evt_hand
 
 uint16_t app_dma_deinit(dma_id_t id)
 {
-    uint8_t i;
+    uint32_t i;
 
     if ((id < 0) || (id >= DMA_HANDLE_MAX))
     {
@@ -456,9 +449,7 @@ uint16_t app_dma_deinit(dma_id_t id)
 
     if (i == DMA_HANDLE_MAX)
     {
-        pwr_unregister_sleep_cb(s_dma_pwr_id);
-        s_dma_pwr_id = -1;
-        s_sleep_cb_registered_flag = false;
+        pwr_unregister_sleep_cb(DMA_PWR_ID);
 #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR551X)
         hal_nvic_disable_irq(DMA0_IRQn);
 #endif

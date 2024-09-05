@@ -100,20 +100,18 @@ typedef void (* delay_func_t)(uint32_t);
 /**
  ****************************************************************************************
  * @brief Enable the DWT.
- * @param _demcr_initial:    demcr initial. 
- * @param _dwt_ctrl_initial: dwt ctrl initial.
+ *
  ****************************************************************************************
  */
-void hal_dwt_enable(uint32_t _demcr_initial, uint32_t _dwt_ctrl_initial);
+void hal_dwt_enable(void);
 
 /**
  ****************************************************************************************
  * @brief Disable the DWT.
- * @param _demcr_initial:    demcr initial. 
- * @param _dwt_ctrl_initial: dwt ctrl initial.
+ *
  ****************************************************************************************
  */
-void hal_dwt_disable(uint32_t _demcr_initial, uint32_t _dwt_ctrl_initial);
+void hal_dwt_disable(void);
 /** @} */
 
 /** @addtogroup HAL_DELAY_DEFINES Defines
@@ -123,21 +121,13 @@ void hal_dwt_disable(uint32_t _demcr_initial, uint32_t _dwt_ctrl_initial);
  * @brief  Timeout module init. This macro must be used in
  *         conjunction with the @ref HAL_TIMEOUT_DEINIT macro
  */
-#define HAL_TIMEOUT_INIT()                                               \
-    uint32_t _demcr_initial = CoreDebug->DEMCR;                          \
-    uint32_t _dwt_ctrl_initial = DWT->CTRL;                              \
-do {                                                                     \
-    hal_dwt_enable(_demcr_initial, _dwt_ctrl_initial);                   \
-} while (0)
+#define HAL_TIMEOUT_INIT()                         hal_dwt_enable()
 
 /**
   * @brief  Timeout module deinit. This macro must be used in
   *         conjunction with the @ref HAL_TIMEOUT_INIT macro
   */
-#define HAL_TIMEOUT_DEINIT()                                             \
-do {                                                                     \
-    hal_dwt_disable(_demcr_initial, _dwt_ctrl_initial);                  \
-} while(0)
+#define HAL_TIMEOUT_DEINIT()                        hal_dwt_disable()
 /** @} */
 
 /** @addtogroup HAL_DELAY_FUNCTIONS Functions

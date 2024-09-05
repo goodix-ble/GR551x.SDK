@@ -53,9 +53,8 @@
 
 #include "gr55xx_sys_cfg.h"
 #include "gr55xx_nvds.h"
-#include "gr55xx_dfu.h"
 #include "gr55xx_pwr.h"
-#include "gr55xx_fpb.h"
+#include "gr5xx_fpb.h"
 #include "ble.h"
 
 #include <stdint.h>
@@ -399,15 +398,6 @@ void app_boot_security_clock_set(void);
 
 /**
  *****************************************************************************************
- * @brief jump to app firmware.	69
- *
- * @param[in] p_boot_info: Firmware system firmware information	71
- *****************************************************************************************
- */
-void sys_firmware_jump(dfu_boot_info_t *p_boot_info);
-
-/**
- *****************************************************************************************
  * @brief Get the trim checksum.
  *
  * @param[out] p_trim_sum: The pointer to the buffer for trim checksum.
@@ -734,7 +724,6 @@ void rtc_calibration(void);
 /**
  ****************************************************************************************
  * @brief  RNG calibration function.
- * @note The function will call between platform_init_push and platform_init_pop.
  ****************************************************************************************
  */
 void rng_calibration(void);
@@ -754,6 +743,16 @@ uint32_t sys_reverse_word(uint32_t value);
  ****************************************************************************************
  */
 uint16_t sys_reverse_hword(uint16_t value);
+
+/**
+ *****************************************************************************************
+ * @brief jump to app firmware.
+ *
+ * @param[in] fw_addr:     Firmware run address
+ * @param[in] fw_bin_size: Firmware bin size
+ *****************************************************************************************
+ */
+void sys_firmware_jump(uint32_t fw_addr, uint32_t fw_bin_size);
 
 /** @} */
 #endif

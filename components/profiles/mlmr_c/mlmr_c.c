@@ -39,8 +39,14 @@
  *****************************************************************************************
  */
 #include "mlmr_c.h"
-#include "user_app.h"
 #include "app_log.h"
+
+/*
+ * DEFINES
+ *****************************************************************************************
+ */
+#define CFG_BOND_DEVS   5                     /**< The default setting is the number of device bindings. */
+
 /*
  * STRUCT DEFINE
  *****************************************************************************************
@@ -65,7 +71,7 @@ static uint8_t             s_mlmr_c_flow_ctrl_char_uuid[16] = MLMR_C_FLOW_CTRL_U
 static uint16_t            received_data_len[CFG_BOND_DEVS];
 static uint16_t            send_data_len[CFG_BOND_DEVS];
 static uint8_t             adv_header                    = 0xA0;
-static uint8_t             rx_buffer[CFG_BOND_DEVS][516];
+static uint8_t             rx_buffer[CFG_BOND_DEVS][247];
 static ble_uuid_t          s_mlmr_c_service_uuid =
 {
     .uuid_len = 16,
@@ -158,6 +164,7 @@ void combin_received_packet(uint8_t conn_idx, uint16_t length, uint8_t *p_receiv
  */
 static void mlmr_c_att_ntf_ind_evt_handler(uint8_t conn_idx, const ble_gattc_evt_ntf_ind_t *p_ntf_ind)
 {
+    uint16_t     mtu;
     mlmr_c_evt_t mlmr_c_evt;
 
     mlmr_c_evt.conn_idx = conn_idx;
@@ -182,9 +189,10 @@ static void mlmr_c_att_ntf_ind_evt_handler(uint8_t conn_idx, const ble_gattc_evt
             uint16_t data_length;
             memcpy(&data_length, &(((uint8_t *)p_ntf_ind->p_value)[1]), 2);
             received_data_len[conn_idx] = 0;
-            memset(rx_buffer[conn_idx], 0, 516);
+            memset(rx_buffer[conn_idx], 0, 247);
 
-            if(data_length <= (MAX_MTU_DEFUALT - 3))
+            ble_gatt_mtu_get(conn_idx, &mtu);
+            if(data_length <= (mtu - 3))
             {
                 mlmr_c_evt.evt_type = MLMR_C_EVT_PEER_DATA_RECEIVE;
                 mlmr_c_evt.p_data   = p_ntf_ind->p_value;
@@ -355,6 +363,7 @@ sdk_err_t mlmr_c_tx_data_send(uint8_t conn_idx, uint8_t *p_data, uint16_t length
 {
     sdk_err_t             error_code;
     uint8_t               *buffer = p_data;
+    uint16_t              mtu;
 
     if (BLE_ATT_INVALID_HDL == s_mlmr_c_env.handles.mlmr_c_rx_handle)
     {
@@ -366,16 +375,17 @@ sdk_err_t mlmr_c_tx_data_send(uint8_t conn_idx, uint8_t *p_data, uint16_t length
         return SDK_ERR_POINTER_NULL;
     }
 
-    if(length > (MAX_MTU_DEFUALT - 3))
+    ble_gatt_mtu_get(conn_idx, &mtu);
+    if(length > (mtu - 3))
     {
-        while(length > MAX_MTU_DEFUALT - 3)
+        while(length > mtu - 3)
         {
-            error_code = ble_gattc_write_no_resp(conn_idx, false, s_mlmr_c_env.handles.mlmr_c_rx_handle, MAX_MTU_DEFUALT - 3, buffer);
-            buffer += (MAX_MTU_DEFUALT - 3);
-            length -= (MAX_MTU_DEFUALT - 3);
+            error_code = ble_gattc_write_no_resp(conn_idx, false, s_mlmr_c_env.handles.mlmr_c_rx_handle, mtu - 3, buffer);
+            buffer += (mtu - 3);
+            length -= (mtu - 3);
         }
         
-        if(length != 0 && length < (MAX_MTU_DEFUALT - 3))
+        if(length != 0 && length < (mtu - 3))
         {
             error_code = ble_gattc_write_no_resp(conn_idx, false, s_mlmr_c_env.handles.mlmr_c_rx_handle, length, buffer);
         }

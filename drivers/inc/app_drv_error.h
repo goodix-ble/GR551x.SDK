@@ -65,21 +65,23 @@ extern "C" {
  * @{
  */
 #define APP_DRV_SUCCESS                               0x0000   /**< Successful. */
-#define APP_DRV_ERR_HAL                               0x0001   /**< Hal internal error. */
-#define APP_DRV_ERR_BUSY                              0x0002   /**< Driver is busy. */
-#define APP_DRV_ERR_TIMEOUT                           0x0003   /**< Timeout occurred. */
-#define APP_DRV_ERR_INVALID_PARAM                     0x0004   /**< Invalid parameter supplied. */
-#define APP_DRV_ERR_POINTER_NULL                      0x0005   /**< Invalid pointer supplied. */
-#define APP_DRV_ERR_INVALID_TYPE                      0x0006   /**< Invalid type suplied. */
-#define APP_DRV_ERR_INVALID_MODE                      0x0007   /**< Invalid mode suplied. */
-#define APP_DRV_ERR_INVALID_ID                        0x0008   /**< Invalid ID suplied. */
-#define APP_DRV_ERR_NOT_INIT                          0x0009   /**< Driver not init. */
+#define APP_DRV_ERR_HAL                               0x00E1   /**< Hal internal error. */
+#define APP_DRV_ERR_BUSY                              0x00E2   /**< Driver is busy. */
+#define APP_DRV_ERR_TIMEOUT                           0x00E3   /**< Timeout occurred. */
+#define APP_DRV_ERR_INVALID_PARAM                     0x00E4   /**< Invalid parameter. */
+#define APP_DRV_ERR_POINTER_NULL                      0x00E5   /**< Invalid pointer. */
+#define APP_DRV_ERR_INVALID_TYPE                      0x00E6   /**< Invalid type. */
+#define APP_DRV_ERR_INVALID_MODE                      0x00E7   /**< Invalid mode. */
+#define APP_DRV_ERR_INVALID_ID                        0x00E8   /**< Invalid ID. */
+#define APP_DRV_ERR_NOT_INIT                          0x00E9   /**< Driver not init. */
+#define APP_DRV_ERR_INVALID_INIT                      0x00EA   /**< Invalid init, deinit firstly. */
 /** @} */
 
 /**@addtogroup APP_DRV_ERR_CODE_CHECK App Driver error code check
  * @{
  */
 /**@brief App Driver error code check. */
+#ifndef APP_DRV_ERR_CODE_CHECK
 #define APP_DRV_ERR_CODE_CHECK(err_code)            \
     do                                              \
     {                                               \
@@ -88,12 +90,14 @@ extern "C" {
             return err_code;                        \
         }                                           \
     } while(0)
+#endif
 /** @} */
 
 /**@addtogroup HAL_DRV_ERR_CODE_CHECK Hal Driver error code check
  * @{
  */
  /**@brief Hal Driver error code check. */
+#ifndef HAL_ERR_CODE_CHECK
 #define HAL_ERR_CODE_CHECK(err_code)                \
     do                                              \
     {                                               \
@@ -102,11 +106,12 @@ extern "C" {
             return (uint16_t)err_code;              \
         }                                           \
     } while(0)
+#endif
 /** @} */
 /** @} */
 
 /**
- * @defgroup APP_DRV_ERROR_TYPEDEF Typedefs
+ * @defgroup APP_DRV_ERROR_TYPEDEF Type definitions
  * @{
  */
 /**@brief APP driver error type. */

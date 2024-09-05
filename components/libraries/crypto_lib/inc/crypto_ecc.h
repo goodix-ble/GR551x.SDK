@@ -194,7 +194,7 @@ typedef struct _algo_ecc_curve_parameter {
 
 /**
  * @brief ECC Computation config
- * \note It is recommended to set config via API ecc_init_config
+ * \note It is recommended to set config via API crypto_ecc_init_config
  */
 typedef struct _algo_ecc_config {
 
@@ -282,6 +282,24 @@ typedef struct _algo_ecc_ecdh_config {
 /** @addtogroup CRYPTO_ECC_FUNCTIONS Functions
   * @{
   */
+/**
+ *****************************************************************************************
+ *  @brief ECC config init
+ *
+ *  @param[in] ecc_config:  ECC config data structure, refer to \ref algo_ecc_config_t.
+ *
+ *  @param[in] curve: ECC curve type, refer to \ref algo_ecc_curve_type_e.
+ *****************************************************************************************
+ */
+algo_ecc_ret_e crypto_ecc_init_config(algo_ecc_config_t *ecc_config, algo_ecc_curve_type_e curve);
+
+/**
+ *****************************************************************************************
+ *  @brief Addition: R = A + B,
+ *****************************************************************************************
+ */
+algo_ecc_ret_e crypto_ecc_point_addition(algo_ecc_config_t *ecc_config, algo_ecc_point_t *pointA, algo_ecc_point_t *pointB, algo_ecc_point_t *out_result);
+
 
 // ECDSA  APIs//
 /**

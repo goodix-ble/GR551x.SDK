@@ -61,7 +61,7 @@
 #define APP_ADV_SLOW_MAX_INTERVAL       400             /**< The slow advertising max interval (in units of 0.625 ms). */
 #define MAX_MTU_DEFUALT                 247             /**< Defualt length of maximal MTU acceptable for device. */
 #define MAX_MPS_DEFUALT                 247              /**< Defualt length of maximal packet size acceptable for device. */
-#define MAX_NB_LECB_DEFUALT             10              /**< Defualt length of maximal number of LE Credit based connection. */
+#define MAX_NB_LECB_DEFUALT             2              /**< Defualt length of maximal number of LE Credit based connection. */
 #define MAX_TX_OCTET_DEFUALT            251             /**< Default maximum transmitted number of payload octets. */
 #define MAX_TX_TIME_DEFUALT             2120            /**< Defualt maximum packet transmission time. */
 
@@ -212,7 +212,7 @@ static void app_disconnected_handler(uint8_t conn_idx, uint8_t reason)
     APP_LOG_INFO("Disconnected (0x%02X).", reason);
 
     transport_ble_init();
-    error_code = ble_gap_adv_start(conn_idx, &s_gap_adv_time_param);
+    error_code = ble_gap_adv_start(0, &s_gap_adv_time_param);
     APP_ERROR_CHECK(error_code);
 }
 

@@ -66,18 +66,6 @@ void ble_evt_handler(const ble_evt_t *p_evt);
  *****************************************************************************************
  */
 void ble_app_init(void);
-
-
-// void app_client_connected_handler(uint8_t conn_idx);
-/**
- *****************************************************************************************
- *@brief Function for deal disconnect.
- *****************************************************************************************
- */
-// void app_service_disconnected_handler(uint8_t conn_idx, uint8_t reason);
-// void app_client_disconnected_handler(uint8_t conn_idx, uint8_t reason);
-
-
 /** @} */
 
 #endif

@@ -46,6 +46,7 @@
 #endif
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
 /**
  * @defgroup APP_LOG_MAROC Defines
@@ -108,25 +109,25 @@
 
 #if APP_LOG_PRINTF_ENABLE
     #if APP_LOG_SEVERITY_LEVEL >= APP_LOG_LVL_ERROR
-        #define APP_LOG_ERROR(...) app_log_output(APP_LOG_LVL_ERROR, APP_LOG_TAG, __FILE__, __FUNCTION__, __LINE__, __VA_ARGS__)
+        #define APP_LOG_ERROR(...) app_log_output(APP_LOG_LVL_ERROR, APP_LOG_TAG, __FILE__, __func__, __LINE__, __VA_ARGS__)
     #else
         #define APP_LOG_ERROR(...)
     #endif
 
     #if APP_LOG_SEVERITY_LEVEL >= APP_LOG_LVL_WARNING
-        #define APP_LOG_WARNING(...) app_log_output(APP_LOG_LVL_WARNING, APP_LOG_TAG, __FILE__, __FUNCTION__, __LINE__, __VA_ARGS__)
+        #define APP_LOG_WARNING(...) app_log_output(APP_LOG_LVL_WARNING, APP_LOG_TAG, __FILE__, __func__, __LINE__, __VA_ARGS__)
     #else
         #define APP_LOG_WARNING(...)
     #endif
 
     #if APP_LOG_SEVERITY_LEVEL >= APP_LOG_LVL_INFO
-        #define APP_LOG_INFO(...) app_log_output(APP_LOG_LVL_INFO, APP_LOG_TAG, __FILE__, __FUNCTION__, __LINE__, __VA_ARGS__)
+        #define APP_LOG_INFO(...) app_log_output(APP_LOG_LVL_INFO, APP_LOG_TAG, __FILE__, __func__, __LINE__, __VA_ARGS__)
     #else
         #define APP_LOG_INFO(...)
     #endif
 
     #if APP_LOG_SEVERITY_LEVEL >= APP_LOG_LVL_DEBUG
-        #define APP_LOG_DEBUG(...) app_log_output(APP_LOG_LVL_DEBUG, APP_LOG_TAG, __FILE__, __FUNCTION__, __LINE__, __VA_ARGS__)
+        #define APP_LOG_DEBUG(...) app_log_output(APP_LOG_LVL_DEBUG, APP_LOG_TAG, __FILE__, __func__, __LINE__, __VA_ARGS__)
     #else
         #define APP_LOG_DEBUG(...)
     #endif
@@ -152,6 +153,9 @@ typedef void (*app_log_trans_func_t)(uint8_t *p_data, uint16_t length);
 
 /**@brief  APP LOG flush function type. */
 typedef void (*app_log_flush_func_t)(void);
+
+/**@brief  APP LOG flush function type for assert. */
+typedef void (*app_log_assert_flush_func_t)(void);
 /** @} */
 
 /**
@@ -192,6 +196,16 @@ sdk_err_t app_log_init(app_log_init_t *p_log_init, app_log_trans_func_t trans_fu
 
 /**
  *****************************************************************************************
+ * @brief Initialize app log assert function.
+ *
+ * @param[in] assert_flush_func: App log flush function for assert.
+ *
+ *****************************************************************************************
+ */
+void app_log_assert_flush_init(app_log_assert_flush_func_t assert_flush_func);
+
+/**
+ *****************************************************************************************
  * @brief Output app log.
  *
  * @param[in] level: App log severity level.
@@ -199,7 +213,7 @@ sdk_err_t app_log_init(app_log_init_t *p_log_init, app_log_trans_func_t trans_fu
  * @param[in] file:  File name.
  * @param[in] func:  Funciton name.
  * @param[in] line： Line number.
- * @param[in] fomat: Output format.
+ * @param[in] format: Output format.
  * @param[in] ...:   Arguments.
  *****************************************************************************************
  */
@@ -209,11 +223,31 @@ void app_log_output(uint8_t level, const char *tag, const char *file, const char
  *****************************************************************************************
  * @brief Output RAW format log
  *
- * @param[in] fomat: Output format.
+ * @param[in] format: Output format.
  * @param[in] ...:   Arguments.
  *****************************************************************************************
  */
 void app_log_raw_info(const char *format, ...);
+
+/**
+ *****************************************************************************************
+ * @brief Output RAW format log with va_list param
+ *
+ * @param[in] format: Output format.
+ * @param[in] ap:   Arguments.
+ *****************************************************************************************
+ */
+void app_log_raw_info_va_list(const char *format, va_list ap);
+
+/**
+ *****************************************************************************************
+ * @brief Output RAW format log, and append newline at the end of the format string.
+ *
+ * @param[in] fomat: Output format.
+ * @param[in] ...:   Arguments.
+ *****************************************************************************************
+ */
+void app_log_raw_info_append_newline(const char *format, ...);
 
 /**
  *****************************************************************************************
@@ -231,6 +265,14 @@ void app_log_hex_dump(void *p_data, uint16_t length);
  *****************************************************************************************
  */
 void app_log_flush(void);
+
+/**
+ *****************************************************************************************
+ * @brief Flush app log for assert.
+ *****************************************************************************************
+ */
+void app_log_assert_flush(void);
+
 /** @} */
 
 #endif

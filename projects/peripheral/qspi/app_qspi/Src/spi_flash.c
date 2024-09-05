@@ -267,18 +267,38 @@ static uint32_t spi_flash_read_config(void)
 
 static void spi_flash_write_status(uint32_t status)
 {
-    uint8_t control_frame[4], length = 3;
-    control_frame[0] = SPI_FLASH_CMD_WRSR;
-    control_frame[1] = status & 0xFF;
-    control_frame[2] = (status >> 8) & 0xFF;
-    control_frame[3] = (status >> 16) & 0xFF;
+    uint8_t length;
+    uint8_t control_frame[4];
 
+    if(SPI_FLASH_Read_Device_ID() == SPI_FLASH_TYE_PY25Q128)
+    {
+        /* Send the lower 8 bits */
+        control_frame[0] = SPI_FLASH_CMD_WRSR;
+        control_frame[1] = status & 0xFF;
+        length = 2;
+        SPI_FLASH_WREN();
+        g_master_tdone = 0;
+        app_qspi_dma_transmit_async_ex(g_qspi_params.id, QSPI_DATA_MODE_SPI, QSPI_DATASIZE_08_BITS, control_frame, length);
+        while(g_master_tdone == 0);
+        SPI_FLASH_Wait_Busy();
+
+        /* Send the high 8 bits */
+        control_frame[0] = SPI_FLASH_CMD_WRSR1;
+        control_frame[1] = (status >> 8) & 0xFF;
+    }
+    else
+    {
+        control_frame[0] = SPI_FLASH_CMD_WRSR;
+        control_frame[1] = status & 0xFF;
+        control_frame[2] = (status >> 8) & 0xFF;
+        control_frame[3] = (status >> 16) & 0xFF;
+
+        if (SPI_FLASH_TYE_MX25 == spi_flash_type)
+            length = 4;
+        else if ((SPI_FLASH_TYE_PY25 == spi_flash_type) || (SPI_FLASH_TYE_XTX25 == spi_flash_type))
+            length = 3;
+    }
     SPI_FLASH_WREN();
-
-    if (SPI_FLASH_TYE_MX25 == spi_flash_type)
-        length = 4;
-    else if ((SPI_FLASH_TYE_PY25 == spi_flash_type) || (SPI_FLASH_TYE_XTX25 == spi_flash_type))
-        length = 3;
     g_master_tdone = 0;
     app_qspi_dma_transmit_async_ex(g_qspi_params.id, QSPI_DATA_MODE_SPI, QSPI_DATASIZE_08_BITS, control_frame, length);
     while(g_master_tdone == 0);
@@ -291,7 +311,7 @@ static void spi_flash_write_status(uint32_t status)
  */
 uint8_t SPI_FLASH_init(void)
 {
-    uint16_t ret;
+    uint16_t ret = APP_DRV_SUCCESS;
     app_io_init_t io_init = APP_IO_DEFAULT_CONFIG;
 
     if(g_qspi_params.init.clock_prescaler == 2){
@@ -300,15 +320,17 @@ uint8_t SPI_FLASH_init(void)
         g_qspi_params.init.rx_sample_delay = 0;
     }
 
+    /* Please initialize DMA in the following order. */
+    /* Note: Initialization is not allowed during the transmission process. */
     ret = app_qspi_init(&g_qspi_params, app_qspi_callback);
-    if (ret != 0)
+    if (ret != APP_DRV_SUCCESS)
     {
         APP_LOG_ERROR("QSPI initial failed! Please check the input paraments.");
         return 1;
     }
 
     ret = app_qspi_dma_init(&g_qspi_params);
-    if (ret != 0)
+    if (ret != APP_DRV_SUCCESS)
     {
         APP_LOG_ERROR("QSPI initial dma failed! Please check the input paraments.");
         return 1;
@@ -316,13 +338,21 @@ uint8_t SPI_FLASH_init(void)
 
     io_init.mode = APP_IO_MODE_OUTPUT;
     io_init.pin  = g_qspi_params.pin_cfg.io_2.pin;
+#if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5525X)
     io_init.mux  = APP_IO_MUX_7;
+#else
+    io_init.mux  = APP_IO_MUX_8;
+#endif
     io_init.pull = APP_IO_PULLUP;
     app_io_init(g_qspi_params.pin_cfg.io_2.type, &io_init);
 
     io_init.mode = APP_IO_MODE_OUTPUT;
     io_init.pin  = g_qspi_params.pin_cfg.io_3.pin;
+#if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5525X)
     io_init.mux  = APP_IO_MUX_7;
+#else
+    io_init.mux  = APP_IO_MUX_8;
+#endif
     io_init.pull = APP_IO_PULLUP;
     app_io_init(g_qspi_params.pin_cfg.io_3.type, &io_init);
 
@@ -340,7 +370,10 @@ uint8_t SPI_FLASH_init(void)
     return spi_flash_type;
 }
 
-void SPI_FLASH_deinit(void) {
+void SPI_FLASH_deinit(void) 
+{
+    /* Please deinitialize DMA in the following order. */
+    app_qspi_dma_deinit(g_qspi_params.id);
     app_qspi_deinit(g_qspi_params.id);
     memset(&g_qspi_params, 0, sizeof(app_qspi_params_t));
 }
@@ -591,13 +624,21 @@ void SPI_FLASH_Disable_Quad(void)
 
     io_init.mode = APP_IO_MODE_OUTPUT;
     io_init.pin = g_qspi_params.pin_cfg.io_2.pin;
+#if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5525X)
     io_init.mux = APP_IO_MUX_7;
+#else
+    io_init.mux  = APP_IO_MUX_8;
+#endif
     io_init.pull = APP_IO_PULLUP;
     app_io_init(g_qspi_params.pin_cfg.io_2.type, &io_init);
 
     io_init.mode = APP_IO_MODE_OUTPUT;
     io_init.pin = g_qspi_params.pin_cfg.io_3.pin;
+#if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5525X)
     io_init.mux = APP_IO_MUX_7;
+#else
+    io_init.mux  = APP_IO_MUX_8;
+#endif
     io_init.pull = APP_IO_PULLUP;
     app_io_init(g_qspi_params.pin_cfg.io_3.type, &io_init);
 

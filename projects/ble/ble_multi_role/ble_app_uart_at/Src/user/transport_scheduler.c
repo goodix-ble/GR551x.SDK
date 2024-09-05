@@ -65,8 +65,8 @@ static uint8_t           s_uart_tx_data[ONCE_SEND_DATA_SIZE];
 static uint8_t           s_ble_tx_data[ONCE_SEND_DATA_SIZE];
 static uint8_t           s_uart_to_ble_data[DATA_CACHE_BUFFER_SIZE];
 static uint8_t           s_ble_to_uart_data[DATA_CACHE_BUFFER_SIZE];
-static ring_buffer_t     s_uart_to_ble_buffer;
-static ring_buffer_t     s_ble_to_uart_buffer;
+ring_buffer_t            s_uart_to_ble_buffer;
+ring_buffer_t            s_ble_to_uart_buffer;
 static bool              s_transport_flag[TRANSPORT_FLAGS_NB];
 
 /*

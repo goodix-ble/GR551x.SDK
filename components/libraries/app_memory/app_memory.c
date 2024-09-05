@@ -139,8 +139,7 @@ void *app_malloc(size_t size)
     app_mem_block_t *p_pre_block;
     app_mem_block_t *p_new_block;
     void            *return_ptr = NULL;
-
-    APP_MEM_LOCK();
+    size_t           raw_size = size;
 
     if (NULL == s_start_list_node.p_next_free_block)
     {
@@ -156,6 +155,8 @@ void *app_malloc(size_t size)
     {
         return return_ptr;
     }
+
+    APP_MEM_LOCK();
 
     if (size > 0 && size < s_curr_free_bytes)
     {
@@ -194,6 +195,7 @@ void *app_malloc(size_t size)
         }
     }
 
+    memset(return_ptr, 0, raw_size);
     APP_MEM_UNLOCK();
 
     return return_ptr;

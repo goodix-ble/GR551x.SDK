@@ -173,9 +173,6 @@ Revision: $Rev: 4351 $
                                                 : "r0", "r1"                   \
                                                 );                             \
                             }
-#else
-    #define SEGGER_RTT_LOCK()  
-    #define SEGGER_RTT_UNLOCK()
   #endif
 #endif
 

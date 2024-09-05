@@ -51,11 +51,11 @@
 #endif
 
 #ifndef APP_MEM_HEAP_SIZE
-#define APP_MEM_HEAP_SIZE           (4 * 1024)      /**< Total app memory heap size. */
+#define APP_MEM_HEAP_SIZE           (8 * 1024)      /**< Total app memory heap size. */
 #endif
 
-#define APP_MEM_LOCK()    GLOBAL_EXCEPTION_DISABLE() /**< App memory lock. */
-#define APP_MEM_UNLOCK()  GLOBAL_EXCEPTION_ENABLE()  /**< App memory unlock. */
+#define APP_MEM_LOCK()              LOCAL_INT_DISABLE(BLE_IRQn) /**< App memory lock. */
+#define APP_MEM_UNLOCK()            LOCAL_INT_RESTORE()           /**< App memory unlock. */
 /** @} */
 
 

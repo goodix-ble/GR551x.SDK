@@ -73,7 +73,7 @@ static const uart_dma_info_t s_dma_info[APP_UART_ID_MAX] = {
             .tx = DMA0_REQUEST_UART0_TX,
             .rx = DMA0_REQUEST_UART0_RX,
         },
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X)
+#if ((APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X))
         .dma1_request = {
             .tx = DMA1_REQUEST_UART0_TX,
             .rx = DMA1_REQUEST_UART0_RX,
@@ -288,7 +288,7 @@ static uint16_t app_uart_config_dma(app_uart_params_t *p_params)
 
 uint16_t app_uart_dma_init(app_uart_params_t *p_params)
 {
-    app_uart_id_t  id  = p_params->id;
+    app_uart_id_t  id;
     app_drv_err_t  err_code;
 
     if (p_params == NULL)
@@ -296,15 +296,7 @@ uint16_t app_uart_dma_init(app_uart_params_t *p_params)
         return APP_DRV_ERR_POINTER_NULL;
     }
 
-    if (id >= APP_UART_ID_MAX)
-    {
-        return APP_DRV_ERR_INVALID_ID;
-    }
-
-    if ((p_uart_env[id] == NULL) || (p_uart_env[id]->uart_state == APP_UART_INVALID))
-    {
-        return APP_DRV_ERR_NOT_INIT;
-    }
+    id  = p_params->id;
 
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
     if (id == APP_UART_ID_1)
@@ -313,9 +305,14 @@ uint16_t app_uart_dma_init(app_uart_params_t *p_params)
     }
 #endif
 
-    if (p_uart_env[id]->uart_dma_state == APP_UART_DMA_ACTIVITY)
+    if ((p_uart_env[id] == NULL) || (p_uart_env[id]->uart_state == APP_UART_INVALID))
     {
-        app_uart_dma_deinit(id);
+        return APP_DRV_ERR_NOT_INIT;
+    }
+
+    if (p_uart_env[id]->uart_dma_state != APP_UART_DMA_INVALID)
+    {
+        return APP_DRV_ERR_INVALID_INIT;
     }
 
     GLOBAL_EXCEPTION_DISABLE();
@@ -348,14 +345,7 @@ uint16_t app_uart_dma_deinit(app_uart_id_t id)
     app_dma_deinit(p_uart_env[id]->dma_id[0]);
     app_dma_deinit(p_uart_env[id]->dma_id[1]);
 
-    GLOBAL_EXCEPTION_DISABLE();
     p_uart_env[id]->uart_dma_state = APP_UART_DMA_INVALID;
-    GLOBAL_EXCEPTION_ENABLE();
-
-    if (p_uart_env[id]->uart_state == APP_UART_INVALID)
-    {
-        p_uart_env[id] = NULL;
-    }
 
     return APP_DRV_SUCCESS;
 }
@@ -369,9 +359,9 @@ uint16_t app_uart_dma_receive_async(app_uart_id_t id, uint8_t *p_data, uint16_t 
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_uart_env[id] == NULL) || (p_uart_env[id]->uart_state == APP_UART_INVALID))
+    if ((p_uart_env[id] == NULL) || (p_uart_env[id]->uart_dma_state == APP_UART_DMA_INVALID))
     {
-        return APP_DRV_ERR_POINTER_NULL;
+        return APP_DRV_ERR_NOT_INIT;
     }
 
     if (p_data == NULL || size == 0)
@@ -436,9 +426,9 @@ uint16_t app_uart_dma_transmit_async(app_uart_id_t id, uint8_t *p_data, uint16_t
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_uart_env[id] == NULL) || (p_uart_env[id]->uart_state == APP_UART_INVALID))
+    if ((p_uart_env[id] == NULL) || (p_uart_env[id]->uart_dma_state == APP_UART_DMA_INVALID))
     {
-        return APP_DRV_ERR_POINTER_NULL;
+        return APP_DRV_ERR_NOT_INIT;
     }
 
     if (p_data == NULL || size == 0)
@@ -483,9 +473,9 @@ uint16_t app_uart_transmit_dma_sg_llp(app_uart_id_t id, uint8_t *p_data, uint16_
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_uart_env[id] == NULL) || (p_uart_env[id]->uart_state == APP_UART_INVALID))
+    if ((p_uart_env[id] == NULL) || (p_uart_env[id]->uart_dma_state == APP_UART_DMA_INVALID))
     {
-        return APP_DRV_ERR_POINTER_NULL;
+        return APP_DRV_ERR_NOT_INIT;
     }
 
     if (p_data == NULL || size == 0 || sg_llp_config == NULL)
@@ -528,9 +518,9 @@ uint16_t app_uart_receive_dma_sg_llp(app_uart_id_t id, uint8_t *p_data, uint16_t
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_uart_env[id] == NULL) || (p_uart_env[id]->uart_state == APP_UART_INVALID))
+    if ((p_uart_env[id] == NULL) || (p_uart_env[id]->uart_dma_state == APP_UART_DMA_INVALID))
     {
-        return APP_DRV_ERR_POINTER_NULL;
+        return APP_DRV_ERR_NOT_INIT;
     }
 
     if (p_data == NULL || size == 0 || sg_llp_config == NULL)

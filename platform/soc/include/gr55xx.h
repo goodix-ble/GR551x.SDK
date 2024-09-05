@@ -39,11 +39,6 @@
 #endif
 #endif
 
-#if defined (__GNUC__)
-#define __ramfunc __attribute__((noinline)) \
-                  __attribute__((long_call, section(".ramfunc")))
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -147,34 +142,60 @@ typedef enum
 #define UNUSED(x) ((void)(x))
 #endif
 
-#ifndef SECTION_RAM_CODE
-#if defined(CFG_LAYER_TAG_ROM)
-    #define SECTION_RAM_CODE
-#else
-#if defined ( __ICCARM__ ) || defined (__GNUC__)
-    #define SECTION_RAM_CODE __ramfunc
-#else
-    #define SECTION_RAM_CODE __attribute__((section("RAM_CODE")))   /**< To prevent doxygen from misidentifying the function name */
-#endif
-#endif
-#endif
+#if defined ( __CC_ARM )
+  #ifndef C_CONSTRUCTOR
+    #define C_CONSTRUCTOR __attribute__((constructor))
+  #endif /* C_CONSTRUCTOR */
 
-#ifndef C_CONSTRUCTOR
-#if defined ( __ICCARM__ )
-#define C_CONSTRUCTOR
+  #ifndef SECTION_RAM_CODE
+    #if defined(CFG_LAYER_TAG_ROM)
+      #define SECTION_RAM_CODE
+    #else
+      #define SECTION_RAM_CODE __attribute__((section("RAM_CODE")))
+    #endif
+  #endif /* SECTION_RAM_CODE */
+
+  #ifndef RESERVE_RAM_SECTION
+    #define RESERVE_RAM_SECTION __attribute__((section("RAM_RESERVE"),zero_init))   /**< To prevent doxygen from misidentifying the function name */
+  #endif
+
+#elif defined ( __GNUC__ )
+  #ifndef C_CONSTRUCTOR
+    #define C_CONSTRUCTOR __attribute__((constructor))
+  #endif /* C_CONSTRUCTOR */
+
+  #ifndef SECTION_RAM_CODE
+    #if defined(CFG_LAYER_TAG_ROM)
+      #define SECTION_RAM_CODE
+    #else
+      #define SECTION_RAM_CODE __ramfunc
+      #pragma GCC diagnostic ignored "-Wattributes"
+      #define __ramfunc __attribute__((noinline)) \
+                        __attribute__((long_call, section(".ramfunc")))
+    #endif /* CFG_LAYER_TAG_ROM */
+  #endif /* SECTION_RAM_CODE */
+
+#elif defined ( __ICCARM__ )
+  #ifndef C_CONSTRUCTOR
+    #define C_CONSTRUCTOR
+  #endif /* C_CONSTRUCTOR */
+
+  #ifndef SECTION_RAM_CODE
+    #if defined(CFG_LAYER_TAG_ROM)
+      #define SECTION_RAM_CODE
+    #else
+      #define SECTION_RAM_CODE __ramfunc
+    #endif /* CFG_LAYER_TAG_ROM */
+    #pragma diag_suppress=Ta022
+    #pragma diag_suppress=Ta023
+  #endif /* SECTION_RAM_CODE */
+
 #else
-#define C_CONSTRUCTOR __attribute__((constructor))
-#endif
+  #error Unknown compiler.
 #endif
 
 #ifndef TINY_RAM_SECTION
     #define TINY_RAM_SECTION SECTION_RAM_CODE
-#endif
-
-#ifndef RESERVE_RAM_SECTION
-#if defined ( __CC_ARM )
-#define RESERVE_RAM_SECTION __attribute__((section("RAM_RESERVE"),zero_init))   /**< To prevent doxygen from misidentifying the function name */
-#endif
 #endif
 
 /** @brief Disable interrupts globally in the system(apart from the NMI).

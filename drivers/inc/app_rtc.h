@@ -66,13 +66,14 @@ extern "C" {
   * @{
   */
 
-/**
-  * @brief   App rtc time disable macro definition
+/** @defgroup App rtc time disable macro definition
+  * @{
   */
-
 #define APP_RTC_ALARM_DISABLE_DATE          CALENDAR_ALARM_DISABLE_DATE /**< Disable rtc date alarm */
 #define APP_RTC_ALARM_DISABLE_TICK          CALENDAR_ALARM_DISABLE_TICK /**< Disable rtc tick alarm */
 #define APP_RTC_ALARM_DISABLE_ALL           CALENDAR_ALARM_DISABLE_ALL  /**< Disable rtc all alarm */
+/** @} */
+
 /** @} */
 
 /** @addtogroup APP_RTC_ENUM Enumerations
@@ -83,9 +84,9 @@ extern "C" {
   */
 typedef enum
 {
-    APP_RTC_EVT_DATE_ALARM,                 /**< Date alarm event.  */
-    APP_RTC_EVT_TICK_ALARM,                 /**< Tick alarm event.  */
-    APP_RTC_EVT_OVERFLOW,                   /**< Overflow event.  */
+    APP_RTC_EVT_DATE_ALARM,                 /**< Date alarm event. */
+    APP_RTC_EVT_TICK_ALARM,                 /**< Tick alarm event. */
+    APP_RTC_EVT_OVERFLOW,                   /**< Overflow event. */
 } app_rtc_evt_type_t;
 /** @} */
 
@@ -111,6 +112,11 @@ typedef struct
     app_rtc_evt_type_t  type; /**< Type of event. */
 } app_rtc_evt_t;
 
+/** @} */
+
+/** @addtogroup APP_RTC_TYPEDEFS Type definitions
+  * @{
+  */
 /**
   * @brief RTC event callback definition
   */
@@ -147,7 +153,7 @@ uint16_t app_rtc_deinit(void);
  ****************************************************************************************
  * @brief  Initialize the rtc time.
  *
- * @param[in]  p_time: Pointer to a app_rtc_time_t time struction.
+ * @param[in]  p_time: Pointer to a app_rtc_time_t time struct.
  *
  * @return Result of operation.
  ****************************************************************************************
@@ -158,7 +164,7 @@ uint16_t app_rtc_init_time(app_rtc_time_t *p_time);
  ****************************************************************************************
  * @brief  Get current rtc time.
  *
- * @param[in]  p_time: Pointer to a app_rtc_time_t time struction.
+ * @param[in]  p_time: Pointer to a app_rtc_time_t time struct.
  *
  * @return Result of operation.
  ****************************************************************************************
@@ -213,7 +219,7 @@ uint16_t app_rtc_disable_event(uint32_t disable_mode);
  * @return None.
  ****************************************************************************************
  */
-void app_rtc_time_sync(uint16_t SlowClockFreq);
+void app_rtc_time_sync(float SlowClockFreq);
 #endif
 /** @} */
 

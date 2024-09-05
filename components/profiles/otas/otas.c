@@ -394,6 +394,15 @@ static void otas_ble_evt_handler(const ble_evt_t *p_evt)
         case BLE_GATTS_EVT_CCCD_RECOVERY:
             otas_cccd_set_evt_handler(p_evt->evt.gatts_evt.index, p_evt->evt.gatts_evt.params.cccd_recovery.handle, p_evt->evt.gatts_evt.params.cccd_recovery.cccd_val);
             break;
+
+        case BLE_GAPC_EVT_DISCONNECTED:
+        {
+            otas_evt_t event;
+            event.evt_type = OTAS_EVT_DISCONNECT;
+            event.conn_idx = p_evt->evt.gatts_evt.index;
+            s_otas_env.otas_init.evt_handler(&event);
+            break;
+        }
     }
 }
 
@@ -443,6 +452,7 @@ sdk_err_t otas_service_init(otas_init_t *p_otas_init)
 
     return ble_gatts_prf_add(&s_otas_env.otas_att_db, otas_ble_evt_handler);
 }
+
 
 uint16_t otas_service_start_handle_get(void)
 {

@@ -83,7 +83,6 @@
 /** @brief app timer clock and some time conversion formula definitions */
 #define APP_TIMER_CLK_FREQ_HZ           (hal_sleep_timer_get_clock_freq())
 #define APP_TIMER_MS_TO_US(x)           ((x) * 1000UL)
-//#define APP_TIMER_US_TO_TICKS(x)        ((((uint64_t)(x) * APP_TIMER_CLK_FREQ_HZ) + (999999)) / 1000000)
 #define APP_TIMER_US_TO_TICKS(x)        (((double)(x) * APP_TIMER_CLK_FREQ_HZ / 1000000.0) + 0.5)
 #define APP_TIMER_TICKS_TO_US(x)        ((uint64_t)(x) * 1000000.0f / APP_TIMER_CLK_FREQ_HZ)
 
@@ -96,22 +95,28 @@
 #define APP_TIMER_DELAY_MS_MIN          (1)
 #define APP_TIMER_DELAY_MS_MAX          (36 * 3600 * 1000)
 #define APP_TIMER_DELAY_US_MAX          ((uint64_t)APP_TIMER_DELAY_MS_MAX * 1000)
-#define APP_TIMER_TRIGGER_WINDOW_US     (0)
+#define APP_TIMER_OVERFLOW_VALUE        (0xFFFFFFFF)
 
+#if APP_TIMER_TRIGGER_WINDOW_ENABLE
+/** @brief app timer trigger window definitions */
+#define APP_TIMER_TRIGGER_WINDOW_US     (0)
 #define FALL_WITHIN_TRIGGER_WINDOW(x)   (((x) - s_app_timer_info.apptimer_total_us) <= s_app_timer_info.apptimer_trigger_window_us)
 #define WITHIN_TRIGGER_WINDOW_MARK(x)   (x->timer_mark = true)
 #define WITHIN_TRIGGER_WINDOW_CLEAR(x)  (x->timer_mark = false)
 #define IS_TRIGGER_WINDOW_MARKED(x)     (x->timer_mark == true)
+#endif
 
 /** @brief App timer global state variable. */
 typedef struct app_timer_struct
 {
     uint32_t        cnt_node;
     app_timer_t    *p_curr_timer_node;
-    app_timer_t    *p_within_window_one_shot_node_hd;
     uint64_t        apptimer_total_us;
-    uint64_t        apptimer_trigger_window_us;
     app_timer_t     hd_node;
+#if APP_TIMER_TRIGGER_WINDOW_ENABLE
+    app_timer_t    *p_within_window_one_shot_node_hd;
+    uint64_t        apptimer_trigger_window_us;
+#endif
 }app_timer_info_t;
 
 /** @brief App timer node state variable. */
@@ -127,9 +132,11 @@ static app_timer_info_t s_app_timer_info =
 {
     .cnt_node                           = 0,
     .p_curr_timer_node                  = NULL,
-    .p_within_window_one_shot_node_hd   = NULL,
     .apptimer_total_us                  = 0,
+#if APP_TIMER_TRIGGER_WINDOW_ENABLE
+    .p_within_window_one_shot_node_hd   = NULL,
     .apptimer_trigger_window_us         = APP_TIMER_TRIGGER_WINDOW_US,
+#endif
 };
 
 /*
@@ -142,8 +149,10 @@ static void            low_level_timer_stop(void);
 static uint64_t        low_level_timer_rest_get(void);
 static uint8_t         app_timer_running_queue_insert(app_timer_id_t *p_timer_id);
 static app_timer_id_t* app_timer_running_queue_remove(app_timer_id_t *p_timer_id);
+#if APP_TIMER_TRIGGER_WINDOW_ENABLE
 static uint8_t         app_timer_running_queue_trigger_window_mark(void);
 static uint8_t         app_timer_running_queue_trigger_window_execute(void);
+#endif
 static void            app_timer_node_init(app_timer_id_t *p_timer_id, uint64_t delay, void *p_ctx, uint64_t insert_time);
 static uint8_t         is_need_insert_front(uint64_t delay_value, uint64_t rest_time);
 static uint8_t         is_timer_node_created(app_timer_id_t *p_timer_id);
@@ -166,10 +175,10 @@ void SLPTIMER_IRQHandler(void)
  */
 void hal_pwr_sleep_timer_elapsed_callback(void)
 {
+    APP_TIMER_LOCK();
     app_timer_t *p_curr_node = app_timer_running_queue_remove(NULL);
 
     APP_ASSERT_CHECK(p_curr_node);
-
     s_app_timer_info.apptimer_total_us = p_curr_node->next_shot_time;
     if (s_app_timer_info.apptimer_total_us >= APP_TIMER_DELAY_US_MAX)
     {
@@ -197,7 +206,11 @@ void hal_pwr_sleep_timer_elapsed_callback(void)
         app_timer_running_queue_insert(p_curr_node);
     }
 
+    APP_TIMER_UNLOCK();
+
+#if APP_TIMER_TRIGGER_WINDOW_ENABLE
     app_timer_running_queue_trigger_window_mark();
+#endif
 
     if (s_app_timer_info.p_curr_timer_node)
     {
@@ -210,7 +223,9 @@ void hal_pwr_sleep_timer_elapsed_callback(void)
     else
         APP_ASSERT_CHECK(false);
 
+#if APP_TIMER_TRIGGER_WINDOW_ENABLE
     app_timer_running_queue_trigger_window_execute();
+#endif
 }
 
 sdk_err_t app_timer_start_api(app_timer_id_t *p_timer_id, uint32_t delay, void *p_ctx)
@@ -331,6 +346,17 @@ sdk_err_t app_timer_delete(app_timer_id_t *p_timer_id)
     return SDK_SUCCESS;
 }
 
+sdk_err_t app_timer_deinit(void)
+{
+    if (app_timer_get_status() == RUN)
+    {
+        low_level_timer_stop();
+        NVIC_ClearPendingIRQ(SLPTIMER_IRQn);
+        NVIC_DisableIRQ(SLPTIMER_IRQn);
+    }
+    return SDK_SUCCESS;
+}
+
 uint8_t app_timer_get_status(void)
 {
     uint8_t status = (uint8_t)STOP;
@@ -345,6 +371,7 @@ uint8_t app_timer_get_status(void)
     return status;
 }
 
+#if APP_TIMER_TRIGGER_WINDOW_ENABLE
 void app_timer_trigger_window_set(uint64_t window_us)
 {
     APP_TIMER_LOCK();
@@ -362,6 +389,7 @@ uint64_t app_timer_trigger_window_get(void)
 
     return window_us;
 }
+#endif
 
 sdk_err_t app_timer_create(app_timer_id_t *p_timer_id, app_timer_type_t mode, app_timer_fun_t callback)
 {
@@ -371,6 +399,11 @@ sdk_err_t app_timer_create(app_timer_id_t *p_timer_id, app_timer_type_t mode, ap
     if ((NULL == p_timer_id) || (NULL == callback))
     {
         return SDK_ERR_INVALID_PARAM;
+    }
+
+    if (RUN == p_timer_id->timer_node_status)
+    {
+        return SDK_ERR_BUSY;
     }
 
     APP_TIMER_LOCK();
@@ -401,12 +434,14 @@ static void sleep_timer_handler_register(void)
 static void low_level_timer_startup(uint64_t value)
 {
     uint32_t timeout  = 0;
-    uint32_t lpcycles = APP_TIMER_US_TO_TICKS(value);
+    uint32_t lpcycles =(uint32_t) APP_TIMER_US_TO_TICKS(value);
 
     APP_ASSERT_CHECK(value <= APP_TIMER_DELAY_US_MAX);
 
     hal_sleep_timer_config_and_start(PWR_SLP_TIMER_MODE_SINGLE, lpcycles);
-    while (!hal_sleep_timer_status_get())
+
+    /* Wait for slp timer current value update */
+    while (!hal_sleep_timer_status_get() || hal_sleep_timer_get_current_value() == APP_TIMER_OVERFLOW_VALUE)
     {
         delay_us(1);
         if (timeout++ >= APP_TIMER_INTERNAL_TIMEOUT)
@@ -438,12 +473,12 @@ static uint64_t low_level_timer_rest_get(void)
     uint32_t atimer_curr_ticks = hal_sleep_timer_get_current_value();
     uint64_t curr_rest_us = 0;
 
-    if (atimer_curr_ticks == 0xFFFFFFFF)
+    if (atimer_curr_ticks == APP_TIMER_OVERFLOW_VALUE)
     {
         return 0;
     }
 
-    curr_rest_us = APP_TIMER_TICKS_TO_US(atimer_curr_ticks);
+    curr_rest_us =(uint64_t) APP_TIMER_TICKS_TO_US(atimer_curr_ticks);
     if (s_app_timer_info.p_curr_timer_node)
     {
         if (curr_rest_us > (s_app_timer_info.p_curr_timer_node->next_shot_time - s_app_timer_info.apptimer_total_us))
@@ -490,6 +525,7 @@ static uint8_t app_timer_running_queue_insert(app_timer_t *p_timer_id)
     return true;
 }
 
+#if APP_TIMER_TRIGGER_WINDOW_ENABLE
 static uint8_t app_timer_running_queue_trigger_window_mark(void)
 {
     // todo:
@@ -519,12 +555,20 @@ static uint8_t app_timer_running_queue_trigger_window_mark(void)
             else
             {
                 app_timer_t **pp_trigger_window_one_shot_node_tail = &s_app_timer_info.p_within_window_one_shot_node_hd;
-                while (*pp_trigger_window_one_shot_node_tail)
-                {
-                    pp_trigger_window_one_shot_node_tail = &(*pp_trigger_window_one_shot_node_tail)->p_next;
-                }
                 p_triggered_node->p_next = NULL;
-                (*pp_trigger_window_one_shot_node_tail)->p_next = p_triggered_node;
+
+                if (NULL == *pp_trigger_window_one_shot_node_tail)
+                {
+                    *pp_trigger_window_one_shot_node_tail = p_triggered_node;
+                }
+                else
+                {
+                    while (*pp_trigger_window_one_shot_node_tail)
+                    {
+                        pp_trigger_window_one_shot_node_tail = &(*pp_trigger_window_one_shot_node_tail)->p_next;
+                    }
+                    *pp_trigger_window_one_shot_node_tail = p_triggered_node;
+                }
             }
         }
         else
@@ -583,6 +627,7 @@ static uint8_t app_timer_running_queue_trigger_window_execute(void)
     APP_TIMER_UNLOCK();
     return true;
 }
+#endif
 
 static app_timer_t *app_timer_running_queue_remove(app_timer_id_t *p_timer_id)
 {

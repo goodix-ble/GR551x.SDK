@@ -559,7 +559,6 @@ static void app_adv_stopped_handler(ble_gap_stopped_reason_t reason)
 static void app_paring_succeed_handler(void)
 {
     pair_successful_flag = true;
-    ble_gap_privacy_mode_set(s_bonded_bdaddr, BLE_GAP_PRIVACY_MODE_DEVICE);
 }
 
 static void app_paring_failed_handler(uint8_t enc_ind)

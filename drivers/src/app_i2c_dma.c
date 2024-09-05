@@ -301,7 +301,7 @@ static uint16_t app_i2c_config_dma(app_i2c_params_t *p_params)
  */
 uint16_t app_i2c_dma_init(app_i2c_params_t *p_params)
 {
-    app_i2c_id_t  id = p_params->id;
+    app_i2c_id_t  id;
     app_drv_err_t app_err_code;
 
     if (NULL == p_params)
@@ -309,14 +309,16 @@ uint16_t app_i2c_dma_init(app_i2c_params_t *p_params)
         return APP_DRV_ERR_POINTER_NULL;
     }
 
-    if (id >= APP_I2C_ID_MAX)
-    {
-        return APP_DRV_ERR_INVALID_ID;
-    }
+    id = p_params->id;
 
     if ((p_i2c_env[id] == NULL) || (p_i2c_env[id]->i2c_state == APP_I2C_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
+    }
+
+    if (p_i2c_env[id]->i2c_dma_state != APP_I2C_DMA_INVALID)
+    {
+        return APP_DRV_ERR_INVALID_INIT;
     }
 
     GLOBAL_EXCEPTION_DISABLE();
@@ -349,13 +351,7 @@ uint16_t app_i2c_dma_deinit(app_i2c_id_t id)
     app_dma_deinit(p_i2c_env[id]->dma_id[0]);
     app_dma_deinit(p_i2c_env[id]->dma_id[1]);
 
-    GLOBAL_EXCEPTION_DISABLE();
     p_i2c_env[id]->i2c_dma_state = APP_I2C_DMA_INVALID;
-    GLOBAL_EXCEPTION_ENABLE();
-    if (p_i2c_env[id]->i2c_state == APP_I2C_INVALID)
-    {
-        p_i2c_env[id] = NULL;
-    }
 
     return APP_DRV_SUCCESS;
 }
@@ -369,7 +365,7 @@ uint16_t app_i2c_dma_receive_async(app_i2c_id_t id, uint16_t target_address, uin
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_i2c_env[id] == NULL) || (p_i2c_env[id]->i2c_state == APP_I2C_INVALID))
+    if ((p_i2c_env[id] == NULL) || (p_i2c_env[id]->i2c_dma_state == APP_I2C_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -383,15 +379,16 @@ uint16_t app_i2c_dma_receive_async(app_i2c_id_t id, uint16_t target_address, uin
     i2c_wake_up(id);
 #endif
 
-    p_i2c_env[id]->slv_dev_addr = target_address;
-
     if(p_i2c_env[id]->start_flag == false)
     {
         p_i2c_env[id]->start_flag = true;
+        p_i2c_env[id]->slv_dev_addr = target_address;
         switch(p_i2c_env[id]->role)
         {
             case APP_I2C_ROLE_MASTER:
+                GLOBAL_EXCEPTION_DISABLE();
                 err_code = hal_i2c_master_receive_dma(&p_i2c_env[id]->handle, target_address, p_data, size);
+                GLOBAL_EXCEPTION_ENABLE();
                 break;
 
             case APP_I2C_ROLE_SLAVE:
@@ -425,7 +422,7 @@ uint16_t app_i2c_dma_transmit_async(app_i2c_id_t id, uint16_t target_address, ui
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_i2c_env[id] == NULL) || (p_i2c_env[id]->i2c_state == APP_I2C_INVALID))
+    if ((p_i2c_env[id] == NULL) || (p_i2c_env[id]->i2c_dma_state == APP_I2C_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -439,15 +436,16 @@ uint16_t app_i2c_dma_transmit_async(app_i2c_id_t id, uint16_t target_address, ui
     i2c_wake_up(id);
 #endif
 
-    p_i2c_env[id]->slv_dev_addr = target_address;
-
     if(p_i2c_env[id]->start_flag == false)
     {
         p_i2c_env[id]->start_flag = true;
+        p_i2c_env[id]->slv_dev_addr = target_address;
         switch(p_i2c_env[id]->role)
         {
             case APP_I2C_ROLE_MASTER:
+                GLOBAL_EXCEPTION_DISABLE();
                 err_code = hal_i2c_master_transmit_dma(&p_i2c_env[id]->handle, target_address, p_data, size);
+                GLOBAL_EXCEPTION_ENABLE();
                 break;
 
             case APP_I2C_ROLE_SLAVE:
@@ -481,7 +479,7 @@ uint16_t app_i2c_dma_mem_read_async(app_i2c_id_t id, uint16_t dev_address, uint1
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_i2c_env[id] == NULL) || (p_i2c_env[id]->i2c_state == APP_I2C_INVALID))
+    if ((p_i2c_env[id] == NULL) || (p_i2c_env[id]->i2c_dma_state == APP_I2C_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -495,12 +493,13 @@ uint16_t app_i2c_dma_mem_read_async(app_i2c_id_t id, uint16_t dev_address, uint1
     i2c_wake_up(id);
 #endif
 
-    p_i2c_env[id]->slv_dev_addr = mem_address;
-
     if(p_i2c_env[id]->start_flag == false)
     {
         p_i2c_env[id]->start_flag = true;
+        p_i2c_env[id]->slv_dev_addr = mem_address;
+        GLOBAL_EXCEPTION_DISABLE();
         err_code = hal_i2c_mem_read_dma(&p_i2c_env[id]->handle, dev_address, mem_address, mem_addr_size, p_data, size);
+        GLOBAL_EXCEPTION_ENABLE();
         if (err_code != HAL_OK)
         {
             p_i2c_env[id]->start_flag = false;
@@ -524,7 +523,7 @@ uint16_t app_i2c_dma_mem_write_async(app_i2c_id_t id, uint16_t dev_address, uint
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_i2c_env[id] == NULL) || (p_i2c_env[id]->i2c_state == APP_I2C_INVALID))
+    if ((p_i2c_env[id] == NULL) || (p_i2c_env[id]->i2c_dma_state == APP_I2C_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -538,13 +537,14 @@ uint16_t app_i2c_dma_mem_write_async(app_i2c_id_t id, uint16_t dev_address, uint
     i2c_wake_up(id);
 #endif
 
-    p_i2c_env[id]->slv_dev_addr = mem_address;
-
     if(p_i2c_env[id]->start_flag == false)
     {
         p_i2c_env[id]->start_flag = true;
+        p_i2c_env[id]->slv_dev_addr = mem_address;
 
+        GLOBAL_EXCEPTION_DISABLE();
         err_code = hal_i2c_mem_write_dma(&p_i2c_env[id]->handle, dev_address, mem_address, mem_addr_size, p_data, size);
+        GLOBAL_EXCEPTION_ENABLE();
         if (err_code != HAL_OK)
         {
             p_i2c_env[id]->start_flag = false;

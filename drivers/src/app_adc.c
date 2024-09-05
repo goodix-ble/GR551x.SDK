@@ -42,6 +42,7 @@
 #include "app_pwr_mgmt.h"
 #include "grx_sys.h"
 #include "app_adc.h"
+#include "app_drv.h"
 
 #ifdef HAL_ADC_MODULE_ENABLED
 
@@ -53,9 +54,14 @@ bool adc_prepare_for_sleep(void);
 void adc_wake_up_ind(void);
 
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
-static const uint32_t s_io_to_input_src[ADC_INPUT_SRC_REF+1] =
+const uint32_t s_io_to_input_src[ADC_INPUT_SRC_REF + 1] =
 {
-    MSIO_PIN_0, MSIO_PIN_1, MSIO_PIN_2, MSIO_PIN_3, MSIO_PIN_4, NULL, NULL, NULL
+    MSIO_PIN_0, MSIO_PIN_1, MSIO_PIN_2, MSIO_PIN_3, MSIO_PIN_4, 0, 0, 0
+};
+#else
+const uint32_t s_io_to_input_src[ADC_INPUT_SRC_REF + 1] =
+{
+    MSIO_PIN_0, MSIO_PIN_1, MSIO_PIN_2, MSIO_PIN_3, MSIO_PIN_4, MSIO_PIN_5, MSIO_PIN_6, MSIO_PIN_7
 };
 #endif
 
@@ -64,13 +70,10 @@ static const uint32_t s_io_to_input_src[ADC_INPUT_SRC_REF+1] =
  *****************************************************************************************
  */
 adc_env_t *p_adc_env = NULL;
-static bool      s_sleep_cb_registered_flag = false;
-static pwr_id_t  s_adc_pwr_id = -1;
 
 const static app_sleep_callbacks_t adc_sleep_cb =
 {
     .app_prepare_for_sleep = adc_prepare_for_sleep,
-    .app_sleep_canceled    = NULL,
     .app_wake_up_ind       = adc_wake_up_ind
 };
 
@@ -189,16 +192,7 @@ uint16_t app_adc_init(app_adc_params_t *p_params, app_adc_evt_handler_t evt_hand
     hal_err_code = hal_adc_init(&p_adc_env->handle);
     HAL_ERR_CODE_CHECK(hal_err_code);
 
-    if(!s_sleep_cb_registered_flag)    // register sleep callback
-    {
-        s_sleep_cb_registered_flag = true;
-        s_adc_pwr_id = pwr_register_sleep_cb(&adc_sleep_cb, APP_DRIVER_ADC_WAPEUP_PRIORITY);
-        if (s_adc_pwr_id < 0)
-        {
-            return APP_DRV_ERR_INVALID_PARAM;
-        }
-    }
-
+    pwr_register_sleep_cb(&adc_sleep_cb, APP_DRIVER_ADC_WAKEUP_PRIORITY, ADC_PWR_ID);
     p_adc_env->adc_state = APP_ADC_ACTIVITY;
 
     return APP_DRV_SUCCESS;
@@ -214,16 +208,10 @@ uint16_t app_adc_deinit(void)
     }
 
     p_adc_env->adc_state = APP_ADC_INVALID;
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
     p_adc_env->p_current_sample_node = NULL;
     p_adc_env->multi_channel = 0;
-#endif
 
-    GLOBAL_EXCEPTION_DISABLE();
-    pwr_unregister_sleep_cb(s_adc_pwr_id);
-    s_adc_pwr_id = -1;
-    s_sleep_cb_registered_flag = false;
-    GLOBAL_EXCEPTION_ENABLE();
+    pwr_unregister_sleep_cb(ADC_PWR_ID);
 
     hal_err_code = hal_adc_deinit(&p_adc_env->handle);
     HAL_ERR_CODE_CHECK(hal_err_code);
@@ -249,6 +237,11 @@ uint16_t app_adc_conversion_sync(uint16_t *p_data, uint32_t length, uint32_t tim
         return APP_DRV_ERR_INVALID_PARAM;
     }
 
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
 #ifdef APP_DRIVER_WAKEUP_CALL_FUN
     adc_wake_up();
 #endif
@@ -258,6 +251,40 @@ uint16_t app_adc_conversion_sync(uint16_t *p_data, uint32_t length, uint32_t tim
 
     return APP_DRV_SUCCESS;
 }
+
+#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X)
+uint16_t app_adc_clock_start(void)
+{
+    hal_status_t err_code;
+
+    if ((p_adc_env == NULL) || (p_adc_env->adc_state == APP_ADC_INVALID))
+    {
+        return APP_DRV_ERR_NOT_INIT;
+    }
+
+    err_code = hal_adc_clock_start(&p_adc_env->handle);
+    HAL_ERR_CODE_CHECK(err_code);
+
+    return APP_DRV_SUCCESS;
+}
+
+uint16_t app_adc_get_avg_voltage(float *p_data, uint32_t length)
+{
+    if ((p_adc_env == NULL) || (p_adc_env->adc_state == APP_ADC_INVALID))
+    {
+        return APP_DRV_ERR_NOT_INIT;
+    }
+
+    if(length == 0)
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
+    hal_adc_get_avg_voltage(&p_adc_env->handle, p_data, length);
+
+    return 0;
+}
+#endif
 
 uint16_t app_adc_conversion_async(uint16_t *p_data, uint32_t length)
 {
@@ -288,7 +315,6 @@ uint16_t app_adc_conversion_async(uint16_t *p_data, uint32_t length)
     return APP_DRV_SUCCESS;
 }
 
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
 uint16_t app_adc_multi_channel_conversion_async(app_adc_sample_node_t *p_begin_node, uint32_t total_nodes)
 {
     hal_status_t err_code;
@@ -336,12 +362,13 @@ uint16_t app_adc_multi_channel_conversion_async(app_adc_sample_node_t *p_begin_n
 
     app_io_init_t io_init = APP_IO_DEFAULT_CONFIG;
     io_init.mode = APP_IO_MODE_ANALOG;
-    io_init.mux  = APP_IO_MUX_7;
+    io_init.mux  = APP_IO_MUX;
+    io_init.pull = APP_IO_NOPULL;
     check_node_num = total_nodes;
     p_check_node = p_begin_node;
     while (check_node_num)//config all msios
     {
-        if (s_io_to_input_src[p_check_node->channel] != NULL)
+        if (s_io_to_input_src[p_check_node->channel])
         {
             io_init.pin  = s_io_to_input_src[p_check_node->channel];
             app_io_init(APP_IO_TYPE_MSIO, &io_init);
@@ -365,7 +392,6 @@ uint16_t app_adc_multi_channel_conversion_async(app_adc_sample_node_t *p_begin_n
 
     return APP_DRV_SUCCESS;
 }
-#endif
 
 uint16_t app_adc_voltage_intern(uint16_t *inbuf, double *outbuf, uint32_t buflen)
 {
@@ -455,7 +481,6 @@ void hal_adc_conv_cplt_callback(adc_handle_t *p_adc)
 {
     app_adc_evt_t evt;
 
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
     if(p_adc_env->multi_channel > 0)
     {
         p_adc_env->multi_channel--;
@@ -463,22 +488,20 @@ void hal_adc_conv_cplt_callback(adc_handle_t *p_adc)
 
     if(p_adc_env->multi_channel == 0)
     {
-#endif
         evt.type = APP_ADC_EVT_CONV_CPLT;
 
         if (p_adc_env->evt_handler != NULL)
         {
             p_adc_env->evt_handler(&evt);
         }
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
     }
-    else 
+    else
     {
         p_adc_env->p_current_sample_node = p_adc_env->p_current_sample_node->next;
         ll_adc_set_channeln(p_adc_env->p_current_sample_node->channel);
-        hal_adc_start_dma(&p_adc_env->handle, p_adc_env->p_current_sample_node->p_buf, p_adc_env->p_current_sample_node->len);
+        hal_status_t hal_status = hal_adc_start_dma(&p_adc_env->handle, p_adc_env->p_current_sample_node->p_buf, p_adc_env->p_current_sample_node->len);
+        APP_DRV_ASSERT(HAL_OK == hal_status);
     }
-#endif
 }
 
 uint16_t adc_get_trim_func(adc_trim_info_t *p_adc_trim)

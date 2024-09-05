@@ -60,13 +60,10 @@ static const IRQn_Type   s_tim_irq[APP_TIM_ID_MAX] = { TIMER0_IRQn, TIMER1_IRQn 
 static const uint32_t    s_tim_instance[APP_TIM_ID_MAX] = { TIMER0_BASE, TIMER1_BASE };
 
 tim_env_t *p_tim_env[APP_TIM_ID_MAX];
-static bool s_sleep_cb_registered_flag = false;
-static pwr_id_t s_tim_pwr_id;
 
 const static app_sleep_callbacks_t tim_sleep_cb =
 {
     .app_prepare_for_sleep = tim_prepare_for_sleep,
-    .app_sleep_canceled    = NULL,
     .app_wake_up_ind       = tim_wake_up_ind,
 };
 
@@ -82,7 +79,7 @@ static bool tim_prepare_for_sleep(void)
 SECTION_RAM_CODE static void tim_wake_up_ind(void)
 {
 #ifndef APP_DRIVER_WAKEUP_CALL_FUN
-    uint8_t i;
+    uint32_t i;
 
     for (i = 0; i < APP_TIM_ID_MAX; i++)
     {
@@ -186,7 +183,7 @@ TIMER_HANDLER(1, APP_TIM_ID_1)
  */
 uint16_t app_tim_init(app_tim_params_t *p_params, app_tim_evt_handler_t evt_handler)
 {
-    app_tim_id_t id = p_params->id;
+    app_tim_id_t id;
     hal_status_t  hal_err_code;
 
     if (NULL == p_params)
@@ -194,16 +191,13 @@ uint16_t app_tim_init(app_tim_params_t *p_params, app_tim_evt_handler_t evt_hand
         return APP_DRV_ERR_POINTER_NULL;
     }
 
+    id = p_params->id;
+
     if (id >= APP_TIM_ID_MAX)
     {
         return APP_DRV_ERR_INVALID_ID;
     }
     p_tim_env[id] = &p_params->tim_env;
-
-    soc_register_nvic(TIMER0_IRQn, (uint32_t)TIMER0_IRQHandler);
-    soc_register_nvic(TIMER1_IRQn, (uint32_t)TIMER1_IRQHandler);
-    hal_nvic_clear_pending_irq(s_tim_irq[id]);
-    hal_nvic_enable_irq(s_tim_irq[id]);
 
     p_tim_env[id]->evt_handler = evt_handler;
 
@@ -220,25 +214,20 @@ uint16_t app_tim_init(app_tim_params_t *p_params, app_tim_evt_handler_t evt_hand
 #endif
     HAL_ERR_CODE_CHECK(hal_err_code);
 
-    if(s_sleep_cb_registered_flag == false)// register sleep callback
-    {
-        s_sleep_cb_registered_flag = true;
-        s_tim_pwr_id = pwr_register_sleep_cb(&tim_sleep_cb, APP_DRIVER_TIM_WAPEUP_PRIORITY);
-
-        if (s_tim_pwr_id < 0)
-        {
-            return APP_DRV_ERR_INVALID_PARAM;
-        }
-    }
+    pwr_register_sleep_cb(&tim_sleep_cb, APP_DRIVER_TIM_WAKEUP_PRIORITY, TIM_PWR_ID);
 
     p_tim_env[id]->tim_state = APP_TIM_ACTIVITY;
+
+    soc_register_nvic(TIMER0_IRQn, (uint32_t)TIMER0_IRQHandler);
+    soc_register_nvic(TIMER1_IRQn, (uint32_t)TIMER1_IRQHandler);
+    hal_nvic_clear_pending_irq(s_tim_irq[id]);
+    hal_nvic_enable_irq(s_tim_irq[id]);
 
     return APP_DRV_SUCCESS;
 }
 
 uint16_t app_tim_deinit(app_tim_id_t id)
 {
-    uint8_t i;
     hal_status_t  hal_err_code;
 
     if (id >= APP_TIM_ID_MAX)
@@ -255,19 +244,15 @@ uint16_t app_tim_deinit(app_tim_id_t id)
     p_tim_env[id]->tim_state = APP_TIM_INVALID;
 
     GLOBAL_EXCEPTION_DISABLE();
-    for (i = 0; i < APP_TIM_ID_MAX; i++)
+    for (uint32_t i = 0; i < APP_TIM_ID_MAX; i++)
     {
-        if (p_tim_env[i] != NULL && (p_tim_env[i]->tim_state) != APP_TIM_INVALID)
+        if ((p_tim_env[i]) && ((p_tim_env[i]->tim_state) != APP_TIM_INVALID))
         {
-            break;
+            goto __deinit;
         }
     }
-    if (APP_TIM_ID_MAX == i)
-    {
-        pwr_unregister_sleep_cb(s_tim_pwr_id);
-        s_tim_pwr_id = -1;
-        s_sleep_cb_registered_flag = false;
-    }
+    pwr_unregister_sleep_cb(TIM_PWR_ID);
+__deinit:
     GLOBAL_EXCEPTION_ENABLE();
 
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)

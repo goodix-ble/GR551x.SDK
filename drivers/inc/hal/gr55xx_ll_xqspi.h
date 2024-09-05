@@ -2640,7 +2640,6 @@ SECTION_RAM_CODE __STATIC_INLINE void ll_xqspi_set_flash_write(xqspi_regs_t *XQS
   */
 SECTION_RAM_CODE __STATIC_INLINE uint32_t ll_xqspi_get_flash_write(xqspi_regs_t *XQSPIx)
 {
-    //GR5515_C and future version.
     return READ_REG(XQSPIx->QSPI.FLASH_WRITE);
 }
 

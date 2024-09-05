@@ -63,6 +63,7 @@ static dfu_m_func_cfg_t s_dfu_m_func_cfg =
     .dfu_m_get_img_info  = dfu_m_get_img_info,
     .dfu_m_get_img_data  = dfu_m_get_img_data,
     .dfu_m_send_data     = dfu_uart_data_send,
+    .dfu_m_fw_read       = hal_flash_read,
     .dfu_m_event_handler = dfu_m_event_handler,
 };
 
@@ -80,6 +81,7 @@ static void dfu_m_get_img_info(dfu_img_info_t *img_info)
 
 static void dfu_m_get_img_data(uint32_t addr, uint8_t *p_data, uint16_t length)
 {
+#ifndef SOC_GR533X
     bool flash_security_status = false;
     uint32_t sys_security = sys_security_enable_status_check();
     if(sys_security)
@@ -87,11 +89,16 @@ static void dfu_m_get_img_data(uint32_t addr, uint8_t *p_data, uint16_t length)
         flash_security_status = hal_flash_get_security();
         hal_flash_set_security(false);
     }
+#endif
+
     hal_flash_read(addr, p_data, length);
+
+#ifndef SOC_GR533X
     if(sys_security)
     {
         hal_flash_set_security(flash_security_status);
     }
+#endif
 }
 
 static void dfu_m_event_handler(dfu_m_event_t event, uint8_t pre)
@@ -116,6 +123,10 @@ static void dfu_m_event_handler(dfu_m_event_t event, uint8_t pre)
             break;
 
         case ERASEING_SUCCESS:
+            break;
+
+        case FAST_DFU_PRO_FLASH_SUCCESS:
+            APP_LOG_DEBUG("Upgrade Progress %d%%", pre);
             break;
 
         case ERASE_END_SUCCESS:

@@ -62,7 +62,7 @@
 
 #define MAX_MTU_DEFUALT                     247             /**< Defualt length of maximal MTU acceptable for device. */
 #define MAX_MPS_DEFUALT                     247             /**< Defualt length of maximal packet size acceptable for device. */
-#define MAX_NB_LECB_DEFUALT                 10              /**< Defualt length of maximal number of LE Credit based connection. */
+#define MAX_NB_LECB_DEFUALT                 2              /**< Defualt length of maximal number of LE Credit based connection. */
 #define MAX_TX_OCTET_DEFUALT                251             /**< Default maximum transmitted number of payload octets. */
 #define MAX_TX_TIME_DEFUALT                 2120            /**< Defualt maximum packet transmission time. */
 

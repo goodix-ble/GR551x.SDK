@@ -91,9 +91,15 @@ typedef enum
 
 /* Exported macro ------------------------------------------------------------*/
 /**
-  * @brief  HAL max delay definition
+  * @brief  HAL never timeout definition.
   */
-#define HAL_MAX_DELAY                       (0xFFFFFFFFU)
+#define HAL_NEVER_TIMEOUT                   (0xFFFFFFFFU)
+
+/**
+  * @brief  HAL max delay definition. Unit is millisecond.
+  *         20000ms is the max delay time in 96MHz system clock.
+  */
+#define HAL_MAX_DELAY                       (20000U)
 
 /**
   * @brief  Check whether the bits of register are set.

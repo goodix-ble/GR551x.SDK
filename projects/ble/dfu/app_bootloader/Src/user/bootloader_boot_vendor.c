@@ -69,9 +69,10 @@ static dfu_info_t           s_dfu_info;
 static bool                 s_is_app_fw_valid;
 static dfu_image_info_t     s_app_img_info;
 static uint8_t              s_flash_read_buff[DFU_FLASH_SECTOR_SIZE];
-static bool                 s_flash_security_status = false;
 
-extern bool check_image_crc(const uint8_t * p_data, uint32_t len, uint32_t check);
+#ifndef SOC_GR533X
+static bool                 s_flash_security_status = false;
+#endif
 
 /*
  * LOCAL FUNCTION DEFINITIONS
@@ -90,24 +91,39 @@ static void fw_boot_info_print(dfu_boot_info_t *p_boot_info)
     APP_LOG_DEBUG("    CheckSum     = 0x%08x", p_boot_info->check_sum);
 }
 
-
-static void security_disable(void)
+void security_disable(void)
 {
+#ifndef SOC_GR533X
     uint32_t sys_security = sys_security_enable_status_check();
     if(sys_security)
     {
         s_flash_security_status = hal_flash_get_security();
         hal_flash_set_security(false);
     }
+#endif
 }
 
-static void security_state_recovery(void)
+void security_state_recovery(void)
 {
+#ifndef SOC_GR533X
     uint32_t sys_security = sys_security_enable_status_check();
     if(sys_security)
     {
         hal_flash_set_security(s_flash_security_status);
     }
+#endif
+}
+
+static bool check_image_crc(const uint8_t * p_data,uint32_t len, uint32_t check)
+{
+    uint32_t cksum=0;
+
+    for (int i = 0; i < len; i++)
+    {
+        cksum += p_data[i];
+    }
+
+    return (check == cksum);
 }
 
 static uint32_t hal_flash_read_judge_security(const uint32_t addr, uint8_t *buf, const uint32_t size)
@@ -119,28 +135,38 @@ static uint32_t hal_flash_read_judge_security(const uint32_t addr, uint8_t *buf,
     return read_bytes;
 }
 
-static bool bootloader_firmware_verify(uint32_t bin_addr, uint32_t bin_size, uint32_t check_sum_store)
+static bool bootloader_firmware_verify(uint32_t bin_addr, uint32_t bin_size, uint32_t check_sum_store, bool is_in_load_addr)
 {
     extern bool check_image_crc(const uint8_t * p_data, uint32_t len, uint32_t check);
 
-    if (!sys_security_enable_status_check() && !check_image_crc((uint8_t *)bin_addr, bin_size, check_sum_store))
-    {
-        APP_LOG_DEBUG("    Firmware checksum invalid");
-        return false;
-    }
-
 #if BOOTLOADER_SIGN_ENABLE
-    uint8_t public_key_hash[] = {BOOTLOADER_PUBLIC_KEY_HASH};
-    security_disable();
-    if (!sign_verify(bin_addr, bin_size, public_key_hash, sys_security_enable_status_check()))
-    {
-        security_state_recovery();
-        APP_LOG_DEBUG("    Signature verify check fail.");
-        return false;
-    }
-    security_state_recovery();
-    APP_LOG_DEBUG("    Signature verify check success.");
+    bool security_enable = false;
+    #ifndef SOC_GR533X
+    security_enable = sys_security_enable_status_check();
+    #endif
+
+        uint8_t public_key_hash[] = {BOOTLOADER_PUBLIC_KEY_HASH};
+        if (!sign_verify(bin_addr, bin_size, public_key_hash, security_enable))
+        {
+            APP_LOG_DEBUG("    Signature verify check fail.");
+            return false;
+        }
+        APP_LOG_DEBUG("    Signature verify check success.");
 #endif
+
+#ifndef SOC_GR533X
+    if (!sys_security_enable_status_check() || is_in_load_addr)
+    {
+#else
+    {
+#endif
+        if (!check_image_crc((uint8_t *)bin_addr, bin_size, check_sum_store))
+        {
+            APP_LOG_DEBUG("    Firmware checksum invalid");
+            return false;
+        }
+        APP_LOG_DEBUG("    Firmware checksum check success.");
+    }
 
     return true;
 }
@@ -164,7 +190,7 @@ static bool bootloader_app_dfu_fw_verify(void)
         return false;
     }
 
-    return bootloader_firmware_verify(s_dfu_info.dfu_fw_save_addr, s_dfu_info.dfu_img_info.boot_info.bin_size, s_dfu_info.dfu_img_info.boot_info.check_sum);
+    return bootloader_firmware_verify(s_dfu_info.dfu_fw_save_addr, s_dfu_info.dfu_img_info.boot_info.bin_size, s_dfu_info.dfu_img_info.boot_info.check_sum, false);
 }
 
 static bool bootloader_dfu_info_verify(void)
@@ -207,16 +233,22 @@ SECTION_RAM_CODE static void bootloader_dfu_fw_copy(uint32_t dst_addr, uint32_t 
 
     APP_LOG_DEBUG("    App dfu firmware start copy.");
 
+#ifndef SOC_GR533X
     if (sys_security_enable_status_check())
     {
         temp_size += 856;
     }
     else
     {
-#if BOOTLOADER_SIGN_ENABLE
+    #if BOOTLOADER_SIGN_ENABLE
         temp_size += 856;
-#endif
+    #endif
     }
+#else
+    #if BOOTLOADER_SIGN_ENABLE
+        temp_size += 856;
+    #endif
+#endif
 
     copy_page = temp_size / DFU_FLASH_SECTOR_SIZE;
     remain    = temp_size % DFU_FLASH_SECTOR_SIZE;
@@ -265,7 +297,7 @@ static bool bootloader_app_fw_verify()
     hal_flash_read_judge_security(APP_INFO_START_ADDR, (uint8_t*)&s_app_img_info, sizeof(s_app_img_info));
 
     if (0 == memcmp(s_app_img_info.comments, APP_FW_COMMENTS, strlen(APP_FW_COMMENTS)) &&
-        bootloader_firmware_verify(s_app_img_info.boot_info.load_addr, s_app_img_info.boot_info.bin_size, s_app_img_info.boot_info.check_sum))
+        bootloader_firmware_verify(s_app_img_info.boot_info.load_addr, s_app_img_info.boot_info.bin_size, s_app_img_info.boot_info.check_sum, true))
     {
         APP_LOG_DEBUG("    Found app firmware image info in APP INFO AREA");
         return true;
@@ -276,7 +308,7 @@ static bool bootloader_app_fw_verify()
         hal_flash_read(i * sizeof(s_app_img_info) + SCA_IMG_INFO_ADDR, (uint8_t *)&s_app_img_info, sizeof(s_app_img_info));
 
         if (0 == memcmp(s_app_img_info.comments, APP_FW_COMMENTS, strlen(APP_FW_COMMENTS)) &&
-            bootloader_firmware_verify(s_app_img_info.boot_info.load_addr, s_app_img_info.boot_info.bin_size, s_app_img_info.boot_info.check_sum))
+            bootloader_firmware_verify(s_app_img_info.boot_info.load_addr, s_app_img_info.boot_info.bin_size, s_app_img_info.boot_info.check_sum, true))
         {
             bootloader_app_img_info_update(&s_app_img_info);
             APP_LOG_DEBUG("    Found app firmware image info in SYSTEM CONFIG AREA");
@@ -285,12 +317,18 @@ static bool bootloader_app_fw_verify()
         }
     }
 
+    APP_LOG_DEBUG("    Not found app firmware image info in APP INFO AREA and SYSTEM CONFIG AREA");
     return false;
 }
 
 static void app_bootloader_jump(dfu_boot_info_t *p_boot_info)
 {
-    sys_firmware_jump(p_boot_info);
+    if(p_boot_info->run_addr != p_boot_info->load_addr)//mirror mode
+    {
+        memcpy((uint8_t*)p_boot_info->run_addr, (uint8_t*)p_boot_info->load_addr, p_boot_info->bin_size);
+    }
+
+    sys_firmware_jump(p_boot_info->run_addr, p_boot_info->bin_size);
 }
 
 

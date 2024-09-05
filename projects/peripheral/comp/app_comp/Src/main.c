@@ -64,7 +64,7 @@ app_comp_params_t params = {
         },
     },
     .init = {
-        .input_source = COMP_INPUT_SRC_IO0,
+        .input_source = APP_COMP_INPUT_SRC,
         .ref_source   = COMP_REF_SRC_VREF,
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
         .ref_value    = 30,
@@ -118,13 +118,14 @@ int main(void)
     printf("******************************************************\r\n");
     printf("*                   COMP example.                     *\r\n");
     printf("*                                                     *\r\n");
-    printf("*       COMP_INPUT   <-----     MSIOA0                *\r\n");
+    printf("*       COMP_INPUT   <-----     MSIOAN                *\r\n");
     printf("*       COMP_VREF    <-----     VREF                  *\r\n");
     printf("*                                                     *\r\n");
-    printf("* Please connect signal to MSIOA0.                    *\r\n");
+    printf("* Please connect signal to MSIOAN.                    *\r\n");
     printf("* If the Input single is higher than the Reference,   *\r\n");
     printf("* the comparator interrupt will be triggered.         *\r\n");
     printf("* GR5526 Reference = 7.5mv * ref_value.               *\r\n");
+    printf("* GR533x Reference = 50.82nA * (166K * ref_value).    *\r\n");
     printf("* GR551x Reference = 30mv * ref_value.                *\r\n");
     printf("*******************************************************\r\n");
     printf("\r\n");

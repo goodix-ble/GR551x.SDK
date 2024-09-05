@@ -113,9 +113,9 @@ typedef void (*app_dma_evt_handler_t)(app_dma_evt_type_t type);
   */
 typedef struct
 {
-    app_dma_state_t       dma_state;        /**< App dma state types.               */
-    dma_handle_t          handle;           /**< DMA handle definition.             */
-    app_dma_evt_handler_t evt_handler;      /**< DMA event callback definition.     */
+    app_dma_state_t       dma_state;        /**< App dma state types. */
+    dma_handle_t          handle;           /**< DMA handle definition. */
+    app_dma_evt_handler_t evt_handler;      /**< DMA event callback definition. */
 } dma_env_t;
 
 /**
@@ -123,7 +123,7 @@ typedef struct
   */
 typedef struct
 {
-    dma_regs_t          *p_instance;       /**< DMA inistall               */
+    dma_regs_t          *p_instance;       /**< DMA inistall. */
     dma_channel_t       channel_number;    /**< Specifies the channel of DMA. */
     dma_init_t          init;              /**< DMA communication parameters. */
 } app_dma_params_t;

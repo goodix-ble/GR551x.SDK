@@ -59,13 +59,13 @@
 /** @addtogroup APP_GPIO_PIN_DEFINES Defines
   * @{
   */
+
 /** @addtogroup GR5xxx_pins Defines
   * @{
   */
-
 /**
-* @brief APP_GPIO_DEFINE IO pins
-*/
+  * @brief APP_GPIO_DEFINE IO pins
+  */
 #define APP_IO_PIN_0                 ((uint32_t)0x00000001U)  /**< Pin 0 selected    */
 #define APP_IO_PIN_1                 ((uint32_t)0x00000002U)  /**< Pin 1 selected    */
 #define APP_IO_PIN_2                 ((uint32_t)0x00000004U)  /**< Pin 2 selected    */
@@ -104,17 +104,18 @@
 #define APP_IO_PINS_0_7              ((uint32_t)0x000000FFU)  /**< 0~7 pins selected  */
 #define APP_IO_PINS_0_15             ((uint32_t)0x0000FFFFU)  /**< 0~15 pins selected  */
 #define APP_IO_PINS_16_31            ((uint32_t)0xFFFF0000U)  /**< 16~31 pins selected */
-#define APP_IO_PIN_ALL               ((uint32_t)0x0000FFFFU)  /**< All pins selected   */
 #define APP_AON_IO_PIN_ALL           ((uint32_t)0x000000FFU)  /**< All AON pins selected */
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
+#define APP_IO_PIN_ALL               ((uint32_t)0x00003FFFU)  /**< All pins selected   */
 #define APP_MSIO_IO_PIN_ALL          ((uint32_t)0x000003FFU)  /**< All MISO pins selected */
 #else
+#define APP_IO_PIN_ALL               ((uint32_t)0x0000FFFFU)  /**< All pins selected   */
 #define APP_MSIO_IO_PIN_ALL          ((uint32_t)0x000000FFU)  /**< All MISO pins selected */
 #endif
 #define APP_IO_PIN_MASK              ((uint32_t)0xFFFFFFFFU)  /**< PIN mask for assert test */
 
 /**
-  * @brief GR5xxx_APP_GPIO_default_config initStruct default configuart APP_GPIOn
+  * @brief GR5xxx_APP_GPIO_default_config initStruct default config of APP_GPIOn
   */
 #define APP_IO_DEFAULT_CONFIG                      \
 {                                                  \
@@ -125,6 +126,7 @@
 
 /** @} */
 
+/** @} */
 
 /** @addtogroup APP_GPIO_ENUMERATIONS Enumerations
   * @{
@@ -146,11 +148,11 @@ typedef enum
     APP_IO_TYPE_GPIOA,       /**< General Purpose Input/Output. */
     APP_IO_TYPE_GPIOB,       /**< General Purpose Input/Output. */
     APP_IO_TYPE_GPIOC,       /**< General Purpose Input/Output. */
-// #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
+    APP_IO_TYPE_AON,         /**< Always-on Input/Output. */
+    APP_IO_TYPE_MSIO,        /**< Mixed Signal I/O. */
+    // #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
     APP_IO_TYPE_NORMAL,      /**< General Purpose Input/Output. */
-// #endif
-    APP_IO_TYPE_AON,         /**< Always-on Input/Output.       */
-    APP_IO_TYPE_MSIO,        /**< Mixed Signal I/O.             */
+    // #endif
     APP_IO_TYPE_MAX,         /**< Only for check parameter, not used as input parameters. */
 } app_io_type_t;
 
@@ -160,17 +162,17 @@ typedef enum
 typedef enum
 {
     APP_IO_MODE_NONE,
-    APP_IO_MODE_INPUT,          /**< Input Mode.                                         */
-    APP_IO_MODE_OUTPUT,         /**< Output Mode.                                        */
-    APP_IO_MODE_MUX,            /**< Mux Mode.                                           */
-    APP_IO_MODE_IT_RISING,      /**< Interrupt Mode with Rising edge trigger detection.  */
+    APP_IO_MODE_INPUT,          /**< Input Mode. */
+    APP_IO_MODE_OUTPUT,         /**< Output Mode. */
+    APP_IO_MODE_MUX,            /**< Mux Mode. */
+    APP_IO_MODE_IT_RISING,      /**< Interrupt Mode with Rising edge trigger detection. */
     APP_IO_MODE_IT_FALLING,     /**< Interrupt Mode with Falling edge trigger detection. */
 #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR551X)
-    APP_IO_MODE_IT_BOTH_EDGE,   /**< Interrupt Mode with Rising and Falling edge trigger detection  */
+    APP_IO_MODE_IT_BOTH_EDGE,   /**< Interrupt Mode with Rising and Falling edge trigger detection */
 #endif
-    APP_IO_MODE_IT_HIGH,        /**< Interrupt Mode with High-level trigger detection.   */
-    APP_IO_MODE_IT_LOW,         /**< Interrupt Mode with Low-level trigger detection.    */
-    APP_IO_MODE_ANALOG,         /**< Analog IO Mode.                                     */
+    APP_IO_MODE_IT_HIGH,        /**< Interrupt Mode with High-level trigger detection. */
+    APP_IO_MODE_IT_LOW,         /**< Interrupt Mode with Low-level trigger detection. */
+    APP_IO_MODE_ANALOG,         /**< Analog IO Mode. */
     APP_IO_MODE_MAX,            /**< Only for check parameter, not used as input parameters. */
 } app_io_mode_t;
 
@@ -179,9 +181,9 @@ typedef enum
   */
 typedef enum
 {
-    APP_IO_NOPULL,              /**< No Pull-up or Pull-down activation.  */
-    APP_IO_PULLUP,              /**< Pull-up activation.                  */
-    APP_IO_PULLDOWN,            /**< Pull-down activation.                */
+    APP_IO_NOPULL,              /**< No Pull-up or Pull-down activation. */
+    APP_IO_PULLUP,              /**< Pull-up activation. */
+    APP_IO_PULLDOWN,            /**< Pull-down activation. */
     APP_IO_PULL_MAX             /**< Only for check parameter, not used as input parameters. */
 } app_io_pull_t;
 
@@ -203,49 +205,49 @@ typedef enum
     APP_IO_MUX_9,               /**< IO_MUX_UART1_CTS. */
     APP_IO_MUX_10,              /**< IO_MUX_UART1_RTS. */
     APP_IO_MUX_11,              /**< IO_MUX_UART1_TX. */
-    APP_IO_MUX_12,              /**< IO_MUX_UART1_RX.*/
+    APP_IO_MUX_12,              /**< IO_MUX_UART1_RX. */
     APP_IO_MUX_13,              /**< IO_MUX_PWM0. */
     APP_IO_MUX_14,              /**< IO_MUX_PWM1. */
     APP_IO_MUX_15,              /**< IO_MUX_PWM2. */
     APP_IO_MUX_16,              /**< IO_MUX_PWM3. */
     APP_IO_MUX_17,              /**< IO_MUX_PWM4. */
     APP_IO_MUX_18,              /**< IO_MUX_PWM5. */
-    APP_IO_MUX_19,              /**< IO_MUX_df_ant_sw_0.*/
-    APP_IO_MUX_20,              /**< IO_MUX_df_ant_sw_1.*/
-    APP_IO_MUX_21,              /**< IO_MUX_df_ant_sw_2.*/
-    APP_IO_MUX_22,              /**< IO_MUX_df_ant_sw_3.*/
-    APP_IO_MUX_23,              /**< IO_MUX_df_ant_sw_4.*/
-    APP_IO_MUX_24,              /**< IO_MUX_df_ant_sw_5.*/
-    APP_IO_MUX_25,              /**< IO_MUX_df_ant_sw_6.*/
-    APP_IO_MUX_26,              /**< IO_MUX_ferp_gpio_trig_0.*/
-    APP_IO_MUX_27,              /**< IO_MUX_SWO.*/
-    APP_IO_MUX_28,              /**< IO_MUX_coex_ble_rx.*/
-    APP_IO_MUX_29,              /**< IO_MUX_coex_ble_tx.*/
-    APP_IO_MUX_30,              /**< IO_MUX_coex_wlan_rx.*/
-    APP_IO_MUX_31,              /**< IO_MUX_coex_wlan_tx.*/
-    APP_IO_MUX_32,              /**< IO_MUX_coex_ble_in_process.*/
-    APP_IO_MUX_33,              /**< IO_MUX_SWD_CLK.*/
-    APP_IO_MUX_34,              /**< IO_MUX_SWD_DATA.*/
-    APP_IO_MUX_35,              /**< IO_MUX_reserve3.*/
-    APP_IO_MUX_36,              /**< IO_MUX_reserve4.*/
-    APP_IO_MUX_37,              /**< IO_MUX_reserve5.*/
-    APP_IO_MUX_38,              /**< IO_MUX_SPI_S_MOSI.*/
-    APP_IO_MUX_39,              /**< IO_MUX_SPI_S_CS_N.*/
-    APP_IO_MUX_40,              /**< IO_MUX_SPI_S_CLK.*/
-    APP_IO_MUX_41,              /**< IO_MUX_SPI_S_MISO.*/
-    APP_IO_MUX_42,              /**< IO_MUX_SPI_M_CLK.*/
-    APP_IO_MUX_43,              /**< IO_MUX_SPI_M_CS0_N.*/
-    APP_IO_MUX_44,              /**< IO_MUX_SPI_M_CS1_N.*/
-    APP_IO_MUX_45,              /**< IO_MUX_SPI_M_MISO.*/
-    APP_IO_MUX_46,              /**< IO_MUX_SPI_M_MOSIss*/
-    APP_IO_MUX_47,              /**< RESERVED */
-    APP_IO_MUX_48,              /**< RESERVED */
-    APP_IO_MUX_49,              /**< IO_MUX_DUAL_TIMER0_A */
-    APP_IO_MUX_50,              /**< IO_MUX_DUAL_TIMER0_B */
-    APP_IO_MUX_51,              /**< IO_MUX_DUAL_TIMER0_C */
-    APP_IO_MUX_52,              /**< IO_MUX_DUAL_TIMER1_A */
-    APP_IO_MUX_53,              /**< IO_MUX_DUAL_TIMER1_B */
-    APP_IO_MUX_54,              /**< IO_MUX_DUAL_TIMER1_C */
+    APP_IO_MUX_19,              /**< IO_MUX_df_ant_sw_0. */
+    APP_IO_MUX_20,              /**< IO_MUX_df_ant_sw_1. */
+    APP_IO_MUX_21,              /**< IO_MUX_df_ant_sw_2. */
+    APP_IO_MUX_22,              /**< IO_MUX_df_ant_sw_3. */
+    APP_IO_MUX_23,              /**< IO_MUX_df_ant_sw_4. */
+    APP_IO_MUX_24,              /**< IO_MUX_df_ant_sw_5. */
+    APP_IO_MUX_25,              /**< IO_MUX_df_ant_sw_6. */
+    APP_IO_MUX_26,              /**< IO_MUX_ferp_gpio_trig_0. */
+    APP_IO_MUX_27,              /**< IO_MUX_SWO. */
+    APP_IO_MUX_28,              /**< IO_MUX_coex_ble_rx. */
+    APP_IO_MUX_29,              /**< IO_MUX_coex_ble_tx. */
+    APP_IO_MUX_30,              /**< IO_MUX_coex_wlan_rx. */
+    APP_IO_MUX_31,              /**< IO_MUX_coex_wlan_tx. */
+    APP_IO_MUX_32,              /**< IO_MUX_coex_ble_in_process. */
+    APP_IO_MUX_33,              /**< IO_MUX_SWD_CLK. */
+    APP_IO_MUX_34,              /**< IO_MUX_SWD_DATA. */
+    APP_IO_MUX_35,              /**< IO_MUX_reserve3. */
+    APP_IO_MUX_36,              /**< IO_MUX_reserve4. */
+    APP_IO_MUX_37,              /**< IO_MUX_reserve5. */
+    APP_IO_MUX_38,              /**< IO_MUX_SPI_S_MOSI. */
+    APP_IO_MUX_39,              /**< IO_MUX_SPI_S_CS_N. */
+    APP_IO_MUX_40,              /**< IO_MUX_SPI_S_CLK. */
+    APP_IO_MUX_41,              /**< IO_MUX_SPI_S_MISO. */
+    APP_IO_MUX_42,              /**< IO_MUX_SPI_M_CLK. */
+    APP_IO_MUX_43,              /**< IO_MUX_SPI_M_CS0_N. */
+    APP_IO_MUX_44,              /**< IO_MUX_SPI_M_CS1_N. */
+    APP_IO_MUX_45,              /**< IO_MUX_SPI_M_MISO. */
+    APP_IO_MUX_46,              /**< IO_MUX_SPI_M_MOSIss. */
+    APP_IO_MUX_47,              /**< RESERVED. */
+    APP_IO_MUX_48,              /**< RESERVED. */
+    APP_IO_MUX_49,              /**< IO_MUX_DUAL_TIMER0_A. */
+    APP_IO_MUX_50,              /**< IO_MUX_DUAL_TIMER0_B. */
+    APP_IO_MUX_51,              /**< IO_MUX_DUAL_TIMER0_C. */
+    APP_IO_MUX_52,              /**< IO_MUX_DUAL_TIMER1_A. */
+    APP_IO_MUX_53,              /**< IO_MUX_DUAL_TIMER1_B. */
+    APP_IO_MUX_54,              /**< IO_MUX_DUAL_TIMER1_C. */
     APP_IO_MUX_MAX,             /**< Only for check parameter, not used as input parameters. */
 } app_io_mux_t;
 #else
@@ -263,7 +265,11 @@ typedef enum
     APP_IO_MUX_MAX,             /**< Only for check parameter, not used as input parameters. */
 } app_io_mux_t;
 #endif
+/** @} */
 
+/** @addtogroup APP_GPIO_PIN_DEFINES Defines
+  * @{
+  */
 /**
 * @brief GPIO mux for different APP_DRIVER_CHIP_TYPE
 */
@@ -291,7 +297,6 @@ typedef struct
     app_io_pull_t pull;         /**< Specifies the Pull-up or Pull-Down activation for the selected pins. */
     app_io_mux_t  mux;          /**< Specifies the Peripheral to be connected to the selected pins. */
 } app_io_init_t;
-/** @} */
 
 /**
   * @brief GPIO Interrupt event Structure definition
@@ -303,6 +308,11 @@ typedef struct
     void                   *arg;        /**< User parameters */
 } app_io_evt_t;
 
+/** @} */
+
+/** @addtogroup APP_GPIO_ENUMERATIONS Enumerations
+  * @{
+  */
 /**
   * @brief  GPIO Speed Structure definition
   */
@@ -326,18 +336,24 @@ typedef enum {
   * @brief  GPIO Strength Structure definition
   */
 typedef enum {
-    APP_IO_STRENGTH_LOW,       /**< Select low output driver strength */
-    APP_IO_STRENGTH_MEDIUM,    /**< Select medium output driver strength */
-    APP_IO_STRENGTH_HIGH,      /**< Select high output driver strength */
-    APP_IO_STRENGTH_ULTRA,     /**< Select high output driver strength */
+    APP_IO_STRENGTH_LOW,       /**< Select low output driver strength. */
+    APP_IO_STRENGTH_MEDIUM,    /**< Select medium output driver strength. */
+    APP_IO_STRENGTH_HIGH,      /**< Select high output driver strength. */
+    APP_IO_STRENGTH_ULTRA,     /**< Select high output driver strength. */
     APP_IO_STRENGTH_MAX,       /**< Only for check parameter, not used as input parameters. */
 } app_io_strength_t;
 
+/** @} */
+
+/** @addtogroup APP_GPIO_TYPEDEFS Type definitions
+  * @{
+  */
 /**
   * @brief GPIO callback type.
   */
 typedef void (*app_io_callback_t)(app_io_evt_t *p_evt);
 
+/** @} */
 
 /* Exported functions --------------------------------------------------------*/
 /** @addtogroup HAL_APP_GPIO_DRIVER_FUNCTIONS Functions
@@ -414,7 +430,7 @@ uint16_t app_io_toggle_pin(app_io_type_t type, uint32_t pin);
  * @param[in]  pin:   The pin want to set.
  * @param[in]  speed: GPIO speed type, See app_io_speed_t.
  *
- * @return Result of seting.
+ * @return Result of setting.
  ****************************************************************************************
  */
 uint16_t app_io_set_speed(app_io_type_t type, uint32_t pin, app_io_speed_t speed);
@@ -427,7 +443,7 @@ uint16_t app_io_set_speed(app_io_type_t type, uint32_t pin, app_io_speed_t speed
  * @param[in]  pin:      The pin want to set.
  * @param[in]  strength: GPIO strength type, See app_io_strength_t.
  *
- * @return Result of seting.
+ * @return Result of setting.
  ****************************************************************************************
  */
 uint16_t app_io_set_strength(app_io_type_t type, uint32_t pin, app_io_strength_t strength);
@@ -440,7 +456,7 @@ uint16_t app_io_set_strength(app_io_type_t type, uint32_t pin, app_io_strength_t
  * @param[in]  pin:        The pin want to toggle.
  * @param[in]  input_type: GPIO input type, See app_io_input_type_t.
  *
- * @return Result of seting.
+ * @return Result of setting.
  ****************************************************************************************
  */
 uint16_t app_io_set_intput_type(app_io_type_t type, uint32_t pin, app_io_input_type_t input_type);
@@ -474,8 +490,6 @@ uint16_t app_io_event_unregister(app_io_type_t type, uint32_t pin);
 
 /** @} */
 #endif
-
-/** @} */
 
 /** @} */
 

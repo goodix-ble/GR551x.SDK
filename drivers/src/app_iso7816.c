@@ -57,7 +57,7 @@
  */
 static bool iso7816_prepare_for_sleep(void);
 static void iso7816_wake_up_ind(void);
-static uint16_t iso7816_gpio_config(app_iso7816_pin_cfg_t pin_cfg);
+static uint16_t iso7816_gpio_config(app_iso7816_pin_cfg_t *p_pin_cfg);
 void ISO7816_IRQHandler(void);
 
 /*
@@ -67,16 +67,13 @@ void ISO7816_IRQHandler(void);
 static const uint32_t    s_iso7816_instance = ISO7816_BASE;
 
 iso7816_env_t *p_iso7816_env = NULL;
-static bool          s_sleep_cb_registered_flag = false;
-static pwr_id_t      s_iso7816_pwr_id;
 
 /* sim card command and response data buffer */
 #define ISO7816_BUFFER_SIZE 33
-static __align(4) uint8_t iso7816_buffer[ISO7816_BUFFER_SIZE];
+static __ALIGNED(4) uint8_t iso7816_buffer[ISO7816_BUFFER_SIZE];
 static const app_sleep_callbacks_t iso7816_sleep_cb =
 {
     .app_prepare_for_sleep = iso7816_prepare_for_sleep,
-    .app_sleep_canceled    = NULL,
     .app_wake_up_ind       = iso7816_wake_up_ind
 };
 
@@ -144,34 +141,34 @@ static void iso7816_wake_up(void)
 }
 #endif
 
-static uint16_t iso7816_gpio_config(app_iso7816_pin_cfg_t pin_cfg)
+static uint16_t iso7816_gpio_config(app_iso7816_pin_cfg_t *p_pin_cfg)
 {
     app_io_init_t io_init = APP_IO_DEFAULT_CONFIG;
     app_drv_err_t err_code = APP_DRV_SUCCESS;
 
-    io_init.pull = pin_cfg.clk.pull;
+    io_init.pull = p_pin_cfg->clk.pull;
     io_init.mode = APP_IO_MODE_MUX;
-    io_init.pin  = pin_cfg.clk.pin;
-    io_init.mux  = pin_cfg.clk.mux;
-    err_code = app_io_init(pin_cfg.clk.type, &io_init);
+    io_init.pin  = p_pin_cfg->clk.pin;
+    io_init.mux  = p_pin_cfg->clk.mux;
+    err_code = app_io_init(p_pin_cfg->clk.type, &io_init);
     APP_DRV_ERR_CODE_CHECK(err_code);
 
-    io_init.pull = pin_cfg.rst.pull;
-    io_init.pin  = pin_cfg.rst.pin;
-    io_init.mux  = pin_cfg.rst.mux;
-    err_code = app_io_init(pin_cfg.rst.type, &io_init);
+    io_init.pull = p_pin_cfg->rst.pull;
+    io_init.pin  = p_pin_cfg->rst.pin;
+    io_init.mux  = p_pin_cfg->rst.mux;
+    err_code = app_io_init(p_pin_cfg->rst.type, &io_init);
     APP_DRV_ERR_CODE_CHECK(err_code);
 
-    io_init.pull = pin_cfg.io.pull;
-    io_init.pin  = pin_cfg.io.pin;
-    io_init.mux  = pin_cfg.io.mux;
-    err_code = app_io_init(pin_cfg.io.type, &io_init);
+    io_init.pull = p_pin_cfg->io.pull;
+    io_init.pin  = p_pin_cfg->io.pin;
+    io_init.mux  = p_pin_cfg->io.mux;
+    err_code = app_io_init(p_pin_cfg->io.type, &io_init);
     APP_DRV_ERR_CODE_CHECK(err_code);
 
-    io_init.pull = pin_cfg.presence.pull;
-    io_init.pin  = pin_cfg.presence.pin;
-    io_init.mux  = pin_cfg.presence.mux;
-    err_code = app_io_init(pin_cfg.presence.type, &io_init);
+    io_init.pull = p_pin_cfg->presence.pull;
+    io_init.pin  = p_pin_cfg->presence.pin;
+    io_init.mux  = p_pin_cfg->presence.mux;
+    err_code = app_io_init(p_pin_cfg->presence.type, &io_init);
     APP_DRV_ERR_CODE_CHECK(err_code);
 
     return err_code;
@@ -215,7 +212,7 @@ uint16_t app_iso7816_init(app_iso7816_params_t *p_params, app_iso7816_evt_handle
         return APP_DRV_ERR_POINTER_NULL;
     }
     p_iso7816_env = &p_params->iso7816_env;
-    app_err_code = iso7816_gpio_config(p_params->pin_cfg);
+    app_err_code = iso7816_gpio_config(&p_params->pin_cfg);
     APP_DRV_ERR_CODE_CHECK(app_err_code);
 
     p_iso7816_env->use_mode = p_params->use_mode;
@@ -232,24 +229,16 @@ uint16_t app_iso7816_init(app_iso7816_params_t *p_params, app_iso7816_evt_handle
     hal_err_code = hal_iso7816_init(&p_iso7816_env->handle);
     HAL_ERR_CODE_CHECK(hal_err_code);
 
+    pwr_register_sleep_cb(&iso7816_sleep_cb, APP_DRIVER_ISO7816_WAKEUP_PRIORITY, ISO7816_PWR_ID);
+
+    p_iso7816_env->iso7816_state = APP_ISO7816_ACTIVITY;
+
     if(p_params->use_mode != APP_ISO7816_TYPE_POLLING)
     {
         soc_register_nvic(ISO7816_IRQn, (uint32_t)ISO7816_IRQHandler);
         hal_nvic_clear_pending_irq(ISO7816_IRQn);
         hal_nvic_enable_irq(ISO7816_IRQn);
     }
-
-    if (s_sleep_cb_registered_flag == false)// register sleep callback
-    {
-        s_sleep_cb_registered_flag = true;
-        s_iso7816_pwr_id = pwr_register_sleep_cb(&iso7816_sleep_cb, APP_DRIVER_ISO7816_WAPEUP_PRIORITY);
-
-        if (s_iso7816_pwr_id < 0)
-        {
-            return APP_DRV_ERR_INVALID_PARAM;
-        }
-    }
-    p_iso7816_env->iso7816_state = APP_ISO7816_ACTIVITY;
 
     return APP_DRV_SUCCESS;
 }
@@ -281,14 +270,7 @@ uint16_t app_iso7816_deinit(void)
     p_iso7816_env->iso7816_state = APP_ISO7816_INVALID;
     p_iso7816_env->start_flag = false;
 
-    GLOBAL_EXCEPTION_DISABLE();
-    if(p_iso7816_env->iso7816_state == APP_ISO7816_INVALID)
-    {
-         pwr_unregister_sleep_cb(s_iso7816_pwr_id);
-         s_iso7816_pwr_id = -1;
-         s_sleep_cb_registered_flag = false;
-    }
-    GLOBAL_EXCEPTION_ENABLE();
+    pwr_unregister_sleep_cb(ISO7816_PWR_ID);
 
     hal_err_code = hal_iso7816_deinit(&p_iso7816_env->handle);
     HAL_ERR_CODE_CHECK(hal_err_code);
@@ -307,6 +289,11 @@ uint16_t app_iso7816_receive_sync(uint16_t size, uint32_t timeout)
     }
 
     if (size == 0)
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
     {
         return APP_DRV_ERR_INVALID_PARAM;
     }
@@ -375,6 +362,11 @@ uint16_t app_iso7816_transmit_sync(uint16_t size, uint32_t timeout)
     }
 
     if (size == 0)
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
     {
         return APP_DRV_ERR_INVALID_PARAM;
     }
@@ -496,6 +488,11 @@ uint16_t app_iso7816_transmit_receive_sync(uint16_t tx_size, uint16_t rx_size, u
     }
 
     if (tx_size == 0 || rx_size == 0)
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
     {
         return APP_DRV_ERR_INVALID_PARAM;
     }

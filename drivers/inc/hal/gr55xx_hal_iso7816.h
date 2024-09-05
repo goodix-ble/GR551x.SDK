@@ -167,7 +167,7 @@ typedef struct _iso7816_handle_t
   * @brief HAL_ISO7816 Callback function definition
   */
 
-typedef struct _iso7816_callback
+typedef struct _hal_iso7816_callback
 {
     void (*iso7816_msp_init)(iso7816_handle_t *p_iso7816);                  /**< ISO7816 init MSP callback                      */
     void (*iso7816_msp_deinit)(iso7816_handle_t *p_iso7816);                /**< ISO7816 de-init MSP callback                   */
@@ -178,7 +178,7 @@ typedef struct _iso7816_callback
     void (*iso7816_tx_cplt_callback)(iso7816_handle_t *p_iso7816);          /**< ISO7816 rx transfer completed callback         */
     void (*iso7816_rx_cplt_callback)(iso7816_handle_t *p_iso7816);          /**< ISO7816 tx transfer completed callback         */
     void (*iso7816_tx_rx_cplt_callback)(iso7816_handle_t *p_iso7816);       /**< ISO7816 tx/rx transfer completed callback      */
-} iso7816_callback_t;
+} hal_iso7816_callback_t;
 
 /** @} */
 

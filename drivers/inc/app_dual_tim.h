@@ -3,7 +3,7 @@
  *
  * @file    app_dual_tim.h
  * @author  BLE Driver Team
- * @brief   Header file containing functions prototypes of DAUL TIM app library.
+ * @brief   Header file containing functions prototypes of DUAL TIM app library.
  *
  ****************************************************************************************
  * @attention
@@ -65,7 +65,7 @@ extern "C" {
 
 #ifdef HAL_DUAL_TIMER_MODULE_ENABLED
 
-/** @addtogroup APP_TIM_ENUM Enumerations
+/** @addtogroup APP_DUAL_TIM_ENUM Enumerations
   * @{
   */
 
@@ -112,7 +112,7 @@ typedef enum
 } app_dual_tim_state_t;
 /** @} */
 
-/** @addtogroup APP_DUAL_TIM_STRUCTURES Structures
+/** @addtogroup APP_DUAL_TIM_TYPEDEFS Type definitions
   * @{
   */
 /**
@@ -120,6 +120,11 @@ typedef enum
   */
 typedef void (*app_dual_tim_evt_handler_t)(app_dual_tim_evt_t *p_evt);
 
+/** @} */
+
+/** @addtogroup APP_DUAL_TIM_STRUCTURES Structures
+  * @{
+  */
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
 /**
   * @brief DUAL_TIM IO configuration Structures
@@ -127,9 +132,9 @@ typedef void (*app_dual_tim_evt_handler_t)(app_dual_tim_evt_t *p_evt);
 typedef struct
 {
     app_io_type_t        type;     /**< Specifies the type of Dual Timer IO.
-                                        This parameter can be any value of @ref app_io_type_t.         */
+                                        This parameter can be any value of @ref app_io_type_t. */
     uint32_t             pin;      /**< Specifies the IO pins to be configured.
-                                        This parameter can be any value of @ref GR5xxx_pins.           */
+                                        This parameter can be any value of @ref GR5xxx_pins. */
 } app_dual_tim_pin_t;
 
 /**
@@ -138,7 +143,7 @@ typedef struct
 typedef struct
 {
     app_dual_tim_pin_t               pin_cfg;      /**< Set the configuration of pin for DUAL_TIM io crtl. */
-    dual_timer_io_ctrl_cfg_t         io_crtl_cfg;  /**< DUAL_TIM io crtl required parameters.              */
+    dual_timer_io_ctrl_cfg_t         io_crtl_cfg;  /**< DUAL_TIM io crtl required parameters. */
 } app_dual_tim_io_crtl_params_t;
 #endif
 
@@ -147,17 +152,17 @@ typedef struct
   */
 typedef struct
 {
-    app_dual_tim_evt_handler_t  evt_handler;      /**< APP_DUAL_TIM event callback definition.    */
-    dual_timer_handle_t         handle;           /**< DUAL_TIM handle definition.     */
-    app_dual_tim_state_t        dual_tim_state;   /**< DUAL_TIM state type Enumerations definition.    */
+    app_dual_tim_evt_handler_t  evt_handler;      /**< APP_DUAL_TIM event callback definition. */
+    dual_timer_handle_t         handle;           /**< DUAL_TIM handle definition. */
+    app_dual_tim_state_t        dual_tim_state;   /**< DUAL_TIM state type Enumerations definition. */
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
-    app_dual_tim_pin_t          cha_pin_cfg;      /**< DUAL_TIM CHANNELA IO configuration Structures.    */
-    app_dual_tim_pin_t          chb_pin_cfg;      /**< DUAL_TIM CHANNELB IO configuration Structures.    */
-    app_dual_tim_pin_t          chc_pin_cfg;      /**< DUAL_TIM CHANNELC IO configuration Structures.    */
+    app_dual_tim_pin_t          cha_pin_cfg;      /**< DUAL_TIM CHANNELA IO configuration Structures. */
+    app_dual_tim_pin_t          chb_pin_cfg;      /**< DUAL_TIM CHANNELB IO configuration Structures. */
+    app_dual_tim_pin_t          chc_pin_cfg;      /**< DUAL_TIM CHANNELC IO configuration Structures. */
 
-    volatile bool               is_cha_enable;    
-    volatile bool               is_chb_enable;    
-    volatile bool               is_chc_enable; 
+    volatile bool               is_cha_enable;
+    volatile bool               is_chb_enable;
+    volatile bool               is_chc_enable;
 #endif
 }dual_tim_env_t;
 
@@ -166,9 +171,9 @@ typedef struct
   */
 typedef struct
 {
-    app_dual_tim_id_t   id;    /**< specified DUAL TIMER module ID.    */
+    app_dual_tim_id_t   id;    /**< specified DUAL TIMER module ID. */
     dual_timer_init_t   init;  /**< DUAL_TIM Base required parameters. */
-    dual_tim_env_t      dual_tim_env;  /**< DUAL_TIM device structure definition.    */
+    dual_tim_env_t      dual_tim_env;  /**< DUAL_TIM device structure definition. */
 } app_dual_tim_params_t;
 /** @} */
 
@@ -268,7 +273,7 @@ uint16_t app_dual_tim_set_onetime_reload(app_dual_tim_id_t id, uint32_t reload_v
 /**
  ****************************************************************************************
  * @brief  DUAL TIMER set period count value
- *         The value is valid when the value is greater than 1. This fucntion is only avaliable in Period/Loop mode with IO control.
+ *         The value is valid when the value is greater than 1. This function is only available in Period/Loop mode with IO control.
  *         This function call must be after app_dual_tim_io_crtl_config.
  *         This function will force the stop action interrupt to be turned on.
  *         If the current count value of the dual timer is not the period value, it may cause the first period to be shortened.
@@ -306,6 +311,30 @@ uint16_t app_dual_tim_io_crtl_config(app_dual_tim_id_t id, app_dual_tim_io_crtl_
  */
 dual_timer_handle_t *app_dual_tim_get_handle(app_dual_tim_id_t id);
 
+/**
+ ****************************************************************************************
+ * @brief  Set the APP DUAL TIM background reload value and current reload value
+ *         The background reload value contains the value from which the counter is to decrement.
+ *         This is the value used to reload the counter when Periodic mode is enabled, and the current count reaches 0.
+ * @param[in]  id:  A specific timer ID which can be APP_DUAL_TIM_ID_0 or APP_DUAL_TIM_ID_1
+ * @param[in]  reload_value: current reload value
+ * @param[in]  bg_reload_value: Background reload value
+ *
+ * @return Result of execution.
+ ****************************************************************************************
+ */
+uint16_t app_dual_tim_set_reload_value_bg_reload_value(app_dual_tim_id_t id, uint32_t reload_value,uint32_t bg_reload_value);
+
+/**
+ ****************************************************************************************
+ * @brief  Return the DUAL TIM counter.
+ *
+ * @param[in]  id: DUAL TIM Channel ID.
+ *
+ * @return DUAL TIM Counter.
+ ****************************************************************************************
+ */
+uint32_t app_dual_tim_get_counter_value(app_dual_tim_id_t id);
 /** @} */
 
 #endif

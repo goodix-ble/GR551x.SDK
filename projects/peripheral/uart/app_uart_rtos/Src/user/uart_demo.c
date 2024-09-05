@@ -191,5 +191,6 @@ static void uart_task(void *arg)
 
 void uart_demo_task(void)
 {
+    printf("APP UART RTOS example.\r\n");
     xTaskCreate(uart_task, "uart_task", APP_TASK_STACK_SIZE, NULL,  configMAX_PRIORITIES - 1, &my_task_handle);
 }

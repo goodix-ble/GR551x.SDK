@@ -376,7 +376,7 @@ typedef struct
 /** @brief  Connection complete event for @ref BLE_GAPC_EVT_CONNECTED. */
 typedef struct
 {
-    uint16_t                conn_index;             /**< Connection index. Range: 0x0000-0x0EFF (all other values reserved for future use). */
+    uint16_t                conn_handle;            /**< Connection_Handle. Range: 0x0000-0x0EFF (all other values reserved for future use). */
     uint16_t                conn_interval;          /**< Connection interval. Range: 0x0006 to 0x0C80, unit: 1.25 ms, time range: 7.5 ms to 4 s. */
     uint16_t                slave_latency;          /**< Latency for the connection in number of connection events. Range: 0x0000 to 0x01F3. */
     uint16_t                sup_timeout;            /**< Connection supervision timeout. Range: 0x000A to 0x0C80, unit: 10 ms, time range: 100 ms to 32 s. */
@@ -614,6 +614,17 @@ uint16_t ble_gap_conn_info_get(uint8_t conn_idx, ble_gap_get_conn_info_op_t opco
  ****************************************************************************************
  */
 uint16_t ble_gap_peer_info_get(uint8_t conn_idx, ble_gap_get_peer_info_op_t opcode);
+
+/**
+ ****************************************************************************************
+ * @brief Get BD address of the local device by the conidx.
+ *
+ * @param[in] conidx: The index of conncetion.
+ * @param[in] p_addr: Pointer to the local BD addrss
+ ****************************************************************************************
+ */
+void ble_gap_get_local_addr_by_conidx(uint8_t conidx, uint8_t *p_addr);
+
 
 /** @} */
 

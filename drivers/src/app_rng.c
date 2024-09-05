@@ -41,6 +41,7 @@
 #include "app_pwr_mgmt.h"
 #include "string.h"
 #include "gr_soc.h"
+#include "app_drv.h"
 
 #ifdef HAL_RNG_MODULE_ENABLED
 
@@ -57,13 +58,10 @@ void RNG_IRQHandler(void);
  *****************************************************************************************
  */
 rng_env_t *p_rng_env = NULL;
-static bool s_sleep_cb_registered_flag = false;
-static pwr_id_t s_rng_pwr_id;
 
 const static app_sleep_callbacks_t rng_sleep_cb =
 {
     .app_prepare_for_sleep = rng_prepare_for_sleep,
-    .app_sleep_canceled    = NULL,
     .app_wake_up_ind       = rng_wake_up_ind
 };
 
@@ -143,12 +141,6 @@ uint16_t app_rng_init(app_rng_params_t *p_params, app_rng_evt_handler_t evt_hand
         return APP_DRV_ERR_POINTER_NULL;
     }
     p_rng_env = &p_params->rng_env;
-    if (p_params->use_type == APP_RNG_TYPE_INTERRUPT)
-    {
-        soc_register_nvic(RNG_IRQn, (uint32_t)RNG_IRQHandler);
-        hal_nvic_clear_pending_irq(RNG_IRQn);
-        hal_nvic_enable_irq(RNG_IRQn);
-    }
 
     p_rng_env->use_type = p_params->use_type;
     p_rng_env->evt_handler = evt_handler;
@@ -161,17 +153,16 @@ uint16_t app_rng_init(app_rng_params_t *p_params, app_rng_evt_handler_t evt_hand
     hal_err_code = hal_rng_init(&p_rng_env->handle);
     APP_DRV_ERR_CODE_CHECK(hal_err_code);
 
-    if(s_sleep_cb_registered_flag == false)    // register sleep callback
-    {
-        s_sleep_cb_registered_flag = true;
-        s_rng_pwr_id = pwr_register_sleep_cb(&rng_sleep_cb, APP_DRIVER_RNG_WAPEUP_PRIORITY);
-        if (s_rng_pwr_id < 0)
-        {
-            return APP_DRV_ERR_INVALID_PARAM;
-        }
-    }
+    pwr_register_sleep_cb(&rng_sleep_cb, APP_DRIVER_RNG_WAKEUP_PRIORITY, RNG_PWR_ID);
 
     p_rng_env->rng_state = APP_RNG_ACTIVITY;
+
+    if (p_params->use_type == APP_RNG_TYPE_INTERRUPT)
+    {
+        soc_register_nvic(RNG_IRQn, (uint32_t)RNG_IRQHandler);
+        hal_nvic_clear_pending_irq(RNG_IRQn);
+        hal_nvic_enable_irq(RNG_IRQn);
+    }
 
     return app_err_code;
 }
@@ -188,11 +179,7 @@ uint16_t app_rng_deinit(void)
     hal_nvic_disable_irq(RNG_IRQn);
     p_rng_env->rng_state = APP_RNG_INVALID;
 
-    GLOBAL_EXCEPTION_DISABLE();
-    pwr_unregister_sleep_cb(s_rng_pwr_id);
-    s_rng_pwr_id = -1;
-    s_sleep_cb_registered_flag = false;
-    GLOBAL_EXCEPTION_ENABLE();
+    pwr_unregister_sleep_cb(RNG_PWR_ID);
 
     hal_err_code = hal_rng_deinit(&p_rng_env->handle);
     HAL_ERR_CODE_CHECK(hal_err_code);
@@ -286,7 +273,7 @@ void hal_rng_ready_data_callback(rng_handle_t *p_rng, uint32_t random32bit)
     }
 }
 
-SECTION_RAM_CODE void RNG_IRQHandler(void)
+void RNG_IRQHandler(void)
 {
     hal_rng_irq_handler(&p_rng_env->handle);
 }

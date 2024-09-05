@@ -63,26 +63,57 @@
 /**
   * @brief PWR MAX value for sleep check
   */
-#define APP_SLEEP_CB_MAX     16
+#define APP_SLEEP_CB_MAX     PWR_ID_MAX
+/** @} */
+
+/** @addtogroup APP_PWR_ENUMERATIONS Enumerations
+  * @{
+  */
+/**
+  * @brief PWR ID Enumerations definition
+  */
+typedef enum
+{
+    DMA_PWR_ID,
+    UART_PWR_ID,
+    I2C_PWR_ID,
+    SPI_PWR_ID,
+    PWM_PWR_ID,
+    TIM_PWR_ID,
+    DUAL_TIM_PWR_ID,
+    ADC_PWR_ID,
+    COMP_PWR_ID,
+    RNG_PWR_ID,
+#if defined SOC_GR5515 || defined SOC_GR5X25 || defined SOC_GR5526
+    QSPI_PWR_ID,
+    I2S_PWR_ID,
+    PKC_PWR_ID,
+    HMAC_PWR_ID,
+    AES_PWR_ID,
+#endif
+#if defined SOC_GR5515 || defined SOC_GR5526
+    ISO7816_PWR_ID,
+#endif
+#if defined SOC_GR5X25 || defined SOC_GR5526
+    DSPI_PWR_ID,
+    PDM_PWR_ID,
+#endif
+    PWR_ID_MAX,
+} pwr_id_t;
 /** @} */
 
 /** @addtogroup APP_PWR_STRUCTURES Structures
   * @{
   */
 /**
-  * @brief PWR id
-  */
-typedef int16_t pwr_id_t;
-
-/**
   * @brief PWR sleep check function Structure
   */
 typedef struct
 {
-    bool (*app_prepare_for_sleep)(void);    /**<Peripherals prepare sleep fuction . */
-    void (*app_sleep_canceled)(void);       /**<Peripherals cancel sleep fuction . */
-    void (*app_wake_up_ind)(void);          /**< Resume peripherals when used fuctioin . */
+    bool (*app_prepare_for_sleep)(void);    /**< Peripherals prepare sleep fuction. */
+    void (*app_wake_up_ind)(void);          /**< Resume peripherals when chip wakeup. */
 } app_sleep_callbacks_t;
+
 /** @} */
 
 
@@ -92,14 +123,22 @@ typedef struct
   */
 /**
  ****************************************************************************************
+ * @brief  Initialize the app power management module
+ ****************************************************************************************
+ */
+void app_pwr_mgmt_init(void);
+
+/**
+ ****************************************************************************************
  * @brief    set PWR sleep callback function
  * @param    p_cb : Device check callback function
  * @param    wakeup_priority : Device wakeup priority
+ * @param    id : which id want to register
  *
  * @return   ID
  ****************************************************************************************
  */
-pwr_id_t pwr_register_sleep_cb(const app_sleep_callbacks_t *p_cb, wakeup_priority_t wakeup_priority);
+pwr_id_t pwr_register_sleep_cb(const app_sleep_callbacks_t *p_cb, wakeup_priority_t wakeup_priority, pwr_id_t id);
 
 /**
  ****************************************************************************************

@@ -48,6 +48,7 @@
 #include "hal_flash.h"
 #include "custom_config.h"
 #include "flash_scatter_config.h"
+#include "app_rtc.h"
 
 /*
  * DEFINENS
@@ -73,6 +74,34 @@ extern bool g_sensor_calibration_done_flag;
  *****************************************************************************************
  */
 #if APP_LOG_STORE_ENABLE
+static void get_timestamp(app_log_store_time_t *p_time)
+{
+    app_rtc_time_t time;
+    app_rtc_get_time(&time);
+    p_time->year=time.year;
+    p_time->month=time.mon;
+    p_time->day=time.date;
+    p_time->hour=time.hour;
+    p_time->min=time.min;
+    p_time->sec=time.sec;
+    p_time->msec=time.ms;
+}
+
+static void app_rtc(void)
+{
+    app_rtc_time_t time;
+    app_rtc_init(NULL);
+    time.year = 23;
+    time.mon  = 2;
+    time.date = 13;
+    time.hour = 8;
+    time.min  = 0;
+    time.sec  = 0;
+    time.week = 0;
+    time.ms   = 0;
+    app_rtc_init_time(&time);
+}
+
 static void log_store_init(void)
 {
     app_log_store_info_t store_info;
@@ -87,10 +116,11 @@ static void log_store_init(void)
     op_func.flash_erase = hal_flash_erase;
     op_func.flash_write = hal_flash_write;
     op_func.flash_read  = hal_flash_read;
-    op_func.time_get    = NULL;
+    op_func.time_get    = get_timestamp;
     op_func.sem_give    = NULL;
     op_func.sem_take    = NULL;
 
+    app_rtc();
     app_log_store_init(&store_info, &op_func);
 }
 #endif

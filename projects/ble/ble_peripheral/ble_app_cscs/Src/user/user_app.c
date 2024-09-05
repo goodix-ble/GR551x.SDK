@@ -157,7 +157,7 @@ static char s_devinfo_cert[] =                                 /**< Device regul
 static dis_pnp_id_t s_devinfo_pnp_id =                         /**< Device PnP id. */
 {
     .vendor_id_source = 1,                                     /**< Vendor ID source (1=Bluetooth SIG). */
-    .vendor_id        = 0x001D,                                /**< Vendor ID. */
+    .vendor_id        = 0x04F7,                                /**< Vendor ID. */
     .product_id       = 0x0000,                                /**< Product ID (vendor-specific). */
     .product_version  = 0x0110                                 /**< Product version (JJ.M.N). */
 };
@@ -469,7 +469,7 @@ static void app_disconnected_handler(uint8_t conn_idx, uint8_t reason)
     app_timer_stop(s_csc_meas_timer_id);
     app_timer_stop(s_battery_level_timer_id);
 
-    error_code = ble_gap_adv_start(conn_idx, &s_gap_adv_time_param);
+    error_code = ble_gap_adv_start(0, &s_gap_adv_time_param);
     APP_ERROR_CHECK(error_code);
 }
 

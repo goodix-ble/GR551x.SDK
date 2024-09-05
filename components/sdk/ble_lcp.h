@@ -222,6 +222,14 @@ uint16_t gdx_lcp_rx_start(void);
  */
 uint16_t gdx_lcp_rx_stop(void);
 
+/**
+ ****************************************************************************************
+ * @brief Set lcp access address
+ *
+ * @retval ::SDK_SUCCESS: Operation is Success.
+ ****************************************************************************************
+ */
+uint16_t gdx_lcp_access_address_set(uint32_t access_address);
 /** @} */
 
 #endif

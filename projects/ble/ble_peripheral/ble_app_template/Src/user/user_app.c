@@ -124,7 +124,7 @@ static void gap_params_init(void)
     if (!strcmp((const char *)dev_name, BLE_GAP_DEVNAME_DEFAULT))
     {
         // Set the default Device Name.
-        error_code = ble_gap_device_name_set(BLE_GAP_WRITE_PERM_NOAUTH, DEVICE_NAME, strlen(DEVICE_NAME));
+        error_code = ble_gap_device_name_set(BLE_GAP_WRITE_PERM_NOAUTH, (uint8_t const *)DEVICE_NAME, strlen(DEVICE_NAME));
         APP_ERROR_CHECK(error_code);
     }
     else
@@ -162,7 +162,7 @@ static void app_disconnected_handler(uint8_t conn_idx, uint8_t reason)
     sdk_err_t error_code;
     APP_LOG_INFO("Disconnected (0x%02X).", reason);
 
-    error_code = ble_gap_adv_start(conn_idx, &s_gap_adv_time_param);
+    error_code = ble_gap_adv_start(0, &s_gap_adv_time_param);
     APP_ERROR_CHECK(error_code);
 }
 

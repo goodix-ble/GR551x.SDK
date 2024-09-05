@@ -476,6 +476,33 @@ hal_status_t hal_dual_timer_set_config(dual_timer_handle_t *p_dual_timer, dual_t
  */
 hal_status_t hal_dual_timer_set_background_reload(dual_timer_handle_t *p_dual_timer, uint32_t reload_value);
 
+/**
+ ****************************************************************************************
+ * @brief  DUAL TIMER set current reload value and next background reload value
+ *         The background reload value contains the value from which the counter is to decrement.
+ *         This is the value used to reload the counter when Periodic mode is enabled, and the current count reaches 0.
+ *         The difference is that writes to background reload value do not cause the counter to immediately restart from the new value.
+ * @param[in]  p_dual_timer: Pointer to a DUAL_TIMER handle which contains the configuration information for the specified DUAL TIMER.
+ * @param[in]  reload_value: Current Background reload value
+ * @param[in]  bg_reload_value: Next Background reload value
+ *
+ * @retval ::HAL_OK: Operation is OK.
+ * @retval ::HAL_ERROR: Parameter error or operation not supported.
+ * @retval ::HAL_BUSY: Driver is busy.
+ ****************************************************************************************
+ */
+hal_status_t hal_dual_timer_set_reload_background_reload(dual_timer_handle_t *p_dual_timer, uint32_t reload_value,uint32_t bg_reload_value);
+
+/**
+ ****************************************************************************************
+ * @brief  Return the DUAL TIMER counter value.
+ *
+ * @param[in]  p_dual_timer: Pointer to a DUAL_TIMER handle which contains the configuration information for the specified DUAL TIMER.
+ *
+ * @return     Dual Timer counter.
+ ****************************************************************************************
+ */
+uint32_t hal_dual_timer_get_counter_value(dual_timer_handle_t *p_dual_timer);
 /** @} */
 
 /** @} */

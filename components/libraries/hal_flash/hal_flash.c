@@ -67,12 +67,31 @@ extern uint32_t sys_security_enable_status_check(void);
 
 #ifdef EXFLASH_ENABLE
 
+uint32_t baud_rate[6] = {XQSPI_BAUD_RATE_64M, XQSPI_BAUD_RATE_48M, XQSPI_BAUD_RATE_16M,
+                         XQSPI_BAUD_RATE_24M, XQSPI_BAUD_RATE_16M, XQSPI_BAUD_RATE_32M};
+extern xqspi_handle_t g_xqspi_handle;
 extern exflash_handle_t g_exflash_handle;
 
 bool hal_flash_init(void)
 {
+    mcu_clock_type_t clk_type = XO_S16M_CLK;
+    SystemCoreGetClock(&clk_type);
+
+    if (g_exflash_handle.p_xqspi == NULL)
+    {
+        g_exflash_handle.p_xqspi       = &g_xqspi_handle;
+        g_xqspi_handle.p_instance      = XQSPI;
+        g_xqspi_handle.init.work_mode  = XQSPI_WORK_MODE_QSPI;
+        g_xqspi_handle.init.cache_mode = ENABLE;
+        g_xqspi_handle.init.read_cmd   = XQSPI_READ_CMD_QUAD_IO_READ;
+
+        /* The XQSPI clock speed should not be greater than system clock. */
+        g_xqspi_handle.init.baud_rate  = baud_rate[clk_type];
+        g_xqspi_handle.init.clock_mode = XQSPI_CLOCK_MODE_0;
+    }
+
     g_exflash_handle.security = sys_security_enable_status_check() ? HAL_EXFLASH_ENCRYPTED : HAL_EXFLASH_UNENCRYPTED;
-    return (HAL_OK == hal_exflash_init(&g_exflash_handle)) ? true : false;
+    return (HAL_OK == hal_exflash_init_ext(&g_exflash_handle)) ? true : false;
 }
 
 uint32_t hal_flash_read(const uint32_t addr, uint8_t *buf, const uint32_t size)

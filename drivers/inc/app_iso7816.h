@@ -70,14 +70,14 @@ extern "C" {
 /** @defgroup APP_ISO7816_ACTION Action state
   * @{
   */
-#define APP_ISO7816_ACTION_NONE             HAL_ISO7816_ACTION_NONE          /**< Do Nothing.                        */
-#define APP_ISO7816_ACTION_OFF              HAL_ISO7816_ACTION_OFF           /**< Switch Off.                        */
-#define APP_ISO7816_ACTION_STOPCLK          HAL_ISO7816_ACTION_STOPCLK       /**< Stop the clock.                    */
-#define APP_ISO7816_ACTION_ON               HAL_ISO7816_ACTION_ON            /**< Switch on and receive ATR.         */
-#define APP_ISO7816_ACTION_WARMRST          HAL_ISO7816_ACTION_WARMRST       /**< Trigger warm reset and receive ATR.*/
-#define APP_ISO7816_ACTION_RX               HAL_ISO7816_ACTION_RX            /**< Receive.                           */
-#define APP_ISO7816_ACTION_TX               HAL_ISO7816_ACTION_TX            /**< Transmit.                          */
-#define APP_ISO7816_ACTION_TXRX             HAL_ISO7816_ACTION_TXRX          /**< Transmit, followed by RX.          */
+#define APP_ISO7816_ACTION_NONE             HAL_ISO7816_ACTION_NONE          /**< Do Nothing                         */
+#define APP_ISO7816_ACTION_OFF              HAL_ISO7816_ACTION_OFF           /**< Switch Off                         */
+#define APP_ISO7816_ACTION_STOPCLK          HAL_ISO7816_ACTION_STOPCLK       /**< Stop the clock                     */
+#define APP_ISO7816_ACTION_ON               HAL_ISO7816_ACTION_ON            /**< Switch on and receive ATR          */
+#define APP_ISO7816_ACTION_WARMRST          HAL_ISO7816_ACTION_WARMRST       /**< Trigger warm reset and receive ATR */
+#define APP_ISO7816_ACTION_RX               HAL_ISO7816_ACTION_RX            /**< Receive                            */
+#define APP_ISO7816_ACTION_TX               HAL_ISO7816_ACTION_TX            /**< Transmit                           */
+#define APP_ISO7816_ACTION_TXRX             HAL_ISO7816_ACTION_TXRX          /**< Transmit, followed by RX           */
 /** @} */
 
 /** @defgroup APP_ISO7816_Interrupt_definition ISO7816 Interrupt Definition
@@ -95,8 +95,8 @@ extern "C" {
 /** @defgroup APP_ISO7816_CARD_PRESENCE Card Presence Defines
   * @{
   */
-#define APP_ISO7816_CARD_ABSENT            HAL_ISO7816_CARD_ABSENT          /**< SIM Card is absent.   */
-#define APP_ISO7816_CARD_PRESENT           HAL_ISO7816_CARD_PRESENT         /**< SIM Card is present.  */
+#define APP_ISO7816_CARD_ABSENT            HAL_ISO7816_CARD_ABSENT          /**< SIM Card is absent    */
+#define APP_ISO7816_CARD_PRESENT           HAL_ISO7816_CARD_PRESENT         /**< SIM Card is present   */
 /** @} */
 
 /** @defgroup APP_ISO7816_IO_STATES IO States Defines
@@ -140,8 +140,8 @@ extern "C" {
   */
 typedef enum
 {
-    APP_ISO7816_TYPE_INTERRUPT,        /**< Interrupt operation mode */
-    APP_ISO7816_TYPE_POLLING,          /**< Polling operation mode   */
+    APP_ISO7816_TYPE_INTERRUPT,        /**< Interrupt operation mode. */
+    APP_ISO7816_TYPE_POLLING,          /**< Polling operation mode. */
     APP_ISO7816_TYPE_MAX,              /**< Only for check parameter, not used as input parameters. */
 } app_iso7816_mode_t;
 
@@ -150,13 +150,13 @@ typedef enum
   */
 typedef enum
 {
-    APP_ISO7816_EVT_ERROR,             /**< Error reported by ISO7816 peripheral.  */
-    APP_ISO7816_EVT_ABORT,             /**< Error reported by ISO7816 peripheral.  */
-    APP_ISO7816_EVT_PRESENCE,          /**< Requested RX transfer completed.       */
-    APP_ISO7816_EVT_ATR_CPLT,          /**< Requested TX transfer completed.       */
-    APP_ISO7816_EVT_TX_CPLT,           /**< Requested TX transfer completed.       */
-    APP_ISO7816_EVT_RX_CPLT,           /**< Requested RX transfer completed.       */
-    APP_ISO7816_EVT_TX_RX_CPLT,        /**< Requested RX transfer completed.       */
+    APP_ISO7816_EVT_ERROR,             /**< Error reported by ISO7816 peripheral. */
+    APP_ISO7816_EVT_ABORT,             /**< Error reported by ISO7816 peripheral. */
+    APP_ISO7816_EVT_PRESENCE,          /**< Requested RX transfer completed. */
+    APP_ISO7816_EVT_ATR_CPLT,          /**< Requested TX transfer completed. */
+    APP_ISO7816_EVT_TX_CPLT,           /**< Requested TX transfer completed. */
+    APP_ISO7816_EVT_RX_CPLT,           /**< Requested RX transfer completed. */
+    APP_ISO7816_EVT_TX_RX_CPLT,        /**< Requested RX transfer completed. */
 } app_iso7816_evt_type_t;
 /** @} */
 
@@ -169,10 +169,10 @@ typedef enum
   */
 typedef struct
 {
-    app_io_type_t        type;     /**< Specifies the type of IO.                                            */
-    app_io_mux_t         mux;      /**< Specifies the Peripheral to be connected to the selected pins.       */
+    app_io_type_t        type;     /**< Specifies the type of IO. */
+    app_io_mux_t         mux;      /**< Specifies the Peripheral to be connected to the selected pins. */
     uint32_t             pin;      /**< Specifies the IO pins to be configured.
-                                        This parameter can be any value of @ref GR5xxx_pins.                 */
+                                        This parameter can be any value of @ref GR5xxx_pins. */
     app_io_pull_t        pull;     /**< Specifies the Pull-up or Pull-Down activation for the selected pins. */
 } app_iso7816_pin_t;
 
@@ -181,10 +181,10 @@ typedef struct
   */
 typedef struct
 {
-    app_iso7816_pin_t       clk;       /**< Set the configuration of ISO7816 clock pin.   */
-    app_iso7816_pin_t       rst;       /**< Set the configuration of ISO7816 reset pin.   */
-    app_iso7816_pin_t       io;        /**< Set the configuration of ISO7816 io pin.      */
-    app_iso7816_pin_t       presence;  /**< Set the configuration of ISO7816 presence pin.*/
+    app_iso7816_pin_t       clk;       /**< Set the configuration of ISO7816 clock pin. */
+    app_iso7816_pin_t       rst;       /**< Set the configuration of ISO7816 reset pin. */
+    app_iso7816_pin_t       io;        /**< Set the configuration of ISO7816 io pin. */
+    app_iso7816_pin_t       presence;  /**< Set the configuration of ISO7816 presence pin. */
 } app_iso7816_pin_cfg_t;
 
 /**
@@ -237,12 +237,12 @@ typedef enum
   */
 typedef struct
 {
-    app_iso7816_evt_handler_t   evt_handler;           /**< ISO7816 event callback.              */
-    iso7816_handle_t            handle;                /**< ISO7816 handle Structure.            */
+    app_iso7816_evt_handler_t   evt_handler;           /**< ISO7816 event callback. */
+    iso7816_handle_t            handle;                /**< ISO7816 handle Structure. */
     app_iso7816_mode_t          use_mode;              /**< ISO7816 operating mode Enumerations. */
-    app_iso7816_pin_cfg_t       *p_pin_cfg;            /**< ISO7816 pin configure structure.     */
-    app_iso7816_state_t         iso7816_state;         /**< ISO7816 state configure structure.   */
-    bool                        start_flag;            /**< ISO7816 start_flage.                 */
+    app_iso7816_pin_cfg_t       *p_pin_cfg;            /**< ISO7816 pin configure structure. */
+    app_iso7816_state_t         iso7816_state;         /**< ISO7816 state configure structure. */
+    bool                        start_flag;            /**< ISO7816 start_flage. */
 }iso7816_env_t;
 
 /**
@@ -250,10 +250,10 @@ typedef struct
   */
 typedef struct
 {
-    app_iso7816_mode_t      use_mode;        /**< Specifies the operation mode of ISO7816.            */
-    app_iso7816_pin_cfg_t   pin_cfg;         /**< The pin configuration information for the ISO7816.  */
-    iso7816_init_t          init;            /**< ISO7816 communication parameters.                   */
-    iso7816_env_t           iso7816_env;     /**< ISO7816 device structure definition.                */
+    app_iso7816_mode_t      use_mode;        /**< Specifies the operation mode of ISO7816. */
+    app_iso7816_pin_cfg_t   pin_cfg;         /**< The pin configuration information for the ISO7816. */
+    iso7816_init_t          init;            /**< ISO7816 communication parameters. */
+    iso7816_env_t           iso7816_env;     /**< ISO7816 device structure definition. */
 } app_iso7816_params_t;
 
 /** @} */

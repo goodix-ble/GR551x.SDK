@@ -43,9 +43,12 @@
 #include "grx_sys.h"
 #include "gr_soc.h"
 #include "gr_plat.h"
+#include "custom_config.h"
 
 #if defined (__CC_ARM )
 const APP_INFO_t BUILD_IN_APP_INFO __attribute__((at(APP_INFO_ADDR))) =
+#elif (defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 6100100))
+const APP_INFO_t BUILD_IN_APP_INFO __attribute__((section(".ARM.__at_"APP_INFO_AT_ADDR), used )) =
 #elif defined (__ICCARM__)
 __root const APP_INFO_t BUILD_IN_APP_INFO @ (APP_INFO_ADDR) =
 #else
@@ -64,9 +67,10 @@ const APP_INFO_t BUILD_IN_APP_INFO __attribute__((section(".app_info"))) =
 #ifdef APP_INFO_COMMENTS
     .comments         = APP_INFO_COMMENTS,
 #endif
+    .reserved1        = {APP_INFO_RESERVED}
 };
 
-void C_CONSTRUCTOR system_platform_init(void)
+__WEAK void C_CONSTRUCTOR system_platform_init(void)
 {
     vector_table_init();
     sdk_init();
@@ -74,21 +78,11 @@ void C_CONSTRUCTOR system_platform_init(void)
     return;
 }
 
-#if defined ( __ICCARM__ )
-extern void __iar_program_start(void);
-void __main(void)
-{
-    __iar_program_start();
-}
+#if defined ( __CC_ARM )
 
-extern void __iar_data_init3(void);
-int __low_level_init(void)
-{
-    __iar_data_init3();
-    system_platform_init();
-    return 0;
-}
-#elif defined ( __GNUC__ ) && !defined ( __CC_ARM ) 
+#elif (defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 6100100))
+
+#elif defined ( __GNUC__ ) && !defined ( __CC_ARM )
 extern int main(void);
 void __main(void)
 {
@@ -112,15 +106,27 @@ void __main(void)
     system_platform_init();
     main();
 }
+#elif defined ( __ICCARM__ )
+extern void __iar_program_start(void);
+void __main(void)
+{
+    __iar_program_start();
+}
+
+extern void __iar_data_init3(void);
+int __low_level_init(void)
+{
+    __iar_data_init3();
+    system_platform_init();
+    return 0;
+}
+
 #endif
 
-void main_init(void)
+__WEAK void main_init(void)
 {
-#if defined ( SOC_GR5332 )
-    uint32_t boot_flag = pwr_mgmt_get_wakeup_flag();
-#else
-    uint32_t boot_flag = get_wakeup_flag();
- #endif
+    boot_mode_t boot_flag = pwr_mgmt_get_wakeup_flag();
+
     if(COLD_BOOT == boot_flag)
     {
         extern void __main(void);
@@ -129,7 +135,9 @@ void main_init(void)
     else
     {
         warm_boot_process();
-        while (1);
+
+        for (;;)
+        {
+        }
     }
 }
-

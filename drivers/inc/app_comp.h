@@ -67,7 +67,7 @@ extern "C" {
   * @{
   */
 /**
-  * @brief COMP event Enumerations definition
+  * @brief APP COMP event Enumerations definition
   */
 typedef enum
 {
@@ -113,7 +113,14 @@ typedef struct
     app_comp_pin_t      vref;         /**< Set the configuration of reference pin. */
 } app_comp_pin_cfg_t;
 
-/**@brief App comp state types. */
+/** @} */
+
+/** @addtogroup APP_COMP_ENUM Enumerations
+  * @{
+  */
+/**
+  * @brief App COMP state types
+  */
 typedef enum
 {
     APP_COMP_INVALID = 0,
@@ -123,6 +130,11 @@ typedef enum
 #endif
 } app_comp_state_t;
 
+/** @} */
+
+/** @addtogroup APP_COMP_STRUCTURES Structures
+  * @{
+  */
 /**
   * @brief COMP device structure definition
   */
@@ -131,7 +143,7 @@ typedef struct
     app_comp_evt_handler_t  evt_handler;     /**< COMP event callback definition. */
     comp_handle_t           handle;          /**< COMP handle definition. */
     app_comp_pin_cfg_t      *p_pin_cfg;      /**< COMP pins config Structures. */
-    app_comp_state_t        comp_state;      /**< COMP state types.  */
+    app_comp_state_t        comp_state;      /**< COMP state types. */
 }comp_env_t;
 
 /**
@@ -140,8 +152,8 @@ typedef struct
 typedef struct
 {
     app_comp_pin_cfg_t  pin_cfg;      /**< the pin configuration information for the specified COMP module. */
-    comp_init_t         init;         /**< COMP configuration parameters.      */
-    comp_env_t          comp_env;     /**< COMP device structure definition.      */
+    comp_init_t         init;         /**< COMP configuration parameters. */
+    comp_env_t          comp_env;     /**< COMP device structure definition. */
 } app_comp_params_t;
 
 

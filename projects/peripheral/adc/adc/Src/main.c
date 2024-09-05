@@ -51,6 +51,7 @@
  * DEFINES
  *****************************************************************************************
  */
+// Note: Note: TEST_CONV_LENGTH must be aligned on a four-byte boundary.
 #define TEST_CONV_LENGTH      (128UL)
 
 /*
@@ -78,8 +79,8 @@ app_adc_params_t adc_params = {
         .dma_channel  = DMA_Channel0,
     },
     .init = {
-        .channel_p  = ADC_INPUT_SRC_IO0,
-        .channel_n  = ADC_INPUT_SRC_IO1,
+        .channel_p  = APP_ADC_P_INPUT_SRC,
+        .channel_n  = APP_ADC_N_INPUT_SRC,
         .input_mode = ADC_INPUT_SINGLE,
         .ref_source = ADC_REF_SRC_BUF_INT,
         .ref_value  = ADC_REF_VALUE_1P6,
@@ -96,16 +97,27 @@ void app_adc_evt_handler(app_adc_evt_t * p_evt)
     if (p_evt->type == APP_ADC_EVT_CONV_CPLT)
     {
         covn_done = 1;
-        printf("DMA conversion is done.\r\n");
     }
 }
 
 void adc_single(void)
 {
-    app_adc_deinit();
-    app_adc_init(&adc_params, app_adc_evt_handler);
-    app_adc_dma_deinit();
-    app_adc_dma_init(&adc_params);
+    uint16_t ret = APP_DRV_SUCCESS;
+
+    /* Please initialize DMA in the following order. */
+    /* Note: Initialization is not allowed during the transmission process. */
+    ret = app_adc_init(&adc_params, app_adc_evt_handler);
+    if (ret != APP_DRV_SUCCESS)
+    {
+        printf("\r\nADC initial failed! Please check the input parameters.\r\n");
+        return;
+    }
+    ret = app_adc_dma_init(&adc_params);
+    if (ret != APP_DRV_SUCCESS)
+    {
+        printf("\r\nADC initial dma failed! Please check the input parameters.\r\n");
+        return;
+    }
 
     memset(conversion, 0, sizeof(conversion));
 
@@ -122,19 +134,34 @@ void adc_single(void)
         app_log_flush();
     }
     printf("\r\n");
+
+    /* Please deinitialize DMA in the following order. */
+    app_adc_dma_deinit();
+    app_adc_deinit();
 }
 
 #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR551X)
 void temperater_measure(void)
 {
     double temp;
+    uint16_t ret = APP_DRV_SUCCESS;
 
     adc_params.init.channel_n = ADC_INPUT_SRC_TMP;
     adc_params.init.ref_value = ADC_REF_VALUE_0P8;
-    app_adc_deinit();
-    app_adc_init(&adc_params, app_adc_evt_handler);
-    app_adc_dma_deinit();
-    app_adc_dma_init(&adc_params);
+    /* Please initialize DMA in the following order. */
+    /* Note: Initialization is not allowed during the transmission process. */
+    ret = app_adc_init(&adc_params, app_adc_evt_handler);
+    if (ret != APP_DRV_SUCCESS)
+    {
+        printf("\r\nADC initial failed! Please check the input parameters.\r\n");
+        return;
+    }
+    ret = app_adc_dma_init(&adc_params);
+    if (ret != APP_DRV_SUCCESS)
+    {
+        printf("\r\nADC initial dma failed! Please check the input parameters.\r\n");
+        return;
+    }
 
     memset(conversion, 0, sizeof(conversion));
     printf("\r\nStart temperature sampling.\r\n");
@@ -153,18 +180,33 @@ void temperater_measure(void)
     app_adc_temperature_conv((uint16_t *)&aver, &temp, 1);
     printf("Temperature value= %0.1f C\r\n", temp);
     app_log_flush();
+
+    /* Please deinitialize DMA in the following order. */
+    app_adc_dma_deinit();
+    app_adc_deinit();
 }
 
 void vbattery_measure(void)
 {
     double vbat;
+    uint16_t ret = APP_DRV_SUCCESS;
 
     adc_params.init.channel_n = ADC_INPUT_SRC_BAT;
     adc_params.init.ref_value = ADC_REF_VALUE_0P8;
-    app_adc_deinit();
-    app_adc_init(&adc_params, app_adc_evt_handler);
-    app_adc_dma_deinit();
-    app_adc_dma_init(&adc_params);
+    /* Please initialize DMA in the following order. */
+    /* Note: Initialization is not allowed during the transmission process. */
+    ret = app_adc_init(&adc_params, app_adc_evt_handler);
+    if (ret != APP_DRV_SUCCESS)
+    {
+        printf("\r\nADC initial failed! Please check the input parameters.\r\n");
+        return;
+    }
+    ret = app_adc_dma_init(&adc_params);
+    if (ret != APP_DRV_SUCCESS)
+    {
+        printf("\r\nADC initial dma failed! Please check the input parameters.\r\n");
+        return;
+    }
 
     memset(conversion, 0, sizeof(conversion));
     printf("\r\nStart Vbattery sampling.\r\n");
@@ -183,6 +225,10 @@ void vbattery_measure(void)
     app_adc_vbat_conv((uint16_t *)&aver, &vbat, 1);
     printf("Vbattery= %0.3f V\r\n", vbat);
     app_log_flush();
+
+    /* Please deinitialize DMA in the following order. */
+    app_adc_dma_deinit();
+    app_adc_deinit();
 }
 #endif
 
@@ -191,16 +237,14 @@ int main(void)
     board_init();
 
     printf("\r\n");
-    printf("******************************************************\r\n");
-    printf("*                 ADC APP example.                   *\r\n");
-    printf("*                                                    *\r\n");
-    printf("*       ADC_INPUT_P   <-----     MSIO0               *\r\n");
-    printf("*       ADC_INPUT_N   <-----     MSIO1               *\r\n");
-    printf("*                                                    *\r\n");
-    printf("* Please connect signal to MSIO0 and MSIO1.          *\r\n");
-    printf("* This sample will show the ADC sample signal from   *\r\n");
-    printf("* INPUT_P & INPUT_N.                                 *\r\n");
-    printf("******************************************************\r\n");
+    printf("*********************************************************\r\n");
+    printf("*                 ADC APP example.                      *\r\n");
+    printf("*                                                       *\r\n");
+    printf("*                                                       *\r\n");
+    printf("* Please connect signal to ADC_INPUT_P and ADC_INPUT_N. *\r\n");
+    printf("* This sample will show the ADC sample signal from      *\r\n");
+    printf("* INPUT_P & INPUT_N.                                    *\r\n");
+    printf("*********************************************************\r\n");
 
     adc_single();
 

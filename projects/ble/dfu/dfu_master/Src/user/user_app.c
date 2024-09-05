@@ -72,7 +72,7 @@
 
 uint16_t fast_dfu_program_one_size = 0;
 
-uint8_t ble_send_cplt_flag = 0;
+extern uint8_t ble_send_cplt_flag;
 
 /*
  * LOCAL VARIABLE DEFINITIONS
@@ -177,7 +177,7 @@ static bool user_otas_uuid_find(const uint8_t *p_data, const uint16_t length)
 static void otas_c_evt_process(otas_c_evt_t *p_evt)
 {
     extern uint8_t fast_dfu_mode;
-    extern uint32_t          s_program_size;
+    extern uint32_t program_size;
 
     switch (p_evt->evt_type)
     {
@@ -195,11 +195,11 @@ static void otas_c_evt_process(otas_c_evt_t *p_evt)
             break;
 
         case OTAS_C_EVT_TX_CPLT:
-            if (fast_dfu_mode == 0x00)
+            if (fast_dfu_mode == FAST_DFU_MODE_DISABLE)
             {
                 dfu_m_send_data_cmpl_process();
             }
-            else if (fast_dfu_mode == 0x02 && s_program_size != 0)
+            else if (fast_dfu_mode == FAST_DFU_MODE_ENABLE && program_size != 0)
             {
                 ble_send_cplt_flag = 1;
             }
@@ -374,6 +374,12 @@ void app_dfu_rev_cmd_cb(void)
 
 void ble_app_init(void)
 {
+    sdk_version_t     version;
+
+    sys_sdk_verison_get(&version);
+    APP_LOG_INFO("Goodix BLE SDK V%d.%d.%d (commit %x)",
+                 version.major, version.minor, version.build, version.commit_id);
+
     otas_client_init(otas_c_evt_process);
     gap_params_init();
     master_timer_init();

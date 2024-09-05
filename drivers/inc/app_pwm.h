@@ -68,7 +68,7 @@ extern "C" {
   * @{
   */
 
-#define APP_PWM_PIN_ENABLE      1    /**< PWM pin enable  */
+#define APP_PWM_PIN_ENABLE      1    /**< PWM pin enable */
 #define APP_PWM_PIN_DISABLE     0    /**< PWM pin disable */
 
 /** @} */
@@ -82,8 +82,8 @@ extern "C" {
   */
 typedef enum
 {
-    APP_PWM_ID_0,                /**< PWM module 0 */
-    APP_PWM_ID_1,                /**< PWM module 1 */
+    APP_PWM_ID_0,                /**< PWM module 0. */
+    APP_PWM_ID_1,                /**< PWM module 1. */
     APP_PWM_ID_MAX               /**< Only for check parameter, not used as input parameters. */
 } app_pwm_id_t;
 
@@ -92,11 +92,11 @@ typedef enum
   */
 typedef enum
 {
-    APP_PWM_ACTIVE_CHANNEL_A        = 0x01,    /**< The active channel is A     */
-    APP_PWM_ACTIVE_CHANNEL_B        = 0x02,    /**< The active channel is B     */
-    APP_PWM_ACTIVE_CHANNEL_C        = 0x04,    /**< The active channel is C     */
-    APP_PWM_ACTIVE_CHANNEL_ALL      = 0x07,    /**< The active channels are ALL */
-    APP_PWM_ACTIVE_CHANNEL_CLEARED  = 0x00     /**< All active channels are cleared */
+    APP_PWM_ACTIVE_CHANNEL_A        = 0x01,    /**< The active channel is A. */
+    APP_PWM_ACTIVE_CHANNEL_B        = 0x02,    /**< The active channel is B. */
+    APP_PWM_ACTIVE_CHANNEL_C        = 0x04,    /**< The active channel is C. */
+    APP_PWM_ACTIVE_CHANNEL_ALL      = 0x07,    /**< The active channels are ALL. */
+    APP_PWM_ACTIVE_CHANNEL_CLEARED  = 0x00     /**< All active channels are cleared. */
 } app_pwm_active_channel_t;
 
 /**@brief App pwm state types. */
@@ -186,6 +186,13 @@ typedef struct
     dma_channel_t    pwm_dma_channel;    /**< Specifies the dma channel of PWM. */
 } app_pwm_mode_t;
 
+/**@brief App pwm dma state types. */
+typedef enum
+{
+    APP_PWM_DMA_INVALID = 0,
+    APP_PWM_DMA_ACTIVITY,
+} app_pwm_dma_state_t;
+
 /**
   * @brief PWM event structure definition
   */
@@ -209,14 +216,14 @@ typedef struct
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
     app_pwm_evt_handler_t  evt_handler;
 #endif
-    app_pwm_pin_cfg_t      *p_pin_cfg;            /**< PWM configuration Structures.      */
-    app_pwm_state_t        pwm_state;             /**< App pwm state types.      */       
-    app_pwm_module_state_t pwm_module_state;      /**< App pwm module state types.      */
+    app_pwm_pin_cfg_t      *p_pin_cfg;            /**< PWM configuration Structures. */
+    app_pwm_state_t        pwm_state;             /**< App pwm state types. */
+    app_pwm_module_state_t pwm_module_state;      /**< App pwm module state types. */
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
-    app_pwm_mode_t         use_mode;
+    app_pwm_dma_state_t    dma_state;             /**< App pwm dma state. */
     dma_id_t               dma_id[1];
 #endif
-    pwm_handle_t           handle;                /**< PWM handle Structure.      */
+    pwm_handle_t           handle;                /**< PWM handle Structure. */
 } pwm_env_t;
 
 /**
@@ -224,11 +231,11 @@ typedef struct
   */
 typedef struct
 {
-    app_pwm_id_t             id;              /**< specified PWM module ID.      */
+    app_pwm_id_t             id;              /**< specified PWM module ID. */
     app_pwm_pin_cfg_t        pin_cfg;         /**< the pin configuration information for the specified PWM module. */
-    app_pwm_active_channel_t active_channel;  /**< PWM operate mode.             */
+    app_pwm_active_channel_t active_channel;  /**< PWM operate mode. */
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
-    app_pwm_mode_t           use_mode;        /**< PWM operate mode.             */
+    app_pwm_mode_t           use_mode;        /**< PWM operate mode. */
 #endif
     pwm_init_t               init;            /**< PWM communication parameters. */
     pwm_env_t                pwm_env;         /**< PWM device structure definition. */
@@ -242,7 +249,7 @@ typedef struct
 
 /**
  ****************************************************************************************
- * @brief  Initialize the pwm peripheral.
+ * @brief  Initialize the APP PWM DRIVER.
  *
  * @param[in]  p_params: Pointer to app_pwm_params_t parameter which contains the
  *                       configuration information for the specified PWM module.
@@ -258,7 +265,7 @@ uint16_t app_pwm_init(app_pwm_params_t *p_params);
 
 /**
  ****************************************************************************************
- * @brief  De-initialize the pwm peripheral.
+ * @brief  De-initialize the APP PWM DRIVER.
  *
  * @param[in]  id: De-initialize for a specific ID.
  *

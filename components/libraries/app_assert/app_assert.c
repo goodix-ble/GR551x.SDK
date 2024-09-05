@@ -142,7 +142,10 @@ static void app_assert_info_output(uint8_t assert_type)
                    "%s",
                    assert_info);
 
-    app_log_flush();
+    if (APP_ASSERT_WARNING != assert_type)
+    {
+        app_log_assert_flush();
+    }
 }
 
 
@@ -173,7 +176,7 @@ __WEAK void app_assert_warn_cb(int param0, int param1, const char *file, int lin
 
 __WEAK void app_assert_param_cb(int param0, int param1, const char *file, int line)
 {
-    __disable_irq(); 
+    __disable_irq();
 
     uint32_t file_name_len;
 
@@ -218,6 +221,7 @@ __WEAK void app_assert_err_cb(const char *expr, const char *file, int line)
 
     // Also can store assert info to flash
     app_assert_info_output(APP_ASSERT_ERROR);
+
     while(1);
 }
 

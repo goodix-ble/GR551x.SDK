@@ -64,6 +64,26 @@ extern "C" {
 
 #ifdef HAL_SPI_MODULE_ENABLED
 
+/** @addtogroup APP_SPI_STRUCTURES Structures
+  * @{
+  */
+/**
+  * @brief SPI SCreen Config Structures
+  */
+typedef struct {
+    uint8_t     instruction;            /**< screen instruction, such as 0x02                             */
+    uint32_t    leading_address;        /**< control address started from origin, such as 0x002C00        */
+    uint32_t    ongoing_address;        /**< control address started from last position, such as 0x003C00 */
+    uint32_t    data_xfer_width;        /**< data width, @ref SPI_DATASIZE_8BIT SPI_DATASIZE_16BIT        */
+    uint32_t    buff_pixel_stride;      /**< row stride in pixel                                          */
+    uint32_t    buff_pixel_width;       /**< show width in pixel, usually buff_pixel_width <= buff_pixel_stride */
+    uint32_t    buff_pixel_height;      /**< column height in pixel             */
+    uint32_t    buff_pixel_depth;       /**< Just support 2 now (means 16bit).  */
+} app_spi_screen_config_t;
+
+/** @} */
+
+
 /* Exported functions --------------------------------------------------------*/
 /** @addtogroup APP_SPI_DRIVER_FUNCTIONS Functions
   * @{
@@ -108,6 +128,23 @@ uint16_t app_spi_dma_deinit(app_spi_id_t id);
  ****************************************************************************************
  */
 uint16_t app_spim_dma_transmit_with_ia(app_spi_id_t id, uint8_t instruction, uint32_t address, uint8_t * p_data, uint16_t data_length);
+
+#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X)
+/**
+ ****************************************************************************************
+ * @brief  SPI master transmit with 1-byte inst and 4-byte addr, can use to write flash/display/eeprom, etc
+ * @note   DO NOT Support interrupt mode
+ * @param[in]  id          : just support APP_SPI_ID_MASTER
+ * @param[in]  instruction : 1-byte instruction phase
+ * @param[in]  address     : 3-byte address phase
+ * @param[in]  p_data      : pointer to transmit buffer
+ * @param[in]  data_length : length of buffer, unit in byte
+ *
+ * @return APP_DRV_* in app_drv_error.h
+ ****************************************************************************************
+ */
+uint16_t app_spim_dma_transmit_with_ia_32addr(app_spi_id_t id, uint8_t instruction, uint32_t address, uint8_t * p_data, uint16_t data_length);
+#endif
 
 /**
  ****************************************************************************************
@@ -236,6 +273,22 @@ uint16_t app_spi_dma_receive_high_speed_sync(app_spi_id_t id, uint8_t *p_data, u
  ****************************************************************************************
  */
 uint16_t app_spi_dma_transmit_high_speed_sync(app_spi_id_t id, uint8_t *p_data, uint16_t size);
+#endif
+
+
+#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X)
+/**
+ ****************************************************************************************
+ * @brief  transfer big block data from sram to screen device in dma llp mode. Must override _v_malloc and _v_free in application layer
+ *
+ * @param[in]  id: which SPI module want to transmit.
+ * @param[in]  p_scrn_info: Pointer to screen configure information
+ * @param[in]  p_buff: Pointer to data buffer to transfer
+ *
+ * @return Result of operation.
+ ****************************************************************************************
+ */
+uint16_t app_spi_send_display_frame(app_spi_id_t id, app_spi_screen_config_t * p_scrn_info, void * p_buff) ;
 #endif
 
 /** @} */

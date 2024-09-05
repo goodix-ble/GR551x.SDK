@@ -122,7 +122,6 @@ extern "C" {
 
 
 /** @defgroup PWR_LL_EC_WAKEUP_EVT Wakeup Event
- *  @note     Only available on GR5515_C and later version
   * @{
   */
 #define LL_PWR_WKUP_EVENT_BLE               AON_SLP_EVENT_SMCOSCEN              /**< BLE Timer wakeup event             */
@@ -197,7 +196,6 @@ extern "C" {
 /** @} */
 
 /** @defgroup PWR_LL_EC_TIMER_READ_SEL  Timer Read Select
- *  @note     Only available on GR5515_C and later version
  * @{
  */
 #define LL_PWR_TIMER_READ_SEL_CAL_TIMER     AON_PAD_CTL1_TIMER_READ_SEL_CAL_TIMER   /**< Calendar timer     */
@@ -296,7 +294,6 @@ SECTION_RAM_CODE __STATIC_INLINE uint32_t ll_pwr_get_wakeup_condition(void)
 
 /**
   * @brief  Get the Event that triggered the DeepSleep WakeUp.
- *  @note     Only available on GR5515_C and later version
  *
   *  \rst
   *  +----------------------+-----------------------------------+

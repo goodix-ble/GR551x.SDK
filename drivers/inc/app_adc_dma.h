@@ -64,6 +64,19 @@ extern "C" {
 
 #ifdef HAL_ADC_MODULE_ENABLED
 
+/** @addtogroup APP_ADC_DRIVER_MACRO Defines
+  * @{
+  */
+ /**
+* @brief  DMA for conversion.
+*/
+#define app_adc_dma_conversion_async                app_adc_conversion_async
+/**
+* @brief  DMA for multi channel conversion.
+*/
+#define app_adc_dma_multi_channel_conversion_async  app_adc_multi_channel_conversion_async
+/** @} */
+
 /* Exported functions --------------------------------------------------------*/
 /** @addtogroup APP_ADC_DRIVER_FUNCTIONS Functions
   * @{
@@ -92,18 +105,6 @@ uint16_t app_adc_dma_init(app_adc_params_t *p_params);
  ****************************************************************************************
  */
 uint16_t app_adc_dma_deinit(void);
-
-/**
- ****************************************************************************************
- * @brief  DMA for conversion.
- *
- * @param[in]  p_data: Pointer to data buffer which to storage ADC conversion results.
- * @param[in]  length: Length of data buffer,  ranging between 0 and 4095.
- *
- * @return Result of operation.
- ****************************************************************************************
- */
-uint16_t app_adc_dma_conversion_async(uint16_t *p_data, uint32_t length);
 
 /** @} */
 

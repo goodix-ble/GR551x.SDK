@@ -541,7 +541,7 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\components\libraries\app_memory\app_memory.c</FilePath>
             </File>
-          </Files>
+          <File><FileName>ble.c</FileName><FileType>1</FileType><FilePath>..\..\..\..\..\components\sdk\ble.c</FilePath></File></Files>
         </Group>
         <Group>
           <GroupName>gr_profiles</GroupName>

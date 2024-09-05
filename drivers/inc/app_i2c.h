@@ -95,7 +95,7 @@ typedef enum
 typedef enum
 {
     APP_I2C_ROLE_MASTER,           /**< I2C master device. */
-    APP_I2C_ROLE_SLAVE,            /**< I2C slave device.  */
+    APP_I2C_ROLE_SLAVE,            /**< I2C slave device. */
     APP_I2C_ROLE_MAX,              /**< Only for check parameter, not used as input parameters. */
 } app_i2c_role_t;
 
@@ -104,10 +104,10 @@ typedef enum
   */
 typedef enum
 {
-    APP_I2C_EVT_ERROR,                   /**< Error reported by I2C peripheral.  */
-    APP_I2C_EVT_TX_CPLT,                 /**< Requested TX transfer completed.    */
-    APP_I2C_EVT_RX_DATA,                 /**< Requested RX transfer completed.    */
-    APP_I2C_ABORT,                       /**< abort reported by I2C peripheral.  */
+    APP_I2C_EVT_ERROR,                   /**< Error reported by I2C peripheral. */
+    APP_I2C_EVT_TX_CPLT,                 /**< Requested TX transfer completed. */
+    APP_I2C_EVT_RX_DATA,                 /**< Requested RX transfer completed. */
+    APP_I2C_ABORT,                       /**< abort reported by I2C peripheral. */
 } app_i2c_evt_type_t;
 /** @} */
 
@@ -119,10 +119,10 @@ typedef enum
   */
 typedef struct
 {
-    app_io_type_t        type;     /**< Specifies the type of SPI IO.                                  */
+    app_io_type_t        type;     /**< Specifies the type of SPI IO. */
     app_io_mux_t         mux;      /**< Specifies the Peripheral to be connected to the selected pins. */
     uint32_t             pin;      /**< Specifies the IO pins to be configured.
-                                        This parameter can be any value of @ref GR5xxx_pins.           */
+                                        This parameter can be any value of @ref GR5xxx_pins. */
     app_io_pull_t        pull;     /**< Specifies the Pull-up or Pull-Down activation for the selected pins. */
 } app_i2c_pin_t;
 
@@ -131,8 +131,8 @@ typedef struct
   */
 typedef struct
 {
-    app_i2c_pin_t       scl;       /**< Set the configuration of I2C SCL pin.   */
-    app_i2c_pin_t       sda;       /**< Set the configuration of I2C SDA pin.   */
+    app_i2c_pin_t       scl;       /**< Set the configuration of I2C SCL pin. */
+    app_i2c_pin_t       sda;       /**< Set the configuration of I2C SDA pin. */
 } app_i2c_pin_cfg_t;
 
 /**
@@ -151,15 +151,20 @@ typedef struct
   */
 typedef struct
 {
-    app_i2c_evt_type_t type;             /**< Type of event.                    */
+    app_i2c_evt_type_t type;             /**< Type of event. */
     union
     {
-        uint32_t error_code;             /**< I2C Error code .                  */
+        uint32_t error_code;             /**< I2C Error code. */
         uint16_t size;                   /**< I2C transmitted/received counter. */
-    } data;                              /**< Data of event.                    */
-    uint16_t slave_addr;                 /**< I2C slave address.                */
+    } data;                              /**< Data of event. */
+    uint16_t slave_addr;                 /**< I2C slave address. */
 } app_i2c_evt_t;
 
+/** @} */
+
+/** @addtogroup APP_I2C_ENUM Enumerations
+  * @{
+  */
 /**@brief App i2c state types. */
 typedef enum
 {
@@ -177,6 +182,11 @@ typedef enum
     APP_I2C_DMA_ACTIVITY,
 } app_i2c_dma_state_t;
 
+/** @} */
+
+/** @addtogroup APP_I2C_TYPEDEFS Type definitions
+  * @{
+  */
 /**
   * @brief I2C event callback definition
   */
@@ -184,20 +194,23 @@ typedef void (*app_i2c_evt_handler_t)(app_i2c_evt_t *p_evt);
 
 /** @} */
 
+/** @addtogroup APP_I2C_STRUCTURES Structures
+  * @{
+  */
 /**
   * @brief I2C device structure definition
   */
 typedef struct
 {
-    app_i2c_evt_handler_t   evt_handler;         /**< I2C event callback definition.                  */
-    i2c_handle_t            handle;              /**< I2C handle definition.                          */
-    app_i2c_role_t          role;                /**< I2C role Enumerations definition.               */
-    app_i2c_pin_cfg_t       *p_pin_cfg;          /**< I2C pins config Structures.                     */
-    dma_id_t                dma_id[2];           /**< DMA id definition.                              */
-    app_i2c_state_t         i2c_state;           /**< I2C state types.                                */
-    app_i2c_dma_state_t     i2c_dma_state;       /**< I2C dma state types.                            */
-    volatile bool           start_flag;          /**< Start flag definition.                          */
-    uint16_t                slv_dev_addr;        /**< I2C Slave address.                              */
+    app_i2c_evt_handler_t   evt_handler;         /**< I2C event callback definition. */
+    i2c_handle_t            handle;              /**< I2C handle definition. */
+    app_i2c_role_t          role;                /**< I2C role Enumerations definition. */
+    app_i2c_pin_cfg_t       *p_pin_cfg;          /**< I2C pins config Structures. */
+    dma_id_t                dma_id[2];           /**< DMA id definition. */
+    app_i2c_state_t         i2c_state;           /**< I2C state types. */
+    app_i2c_dma_state_t     i2c_dma_state;       /**< I2C dma state types. */
+    volatile bool           start_flag;          /**< Start flag definition. */
+    uint16_t                slv_dev_addr;        /**< I2C Slave address. */
 } i2c_env_t;
 
 /**
@@ -205,13 +218,15 @@ typedef struct
   */
 typedef struct
 {
-    app_i2c_id_t        id;              /**< specified I2C module ID.                                        */
-    app_i2c_role_t      role;            /**< specified the role of I2C.                                      */
+    app_i2c_id_t        id;              /**< specified I2C module ID. */
+    app_i2c_role_t      role;            /**< specified the role of I2C. */
     app_i2c_pin_cfg_t   pin_cfg;         /**< the pin configuration information for the specified I2C module. */
-    app_i2c_dma_cfg_t   dma_cfg;         /**< I2C operate mode.                                               */
-    i2c_init_t          init;            /**< I2C communication parameters.                                   */
-    i2c_env_t           i2c_dev;         /**< I2C device structure definition.                                */
+    app_i2c_dma_cfg_t   dma_cfg;         /**< I2C operate mode. */
+    i2c_init_t          init;            /**< I2C communication parameters. */
+    i2c_env_t           i2c_dev;         /**< I2C device structure definition. */
 } app_i2c_params_t;
+
+/** @} */
 
 /* Exported functions --------------------------------------------------------*/
 /** @addtogroup HAL_APP_I2C_DRIVER_FUNCTIONS Functions
@@ -428,7 +443,7 @@ uint16_t app_i2c_timing_get(app_i2c_id_t id, uint32_t timing_type, uint32_t *p_t
  * @param[in]  id: which I2C module want to transmit.
  * @param[in]  dev_address: Target device address: The device 7 bits address value in datasheet
                must be shifted at right before call interface.
- * @param[in]  p_tdata: Pointer to transmited data buffer
+ * @param[in]  p_tdata: Pointer to transmit data buffer
  * @param[in]  tsize: Amount of data to be sent
  * @param[in]  p_rdata: Pointer to received data buffer
  * @param[in]  rsize: Amount of data to be receive

@@ -318,10 +318,6 @@ error_status_t ll_bod_init(ll_bod_init_t *p_bod_init);
 void ll_bod_struct_init(ll_bod_init_t *p_bod_init);
 /** @} */
 
-#ifdef __cplusplus
-}
-#endif
-
 #endif
 
 /** @} */

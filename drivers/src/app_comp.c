@@ -60,13 +60,10 @@ static void comp_wake_up_ind(void);
  *****************************************************************************************
  */
 comp_env_t *p_comp_env = NULL;
-static bool s_sleep_cb_registered_flag = false;
-static pwr_id_t s_comp_pwr_id = -1;
 
 const static app_sleep_callbacks_t comp_sleep_cb =
 {
     .app_prepare_for_sleep = comp_prepare_for_sleep,
-    .app_sleep_canceled    = NULL,
     .app_wake_up_ind       = comp_wake_up_ind
 };
 
@@ -214,16 +211,6 @@ uint16_t app_comp_init(app_comp_params_t *p_params, app_comp_evt_handler_t evt_h
     app_err_code = comp_config_gpio(p_params->init.ref_source, p_params->pin_cfg);
     APP_DRV_ERR_CODE_CHECK(app_err_code);
 
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
-    soc_register_nvic(COMP_EXT_IRQn, (uint32_t)COMP_IRQHandler);
-    hal_nvic_clear_pending_irq(COMP_EXT_IRQn);
-    hal_nvic_enable_irq(COMP_EXT_IRQn);
-#else
-    soc_register_nvic(COMP_IRQn, (uint32_t)COMP_IRQHandler);
-    hal_nvic_clear_pending_irq(COMP_IRQn);
-    hal_nvic_enable_irq(COMP_IRQn);
-#endif
-
     p_comp_env->p_pin_cfg = &p_params->pin_cfg;
     p_comp_env->evt_handler = evt_handler;
     memcpy(&p_comp_env->handle.init, &p_params->init, sizeof(comp_init_t));
@@ -233,17 +220,19 @@ uint16_t app_comp_init(app_comp_params_t *p_params, app_comp_evt_handler_t evt_h
     hal_err_code = hal_comp_init(&p_comp_env->handle);
     APP_DRV_ERR_CODE_CHECK(hal_err_code);
 
-    if(s_sleep_cb_registered_flag == false)    // register sleep callback
-    {
-        s_sleep_cb_registered_flag = true;
-        s_comp_pwr_id = pwr_register_sleep_cb(&comp_sleep_cb, APP_DRIVER_COMP_WAPEUP_PRIORITY);
-        if (s_comp_pwr_id < 0)
-        {
-            return APP_DRV_ERR_INVALID_PARAM;
-        }
-    }
+    pwr_register_sleep_cb(&comp_sleep_cb, APP_DRIVER_COMP_WAKEUP_PRIORITY, COMP_PWR_ID);
 
     p_comp_env->comp_state = APP_COMP_ACTIVITY;
+
+#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
+    soc_register_nvic(COMP_EXT_IRQn, (uint32_t)COMP_IRQHandler);
+    hal_nvic_clear_pending_irq(COMP_EXT_IRQn);
+    hal_nvic_enable_irq(COMP_EXT_IRQn);
+#else
+    soc_register_nvic(COMP_IRQn, (uint32_t)COMP_IRQHandler);
+    hal_nvic_clear_pending_irq(COMP_IRQn);
+    hal_nvic_enable_irq(COMP_IRQn);
+#endif
 
     return 0;
 }
@@ -278,11 +267,7 @@ uint16_t app_comp_deinit(void)
 
     p_comp_env->comp_state = APP_COMP_INVALID;
 
-    GLOBAL_EXCEPTION_DISABLE();
-    pwr_unregister_sleep_cb(s_comp_pwr_id);
-    s_comp_pwr_id = -1;
-    s_sleep_cb_registered_flag = false;
-    GLOBAL_EXCEPTION_ENABLE();
+    pwr_unregister_sleep_cb(COMP_PWR_ID);
 
     hal_err_code = hal_comp_deinit(&p_comp_env->handle);
     HAL_ERR_CODE_CHECK(hal_err_code);

@@ -101,7 +101,11 @@ typedef struct
 static uart_env_tag_t uart_env;
 static app_uart_params_t s_params;
 static app_uart_tx_buf_t s_hci_uart_buffer;
+#ifdef SOC_GR5515
+static uint8_t s_hci_buffer[512] = {0};
+#else
 static uint8_t s_hci_buffer[256] = {0};
+#endif
 /*
  * PRIVATED FUNCTION DEFINITIONS
  ****************************************************************************************

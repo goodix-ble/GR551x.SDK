@@ -47,6 +47,16 @@
 /*           Cortex-M4F Processor Interruption and Exception Handlers         */
 /*           Add here the Interrupt Handler for the BLE peripheral(s)         */
 /******************************************************************************/
+extern void SVC_Handler(void);
+extern void DebugMon_Handler(void);
+extern void PendSV_Handler(void);
+extern void SysTick_Handler(void);
+extern void NMI_Handler(void);
+extern void HardFault_Handler(void);
+extern void MemManage_Handler(void);
+extern void BusFault_Handler(void);
+extern void UsageFault_Handler(void);
+extern void SecureFault_Handler(void);
 
 /**
  ****************************************************************************************
@@ -54,7 +64,7 @@
  * @retval void
  ****************************************************************************************
  */
-#if SYS_FAULT_TRACE_ENABLE
+#ifdef SYS_FAULT_TRACE_ENABLE
 
 __WEAK void app_log_flush(void)
 {
@@ -83,7 +93,7 @@ SECTION_RAM_CODE __WEAK void cortex_backtrace_fault_handler(uint32_t fault_handl
 {
 }
 
-SECTION_RAM_CODE __asm void HardFault_Handler (void)
+SECTION_RAM_CODE __WEAK __asm void HardFault_Handler (void)
 {
 #if (ENABLE_BACKTRACE_FEA == 0)//use fault trace module
     PRESERVE8
@@ -105,10 +115,8 @@ Fault_Loop
     BL      Fault_Loop
     ALIGN
 }
-
-#elif defined ( __GNUC__ )
-
-__WEAK void hardfault_trace_handler(unsigned int *hardfault_args)
+#elif(defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 6100100))
+__WEAK void __attribute__((used)) hardfault_trace_handler(unsigned int *hardfault_args)
 {
     unsigned int stacked_r0;
     unsigned int stacked_r1;
@@ -138,23 +146,95 @@ __WEAK void hardfault_trace_handler(unsigned int *hardfault_args)
     printf("LR [R14] = %x  subroutine call return address\r\n", stacked_lr);
     printf("PC [R15] = %x  program counter\r\n", stacked_pc);
     printf("PSR = %x\r\n", stacked_psr);
-    printf("BFAR = %x\r\n", (*((volatile unsigned long *)(0xE000ED38))));
-    printf("CFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED28))));
-    printf("HFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED2C))));
-    printf("DFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED30))));
-    printf("AFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED3C))));
+    printf("BFAR = %x\r\n", (*((volatile unsigned int *)(0xE000ED38U))));
+    printf("CFSR = %x\r\n", (*((volatile unsigned int *)(0xE000ED28U))));
+    printf("HFSR = %x\r\n", (*((volatile unsigned int *)(0xE000ED2CU))));
+    printf("DFSR = %x\r\n", (*((volatile unsigned int *)(0xE000ED30U))));
+    printf("AFSR = %x\r\n", (*((volatile unsigned int *)(0xE000ED3CU))));
     printf("SCB_SHCSR = %x\r\n", SCB->SHCSR);
     printf("================================\r\n");
     app_log_flush();
 
-    while (1);
+    for (;;)
+    {
+    }
 }
 
 SECTION_RAM_CODE __WEAK void cortex_backtrace_fault_handler(uint32_t fault_handler_lr, uint32_t fault_handler_sp)
 {
 }
 
-SECTION_RAM_CODE void HardFault_Handler (void)
+SECTION_RAM_CODE __WEAK void HardFault_Handler (void)
+{
+#if (ENABLE_BACKTRACE_FEA == 0)//use fault trace module
+    __asm volatile(
+        "TST     LR,#4\n\t"
+        "ITE     EQ\n\t"
+        "MRSEQ   R0,MSP\n\t"
+        "MRSNE   R0,PSP\n\t"
+        "BL      hardfault_trace_handler\n\t"
+    );
+#elif (ENABLE_BACKTRACE_FEA == 1)//use cortex_backtrace module
+    __asm volatile(
+        "MOV     r0, lr\n\t"
+        "MOV     r1, sp\n\t"
+        "BL      cortex_backtrace_fault_handler\n\t"
+    );
+#endif
+    for (;;)
+    {
+    }
+}
+#elif defined ( __GNUC__ )
+__WEAK void __attribute__((used)) hardfault_trace_handler(unsigned int *hardfault_args)
+{
+    unsigned int stacked_r0;
+    unsigned int stacked_r1;
+    unsigned int stacked_r2;
+    unsigned int stacked_r3;
+    unsigned int stacked_r12;
+    unsigned int stacked_lr;
+    unsigned int stacked_pc;
+    unsigned int stacked_psr;
+
+    stacked_r0 = ((unsigned long) hardfault_args[0]);
+    stacked_r1 = ((unsigned long) hardfault_args[1]);
+    stacked_r2 = ((unsigned long) hardfault_args[2]);
+    stacked_r3 = ((unsigned long) hardfault_args[3]);
+
+    stacked_r12 = ((unsigned long) hardfault_args[4]);
+    stacked_lr = ((unsigned long) hardfault_args[5]);
+    stacked_pc = ((unsigned long) hardfault_args[6]);
+    stacked_psr = ((unsigned long) hardfault_args[7]);
+    printf("HARDFAULT CALLSTACK INFO:\r\n");
+    printf("================================\r\n");
+    printf("R0 = %x\r\n", stacked_r0);
+    printf("R1 = %x\r\n", stacked_r1);
+    printf("R2 = %x\r\n", stacked_r2);
+    printf("R3 = %x\r\n", stacked_r3);
+    printf("R12 = %x\r\n", stacked_r12);
+    printf("LR [R14] = %x  subroutine call return address\r\n", stacked_lr);
+    printf("PC [R15] = %x  program counter\r\n", stacked_pc);
+    printf("PSR = %x\r\n", stacked_psr);
+    printf("BFAR = %x\r\n", (*((volatile unsigned long *)(0xE000ED38U))));
+    printf("CFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED28U))));
+    printf("HFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED2CU))));
+    printf("DFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED30U))));
+    printf("AFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED3CU))));
+    printf("SCB_SHCSR = %x\r\n", SCB->SHCSR);
+    printf("================================\r\n");
+    app_log_flush();
+
+    for (;;)
+    {
+    }
+}
+
+SECTION_RAM_CODE __WEAK void cortex_backtrace_fault_handler(uint32_t fault_handler_lr, uint32_t fault_handler_sp)
+{
+}
+
+SECTION_RAM_CODE __WEAK void HardFault_Handler (void)
 {
 #if (ENABLE_BACKTRACE_FEA == 0)//use fault trace module
     __asm("TST     LR,#4\n");
@@ -168,23 +248,99 @@ SECTION_RAM_CODE void HardFault_Handler (void)
     __asm("BL      cortex_backtrace_fault_handler");
 #endif
 
-    while (1);
+    for (;;)
+    {
+    }
+}
+
+#elif defined ( __ICCARM__ )
+__root void hardfault_trace_handler(unsigned int *hardfault_args)
+{
+    unsigned int stacked_r0;
+    unsigned int stacked_r1;
+    unsigned int stacked_r2;
+    unsigned int stacked_r3;
+    unsigned int stacked_r12;
+    unsigned int stacked_lr;
+    unsigned int stacked_pc;
+    unsigned int stacked_psr;
+
+    stacked_r0 = ((unsigned long) hardfault_args[0]);
+    stacked_r1 = ((unsigned long) hardfault_args[1]);
+    stacked_r2 = ((unsigned long) hardfault_args[2]);
+    stacked_r3 = ((unsigned long) hardfault_args[3]);
+
+    stacked_r12 = ((unsigned long) hardfault_args[4]);
+    stacked_lr = ((unsigned long) hardfault_args[5]);
+    stacked_pc = ((unsigned long) hardfault_args[6]);
+    stacked_psr = ((unsigned long) hardfault_args[7]);
+    printf("HARDFAULT CALLSTACK INFO:\r\n");
+    printf("================================\r\n");
+    printf("R0 = %x\r\n", stacked_r0);
+    printf("R1 = %x\r\n", stacked_r1);
+    printf("R2 = %x\r\n", stacked_r2);
+    printf("R3 = %x\r\n", stacked_r3);
+    printf("R12 = %x\r\n", stacked_r12);
+    printf("LR [R14] = %x  subroutine call return address\r\n", stacked_lr);
+    printf("PC [R15] = %x  program counter\r\n", stacked_pc);
+    printf("PSR = %x\r\n", stacked_psr);
+    printf("BFAR = %x\r\n", (*((volatile unsigned long *)(0xE000ED38U))));
+    printf("CFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED28U))));
+    printf("HFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED2CU))));
+    printf("DFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED30U))));
+    printf("AFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED3CU))));
+    printf("SCB_SHCSR = %x\r\n", SCB->SHCSR);
+    printf("================================\r\n");
+    app_log_flush();
+
+    for (;;)
+    {
+    }
+}
+
+SECTION_RAM_CODE __WEAK void cortex_backtrace_fault_handler(uint32_t fault_handler_lr, uint32_t fault_handler_sp)
+{
+}
+
+SECTION_RAM_CODE void __attribute__((naked))HardFault_Handler (void)
+{
+    extern void hardfault_trace_handler(unsigned int *hardfault_args);
+    extern void cortex_backtrace_fault_handler(uint32_t fault_handler_lr, uint32_t fault_handler_sp);
+
+#if (ENABLE_BACKTRACE_FEA == 0)//use fault trace module
+    asm volatile ("TST     LR,#4 \n\t"
+                  "ITE     EQ \n\t"
+                  "MRSEQ   R0,MSP \n\t"
+                  "MRSNE   R0,PSP \n\t"
+                  "BL      hardfault_trace_handler");
+#elif (ENABLE_BACKTRACE_FEA == 1)//use cortex_backtrace module
+    asm volatile ("MOV     r0, lr \n\t"
+                  "MOV     r1, sp \n\t"
+                  "BL      cortex_backtrace_fault_handler");
+#endif
+    for (;;)
+    {
+    }
 }
 
 #else
 
-void HardFault_Handler (void)
+__WEAK void HardFault_Handler (void)
 {
-   while (1);
+    for (;;)
+    {
+    }
 }
 
 #endif
 
 #else /*SYS_FAULT_TRACE_ENABLE*/
 
-SECTION_RAM_CODE void HardFault_Handler (void)
+SECTION_RAM_CODE __WEAK void HardFault_Handler (void)
 {
-   while (1);
+    for (;;)
+    {
+    }
 }
 
 #endif  /*SYS_FAULT_TRACE_ENABLE*/
@@ -195,9 +351,11 @@ SECTION_RAM_CODE void HardFault_Handler (void)
  * @retval  void
  ****************************************************************************************
  */
-void MemManage_Handler(void)
+__WEAK void MemManage_Handler(void)
 {
-    while (1);
+    for (;;)
+    {
+    }
 }
 
 /**
@@ -206,9 +364,11 @@ void MemManage_Handler(void)
  * @retval  void
  ****************************************************************************************
  */
-void BusFault_Handler(void)
+__WEAK void BusFault_Handler(void)
 {
-    while (1);
+    for (;;)
+    {
+    }
 }
 
 /**
@@ -217,7 +377,107 @@ void BusFault_Handler(void)
  * @retval  void
  ****************************************************************************************
  */
-void UsageFault_Handler(void)
+__WEAK void UsageFault_Handler(void)
 {
-    while (1);
+    for (;;)
+    {
+    }
+}
+
+/**
+ ****************************************************************************************
+ * @brief  SecureFault Interrupt Handler
+ * @retval  void
+ ****************************************************************************************
+ */
+__WEAK void SecureFault_Handler(void)
+{
+    for (;;)
+    {
+    }
+}
+
+/**
+ ****************************************************************************************
+ * @brief  SVC Interrupt Handler
+ * @retval  void
+ ****************************************************************************************
+ */
+#if defined ( __CC_ARM )
+SECTION_RAM_CODE __WEAK __ASM void SVC_Handler(void)
+{
+    PRESERVE8
+    IMPORT gr5xx_svc_process
+    LDR    R0, =gr5xx_svc_process
+    BX     R0
+    ALIGN
+}
+#elif defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6100100)
+extern void gr5xx_svc_process(void);
+void (*volatile gr5xx_svc_process_handle)(void) = gr5xx_svc_process;
+SECTION_RAM_CODE __WEAK __attribute__((naked,used)) void SVC_Handler(void)
+{
+    __asm("LDR    R0, =gr5xx_svc_process\n"
+          "BX     R0");
+}
+#elif !defined ( __CC_ARM ) && defined ( __GNUC__ )
+SECTION_RAM_CODE __WEAK void __attribute__((naked))SVC_Handler(void)
+{
+    extern void gr5xx_svc_process(void);
+    __asm("LDR    R0, =gr5xx_svc_process\n"
+          "BX     R0");
+}
+#elif defined (__ICCARM__)
+SECTION_RAM_CODE __WEAK void __attribute__((naked))SVC_Handler (void)
+{
+    extern void gr5xx_svc_process(void);
+    asm volatile ("LDR    R0, =gr5xx_svc_process \n\t"
+                  "BX     R0");
+}
+#endif
+
+/**
+ ****************************************************************************************
+ * @brief  DebugMon Interrupt Handler
+ * @retval  void
+ ****************************************************************************************
+ */
+__WEAK void DebugMon_Handler(void)
+{
+    for (;;)
+    {
+    }
+}
+
+/**
+ ****************************************************************************************
+ * @brief  PendSV Interrupt Handler
+ * @retval  void
+ ****************************************************************************************
+ */
+__WEAK void PendSV_Handler(void)
+{
+    for (;;)
+    {
+    }
+}
+
+/**
+ ****************************************************************************************
+ * @brief  SysTick Interrupt Handler
+ * @retval  void
+ ****************************************************************************************
+ */
+__WEAK void SysTick_Handler(void)
+{
+    for (;;)
+    {
+    }
+}
+
+__WEAK void NMI_Handler(void)
+{
+    for (;;)
+    {
+    }
 }

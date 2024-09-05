@@ -71,8 +71,8 @@ extern "C" {
   */
 typedef enum
 {
-    APP_RNG_TYPE_INTERRUPT,        /**< Interrupt operation mode */
-    APP_RNG_TYPE_POLLING,          /**< Polling operation mode   */
+    APP_RNG_TYPE_INTERRUPT,        /**< Interrupt operation mode. */
+    APP_RNG_TYPE_POLLING,          /**< Polling operation mode. */
     APP_RNG_TYPE_MAX               /**< Only for check parameter, not used as input parameters. */
 } app_rng_type_t;
 
@@ -82,7 +82,7 @@ typedef enum
 typedef enum
 {
     APP_RNG_EVT_DONE,             /**< Generated random by UART peripheral. */
-    APP_RNG_EVT_ERROR,            /**< Error reported by UART peripheral.   */
+    APP_RNG_EVT_ERROR,            /**< Error reported by UART peripheral. */
 } app_rng_evt_type_t;
 /** @} */
 
@@ -98,12 +98,24 @@ typedef struct
     uint32_t            random_data;    /**< Random number. */
 } app_rng_evt_t;
 
+/** @} */
+
+/** @addtogroup APP_RNG_TYPEDEFS Type definitions
+  * @{
+  */
 /**
   * @brief RNG event callback definition
   */
 typedef void (*app_rng_evt_handler_t)(app_rng_evt_t *p_evt);
 
-/**@brief App rng state types. */
+/** @} */
+
+/** @addtogroup APP_RNG_ENUM Enumerations
+  * @{
+  */
+/**
+  * @brief App rng state types.
+  */
 typedef enum
 {
     APP_RNG_INVALID = 0,
@@ -113,6 +125,11 @@ typedef enum
 #endif
 } app_rng_state_t;
 
+/** @} */
+
+/** @addtogroup HAL_APP_RNG_STRUCTURES Structures
+  * @{
+  */
 /**
   * @brief RNG device structure definition
   */
@@ -129,8 +146,8 @@ typedef struct
 typedef struct
 {
     app_rng_type_t      use_type;  /**< Specifies the operation mode of RNG. */
-    rng_init_t          init;      /**< RNG required parameters.             */
-    rng_env_t           rng_env;   /**< RNG device structure definition.     */
+    rng_init_t          init;      /**< RNG required parameters. */
+    rng_env_t           rng_env;   /**< RNG device structure definition. */
 } app_rng_params_t;
 
 /** @} */
@@ -203,8 +220,9 @@ uint16_t app_rng_gen_async(uint16_t *p_seed);
  */
 rng_handle_t *app_rng_get_handle(void);
 
-#endif
 /** @} */
+
+#endif
 
 #ifdef __cplusplus
 }
@@ -214,6 +232,4 @@ rng_handle_t *app_rng_get_handle(void);
 
 /** @} */
 /** @} */
-
 /** @} */
-

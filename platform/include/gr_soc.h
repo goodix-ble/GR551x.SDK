@@ -18,18 +18,16 @@ extern void vector_table_init(void);
 extern void soc_init(void);
 extern void warm_boot_process(void);
 extern void platform_init(void);
+#if (CONFIG_ZEPHYR_OS)
+__STATIC_INLINE void soc_register_nvic(IRQn_Type indx, uint32_t func){};
+#else
 extern void soc_register_nvic(IRQn_Type indx, uint32_t func);
+#endif
 extern uint32_t get_wakeup_flag(void);
 
-extern hal_status_t hal_exflash_read_rom(exflash_handle_t *p_exflash, uint32_t addr, uint8_t *p_data, uint32_t size);
 extern uint8_t nvds_put_patch(NvdsTag_t tag, uint16_t len, const uint8_t *p_buf);
 extern uint8_t nvds_put_rom(NvdsTag_t tag, uint16_t len, const uint8_t *p_buf);
 extern void dfu_cmd_handler_replace_for_encrypt(void);
-extern void register_rwip_reset(void (*callback)(void));
-extern void rwip_reset_patch(void);
-extern void register_rwip_init(void (*callback)(uint32_t));
-extern void rwip_init_patch(uint32_t error);
-extern void ble_sup_mul_link_with_same_dev(void);
 
 #if defined (__CC_ARM)
 extern void tiny_rw_section_init(void);

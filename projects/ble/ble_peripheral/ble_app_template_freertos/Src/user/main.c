@@ -59,9 +59,14 @@
  * DEFINES
  *****************************************************************************************
  */
-#define APP_TASK_STACK_SIZE             ( 1024 )//unit : word
-#define DFU_TASK_STACK_SIZE             ( 1024 * 4 )//unit : word
+#define APP_TASK_STACK_SIZE             ( 128 )//unit : word
 #define LOG_STORE_DUMP_TASK_STACK_SIZE  ( 512 )//unit : word
+
+#ifdef SOC_GR5515
+#define DFU_TASK_STACK_SIZE             ( 1024 * 2 )//unit : word
+#else
+#define DFU_TASK_STACK_SIZE             ( 256 )//unit : word
+#endif
 
 /*
  * LOCAL VARIABLE DEFINITIONS
@@ -81,10 +86,10 @@ static void print_test_task(void *p_arg)
     while (1)
     {
         app_rtc_get_time(&g_calendar_time);
-        APP_LOG_INFO("TickCount: %d, Time: %02d/%02d %02d:%02d:%02d.%03d\r\n",
+        APP_LOG_INFO("TickCount: %d, Time: %02d/%02d %02d:%02d:%02d.\r\n",
                       xTaskGetTickCount(),
                       g_calendar_time.mon, g_calendar_time.date,
-                      g_calendar_time.hour, g_calendar_time.min, g_calendar_time.sec, g_calendar_time.ms);
+                      g_calendar_time.hour, g_calendar_time.min, g_calendar_time.sec);
         app_log_flush();
         vTaskDelay(1000);
     }

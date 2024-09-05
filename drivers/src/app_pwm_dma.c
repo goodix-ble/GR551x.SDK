@@ -117,7 +117,13 @@ static uint16_t app_pwm_config_dma(app_pwm_params_t *p_params)
  */
 uint16_t app_pwm_dma_init(app_pwm_params_t *p_params)
 {
-    app_drv_err_t err_code = APP_DRV_SUCCESS;
+    app_drv_err_t app_err_code = APP_DRV_SUCCESS;
+
+    if (NULL == p_params)
+    {
+        return APP_DRV_ERR_POINTER_NULL;
+    }
+
     uint8_t id = p_params->id;
 
     if (id != APP_PWM_ID_0)
@@ -130,21 +136,22 @@ uint16_t app_pwm_dma_init(app_pwm_params_t *p_params)
         return APP_DRV_ERR_NOT_INIT;
     }
 
-    if (NULL == p_params)
+    if (p_pwm_env[id]->dma_state != APP_PWM_DMA_INVALID)
     {
-        return APP_DRV_ERR_POINTER_NULL;
+        return APP_DRV_ERR_INVALID_INIT;
     }
 
     GLOBAL_EXCEPTION_DISABLE();
-    p_pwm_env[p_params->id]->dma_id[0] = -1;
-    err_code = app_pwm_config_dma(p_params);
+    app_err_code = app_pwm_config_dma(p_params);
+    if (app_err_code != APP_DRV_SUCCESS)
+    {
+        goto __exit;
+    }
+    p_pwm_env[id]->dma_state = APP_PWM_DMA_ACTIVITY;
+__exit:
     GLOBAL_EXCEPTION_ENABLE();
-    APP_DRV_ERR_CODE_CHECK(err_code);
 
-    p_pwm_env[id]->use_mode.pwm_dma_instance = p_params->use_mode.pwm_dma_instance;
-    p_pwm_env[id]->use_mode.pwm_dma_channel = p_params->use_mode.pwm_dma_channel;
-
-    return APP_DRV_SUCCESS;
+    return app_err_code;
 }
 
 uint16_t app_pwm_dma_deinit(app_pwm_id_t id)
@@ -154,7 +161,7 @@ uint16_t app_pwm_dma_deinit(app_pwm_id_t id)
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if (p_pwm_env[id] == NULL)
+    if ((p_pwm_env[id] == NULL) || (p_pwm_env[id]->dma_state != APP_PWM_DMA_ACTIVITY))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -163,7 +170,7 @@ uint16_t app_pwm_dma_deinit(app_pwm_id_t id)
 
     p_pwm_env[id]->dma_id[0] = -1;
     p_pwm_env[id]->handle.p_dma = NULL;
-
+    p_pwm_env[id]->dma_state = APP_PWM_DMA_INVALID;
     return APP_DRV_SUCCESS;
 }
 
@@ -177,7 +184,7 @@ uint16_t app_pwm_start_coding_with_dma(app_pwm_id_t id, uint32_t *p_data, uint16
     }
 
     if ((p_pwm_env[id] == NULL) ||
-        (p_pwm_env[id]->pwm_state == APP_PWM_INVALID) ||
+        (p_pwm_env[id]->dma_state == APP_PWM_DMA_INVALID) ||
         (p_pwm_env[id]->handle.p_dma == NULL))
     {
         return APP_DRV_ERR_NOT_INIT;

@@ -56,18 +56,6 @@
 #define APP_GPIO_KEY1_PIN        APP_KEY_OK_PIN
 #define APP_GPIO_KEY1_TYPE       APP_KEY_OK_IO_TYPE
 
-#define APP_GPIO_PIN0            APP_IO_PIN_12     /* GPIO28 */
-#define APP_GPIO_PIN0_TYPE       APP_IO_TYPE_GPIOB
-
-#define APP_GPIO_PIN1            APP_IO_PIN_0     /* MSIO0 */
-#define APP_GPIO_PIN1_TYPE       APP_IO_TYPE_MSIO
-
-#define APP_GPIO_PIN2            APP_IO_PIN_7      /* AON7 */
-#define APP_GPIO_PIN2_TYPE       APP_IO_TYPE_AON
-
-#define APP_GPIO_PIN3            APP_IO_PIN_1      /* MSIO1 */
-#define APP_GPIO_PIN3_TYPE       APP_IO_TYPE_MSIO
-
 /*
  * GLOBAL FUNCTION DECLARATION
  ****************************************************************************************

@@ -70,7 +70,7 @@
 /** @} */
 
 /**
- * @defgroup APP_RTOS_CONFIG_TYPEDEF Typedefs
+ * @defgroup APP_RTOS_CONFIG_TYPEDEF Type definitions
  * @{
  */
 
@@ -261,7 +261,7 @@ uint16_t app_driver_mutex_post(mutex_t mutex);
   * @{
   */
 #define app_driver_sem_init(x)        (0)   /**< Initialize the semaphore. */
-#define app_driver_sem_deinit(x)            /**< Deinitialize the semphore. */
+#define app_driver_sem_deinit(x)            /**< Deinitialize the semaphore. */
 #define app_driver_sem_pend(x, y)     (0)   /**< Pend the semaphore. */
 #define app_driver_sem_post(x)              /**< Post the semaphore. */
 #define app_driver_sem_post_from_isr(x)     /**< Post the semaphore from interrupt. */

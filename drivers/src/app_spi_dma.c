@@ -270,7 +270,7 @@ static uint16_t app_spi_config_dma(app_spi_params_t *p_params)
  */
 uint16_t app_spi_dma_init(app_spi_params_t *p_params)
 {
-    app_spi_id_t id = p_params->id;
+    app_spi_id_t id;
     app_drv_err_t err_code = APP_DRV_SUCCESS;
 
     if (NULL == p_params)
@@ -278,14 +278,16 @@ uint16_t app_spi_dma_init(app_spi_params_t *p_params)
         return APP_DRV_ERR_POINTER_NULL;
     }
 
-    if (id >= APP_SPI_ID_MAX)
-    {
-        return APP_DRV_ERR_INVALID_ID;
-    }
+    id = p_params->id;
 
     if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_state == APP_SPI_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
+    }
+
+    if (p_spi_env[id]->spi_dma_state != APP_SPI_DMA_INVALID)
+    {
+        return APP_DRV_ERR_INVALID_INIT;
     }
 
     GLOBAL_EXCEPTION_DISABLE();
@@ -316,30 +318,24 @@ uint16_t app_spi_dma_deinit(app_spi_id_t id)
     app_dma_deinit(p_spi_env[id]->dma_id[0]);
     app_dma_deinit(p_spi_env[id]->dma_id[1]);
 
-    GLOBAL_EXCEPTION_DISABLE();
     p_spi_env[id]->spi_dma_state = APP_SPI_DMA_INVALID;
-    GLOBAL_EXCEPTION_ENABLE();
-    if (p_spi_env[id]->spi_state == APP_SPI_INVALID)
-    {
-        p_spi_env[id] = NULL;
-    }
 
     return APP_DRV_SUCCESS;
 }
 
 uint16_t app_spim_dma_transmit_with_ia(app_spi_id_t id, uint8_t instruction, uint32_t address,  uint8_t * p_data, uint16_t data_length) {
     hal_status_t  err_code = HAL_OK;
- 
+
     if (id != APP_SPI_ID_MASTER)
     {
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_state == APP_SPI_INVALID))
+    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_dma_state == APP_SPI_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
- 
+
     if ((p_data == NULL) || (data_length == 0))
     {
         return APP_DRV_ERR_INVALID_PARAM;
@@ -368,6 +364,49 @@ uint16_t app_spim_dma_transmit_with_ia(app_spi_id_t id, uint8_t instruction, uin
     return APP_DRV_SUCCESS;
 }
 
+#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X)
+uint16_t app_spim_dma_transmit_with_ia_32addr(app_spi_id_t id, uint8_t instruction, uint32_t address,  uint8_t * p_data, uint16_t data_length) {
+    hal_status_t  err_code = HAL_OK;
+
+    if (id != APP_SPI_ID_MASTER)
+    {
+        return APP_DRV_ERR_INVALID_ID;
+    }
+
+    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_dma_state == APP_SPI_DMA_INVALID))
+    {
+        return APP_DRV_ERR_NOT_INIT;
+    }
+
+    if ((p_data == NULL) || (data_length == 0))
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
+#ifdef APP_DRIVER_WAKEUP_CALL_FUN
+    spi_wake_up(id);
+#endif
+
+    if (p_spi_env[id]->start_flag == false)
+    {
+        p_spi_env[id]->start_flag = true;
+        SPI_SMART_CS_LOW(id);
+        err_code = hal_spi_transmit_dma_with_ia_32addr(&p_spi_env[id]->handle, instruction, address, p_data, data_length);
+        if (err_code != HAL_OK)
+        {
+            p_spi_env[id]->start_flag = false;
+            SPI_SMART_CS_HIGH(id);
+            return (uint16_t)err_code;
+        }
+    }
+    else
+    {
+        return APP_DRV_ERR_BUSY;
+    }
+    return APP_DRV_SUCCESS;
+}
+#endif
+
 uint16_t app_spim_dma_receive_with_ia(app_spi_id_t id, uint8_t instruction, uint32_t address, uint8_t dummy_bytes, uint8_t * p_data, uint16_t data_length) {
     uint8_t ia_data[8];
     uint8_t sent_len = 0;
@@ -378,7 +417,7 @@ uint16_t app_spim_dma_receive_with_ia(app_spi_id_t id, uint8_t instruction, uint
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_state == APP_SPI_INVALID))
+    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_dma_state == APP_SPI_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -434,7 +473,7 @@ uint16_t app_spi_dma_receive_async(app_spi_id_t id, uint8_t *p_data, uint16_t si
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_state == APP_SPI_INVALID))
+    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_dma_state == APP_SPI_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -479,7 +518,7 @@ uint16_t app_spi_dma_receive_high_speed_sync(app_spi_id_t id, uint8_t *p_data, u
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_state == APP_SPI_INVALID))
+    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_dma_state == APP_SPI_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -533,7 +572,7 @@ uint16_t app_spi_dma_transmit_high_speed_sync(app_spi_id_t id, uint8_t *p_data, 
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_state == APP_SPI_INVALID))
+    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_dma_state == APP_SPI_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -589,7 +628,7 @@ uint16_t app_spi_dma_transmit_async(app_spi_id_t id, uint8_t *p_data, uint16_t s
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_state == APP_SPI_INVALID))
+    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_dma_state == APP_SPI_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -633,7 +672,7 @@ uint16_t app_spi_dma_transmit_receive_async(app_spi_id_t id, uint8_t *p_tx_data,
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_state == APP_SPI_INVALID))
+    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_dma_state == APP_SPI_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -677,7 +716,7 @@ uint16_t app_spi_dma_read_eeprom_async(app_spi_id_t id, uint8_t *p_tx_data, uint
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_state == APP_SPI_INVALID))
+    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_dma_state == APP_SPI_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -721,7 +760,7 @@ uint16_t app_spi_dma_read_memory_async(app_spi_id_t id, uint8_t *p_cmd_data, uin
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_state == APP_SPI_INVALID))
+    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_dma_state == APP_SPI_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -772,7 +811,7 @@ uint16_t app_spi_dma_write_memory_async(app_spi_id_t id, uint8_t *p_cmd_data, ui
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_state == APP_SPI_INVALID))
+    if ((p_spi_env[id] == NULL) || (p_spi_env[id]->spi_dma_state == APP_SPI_DMA_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
@@ -814,6 +853,235 @@ uint16_t app_spi_dma_write_memory_async(app_spi_id_t id, uint8_t *p_cmd_data, ui
 
     return APP_DRV_SUCCESS;
 }
+#endif
+
+
+
+#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X)
+
+__weak void * _v_malloc(uint32_t size) {
+    // TODO: override this function
+    return NULL;
+}
+
+__weak void _v_free(void * ptr) {
+    // TODO: override this function
+    return;
+}
+
+static dma_block_config_t * p_llp = NULL;
+
+void _free_dma_llp_resource(void) {
+    if (p_llp != NULL)
+    {
+        dma_block_config_t * p = p_llp;
+        dma_block_config_t * q = NULL;
+        while (p)
+        {
+            q = p->p_lli;
+            _v_free(p);
+            p = q;
+        }
+    }
+    p_llp = NULL;
+}
+
+
+/****************************************************************
+ * IF Flush Area <= Frame Buffer :
+ *
+ *      ---------------------[stride]------------------
+ *      |    [p_buff]                                 |
+ *      |    ++++++++++++++[width]++++++++++++        |
+ *      |    +                               +        |
+ *      |    +                               +        |
+ *      |    +          Flush Area        [height]    |
+ *      |    +                               +        |
+ *      |    +                               +        |
+ *      |    +++++++++++++++++++++++++++++++++        |
+ *      |                                             |
+ *      -----------------------------------------------
+ *                      Frame Buffer
+ ****************************************************************/
+uint16_t app_spi_send_display_frame(app_spi_id_t id, app_spi_screen_config_t * p_scrn_info, void * p_buff) {
+
+    static uint8_t head[4];
+    uint32_t shift_bit   = 0;
+    uint32_t xfer_width  = 0;
+    uint32_t i           = 0;
+    uint32_t block_count = 0;
+    uint32_t block_left  = 0;
+    uint32_t block_beat  = 0;
+    hal_status_t status  = HAL_ERROR;
+
+    dma_block_config_t * p_llp_block      = NULL;
+    dma_block_config_t * p_llp_block_prev = NULL;
+
+    dma_sg_llp_config_t sg_llp_config = {
+        .gather_config = {
+            .src_gather_en = DMA_SRC_GATHER_DISABLE,
+        },
+        .scatter_config = {
+            .dst_scatter_en = DMA_DST_SCATTER_DISABLE,
+        },
+        .llp_config = {
+            .llp_src_en = DMA_LLP_SRC_ENABLE,
+            .llp_dst_en = DMA_LLP_DST_DISABLE,
+            .head_lli = NULL,
+        },
+    };
+
+    head[0] = p_scrn_info->instruction;
+    head[1] = (p_scrn_info->leading_address >> 16) & 0xff;
+    head[2] = (p_scrn_info->leading_address >>  8) & 0xff;
+    head[3] = (p_scrn_info->leading_address >>  0) & 0xff;
+
+    if(p_scrn_info->data_xfer_width == SPI_DATASIZE_8BIT) {
+        xfer_width = DMA_SDATAALIGN_BYTE | DMA_DDATAALIGN_BYTE ;
+        shift_bit  = 0;
+    } else if(p_scrn_info->data_xfer_width == SPI_DATASIZE_16BIT) {
+        xfer_width = DMA_SDATAALIGN_HALFWORD | DMA_DDATAALIGN_HALFWORD ;
+        shift_bit  = 1;
+    }
+
+    uint32_t stride_size = 0;
+    const uint32_t total_beats = (p_scrn_info->buff_pixel_width * p_scrn_info->buff_pixel_height * p_scrn_info->buff_pixel_depth) >> shift_bit;
+
+    if(p_scrn_info->buff_pixel_stride == p_scrn_info->buff_pixel_width) {
+        block_count = total_beats / 4092;
+        block_left  = total_beats % 4092;
+        block_beat  = 4092;
+        stride_size = block_beat << shift_bit;
+    } else {
+        block_count = p_scrn_info->buff_pixel_height;
+        block_left  = 0;
+        block_beat  = (p_scrn_info->buff_pixel_width * p_scrn_info->buff_pixel_depth) >> shift_bit;
+        stride_size = p_scrn_info->buff_pixel_stride * p_scrn_info->buff_pixel_depth;
+    }
+
+    // Link the head
+    {
+        p_llp_block = _v_malloc(sizeof(dma_block_config_t));
+
+        p_llp_block->src_address = (uint32_t)&head[0];
+        p_llp_block->dst_address = 0;
+        p_llp_block->src_status  = 0x00;
+        p_llp_block->dst_status  = 0x00;
+
+        /* memset in word mode */
+        p_llp_block->CTL_L       = DMA_CTLL_INI_EN
+                                    | DMA_SRC_INCREMENT
+                                    | DMA_DST_NO_CHANGE
+                                    | DMA_SRC_GATHER_DISABLE
+                                    | DMA_DST_SCATTER_DISABLE
+                                    | DMA_LLP_SRC_ENABLE
+                                    | DMA_LLP_DST_DISABLE
+                                    | DMA_MEMORY_TO_PERIPH
+                                    | DMA_SDATAALIGN_BYTE | DMA_DDATAALIGN_BYTE;
+
+        p_llp_block->CTL_H       = 4;
+        p_llp_block->p_lli       = NULL;
+
+        if(p_llp_block_prev == NULL) {
+            sg_llp_config.llp_config.head_lli = p_llp_block;
+        } else {
+            p_llp_block_prev->p_lli = p_llp_block;
+        }
+        p_llp_block_prev = p_llp_block;
+    }
+
+    uint32_t src_addr = (uint32_t) p_buff;
+
+    for(i = 0; i < block_count; i++) {
+        p_llp_block = _v_malloc(sizeof(dma_block_config_t));
+
+        p_llp_block->src_address = src_addr;
+        p_llp_block->dst_address = 0;
+        p_llp_block->src_status  = 0x00;
+        p_llp_block->dst_status  = 0x00;
+
+        /* memset in word mode */
+        p_llp_block->CTL_L       = DMA_CTLL_INI_EN
+                                    | DMA_SRC_INCREMENT
+                                    | DMA_DST_NO_CHANGE
+                                    | DMA_SRC_GATHER_DISABLE
+                                    | DMA_DST_SCATTER_DISABLE
+                                    | DMA_LLP_SRC_ENABLE
+                                    | DMA_LLP_DST_DISABLE
+                                    | DMA_MEMORY_TO_PERIPH
+                                    | LL_DMA_SRC_BURST_LENGTH_4 | LL_DMA_DST_BURST_LENGTH_4
+                                    | xfer_width;
+
+        p_llp_block->CTL_H       = block_beat;
+        p_llp_block->p_lli       = NULL;
+
+        if(p_llp_block_prev == NULL) {
+            sg_llp_config.llp_config.head_lli = p_llp_block;
+        } else {
+            p_llp_block_prev->p_lli = p_llp_block;
+        }
+        p_llp_block_prev = p_llp_block;
+
+        src_addr += stride_size;
+    }
+
+    if(block_left > 0) {
+        p_llp_block = _v_malloc(sizeof(dma_block_config_t));
+
+        p_llp_block->src_address = src_addr;
+        p_llp_block->dst_address = 0;
+        p_llp_block->src_status  = 0x00;
+        p_llp_block->dst_status  = 0x00;
+
+        /* memset in word mode */
+        p_llp_block->CTL_L       = DMA_CTLL_INI_EN
+                                    | DMA_SRC_INCREMENT
+                                    | DMA_DST_NO_CHANGE
+                                    | DMA_SRC_GATHER_DISABLE
+                                    | DMA_DST_SCATTER_DISABLE
+                                    | DMA_LLP_SRC_ENABLE
+                                    | DMA_LLP_DST_DISABLE
+                                    | DMA_MEMORY_TO_PERIPH
+                                    | LL_DMA_SRC_BURST_LENGTH_4 | LL_DMA_DST_BURST_LENGTH_4
+                                    | xfer_width;
+
+        p_llp_block->CTL_H       = block_left;
+        p_llp_block->p_lli       = NULL;
+
+        if(p_llp_block_prev == NULL) {
+            sg_llp_config.llp_config.head_lli = p_llp_block;
+        } else {
+            p_llp_block_prev->p_lli = p_llp_block;
+        }
+        p_llp_block_prev = p_llp_block;
+    }
+
+    p_llp = sg_llp_config.llp_config.head_lli;
+
+    uint32_t data_length = p_scrn_info->buff_pixel_width * p_scrn_info->buff_pixel_height * p_scrn_info->buff_pixel_depth;
+
+    if (p_spi_env[id]->start_flag == false)
+    {
+        p_spi_env[id]->start_flag = true;
+        SPI_SMART_CS_LOW(id);
+        status = hal_spi_transmit_dma_llp(&p_spi_env[id]->handle, &sg_llp_config.llp_config, data_length + 4);
+        if (status != HAL_OK)
+        {
+            _free_dma_llp_resource();
+            p_spi_env[id]->start_flag = false;
+            SPI_SMART_CS_HIGH(id);
+            return (uint16_t)status;
+        }
+    }
+    else
+    {
+        _free_dma_llp_resource();
+        return APP_DRV_ERR_BUSY;
+    }
+
+    return APP_DRV_SUCCESS;
+}
+
 #endif
 
 #endif  /* HAL_SPI_MODULE_ENABLED */

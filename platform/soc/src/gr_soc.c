@@ -10,10 +10,7 @@
 #include "pmu_calibration.h"
 #include "platform_sdk.h"
 #include "patch.h"
-#include "patch_tab.h"
-
-// NOTE: SVC #0 is reserved for freertos, DO NOT USE IT!
-#define SVC_TABLE_NUM_MAX           4
+#include "app_pwr_mgmt.h"
 
 #define FLASH_CS                    (LL_GPIO_PIN_2)      /* XQSPI flash CS        */
 #define FLASH_CLK                   (LL_GPIO_PIN_4)      /* XQSPI flash CLK       */
@@ -26,10 +23,20 @@
 #define REG_PL_WR(addr, value)      (*(volatile uint32_t *)(addr)) = (value)
 #define REG_PL_RD(addr)             (*(volatile uint32_t *)(addr))
 
+#define SOFTWARE_REG1_ULTRA_DEEP_SLEEP_MAGIC 0xF175
+
+volatile uint32_t g_app_msp_addr;   /* record app msp address */
+uint8_t g_device_reset_reason = SYS_RESET_REASON_NONE;
+
+#if (CFG_LCP_SUPPORT && (CHIP_TYPE <= 5))
+extern uint16_t gdx_lcp_buf_init(uint32_t buf_addr);
+static uint8_t lcp_buf[280] __attribute__((section (".ARM.__at_0x00820000"), zero_init));
+#endif
+
 #define SDK_VER_MAJOR                   2
-#define SDK_VER_MINOR                   0
-#define SDK_VER_BUILD                   2
-#define COMMIT_ID                       0x502d20d5
+#define SDK_VER_MINOR                   1
+#define SDK_VER_BUILD                   0
+#define COMMIT_ID                       0x02ee0ce7
 
 static const sdk_version_t sdk_version = {SDK_VER_MAJOR,
                                           SDK_VER_MINOR,
@@ -41,102 +48,6 @@ void sys_sdk_verison_get(sdk_version_t *p_version)
     memcpy(p_version, &sdk_version, sizeof(sdk_version_t));
 }
 
-volatile uint32_t g_app_msp_addr;   /* record app msp address */
-static uint32_t SVC_TABLE_USER_SPACE[SVC_TABLE_NUM_MAX] __attribute__((section("SVC_TABLE")));
-uint8_t g_device_reset_reason = SYS_RESET_REASON_NONE;
-
-#if (CFG_LCP_SUPPORT && (CHIP_TYPE <= 5))
-extern uint16_t gdx_lcp_buf_init(uint32_t buf_addr);
-static uint8_t lcp_buf[280] __attribute__((section (".ARM.__at_0x00820000"), zero_init));
-#endif
-
-#if defined ( __CC_ARM )
-
-SECTION_RAM_CODE __asm void SVC_Handler(void)
-{
-    PRESERVE8
-    IMPORT   SVC_handler_proc
-
-    TST      LR,#4                   ; Called from Handler Mode?
-    MRSNE    R12,PSP                 ; Yes, use PSP
-    MOVEQ    R12,SP                  ; No, use MSP
-    PUSH     {R0-R3,LR}
-    MOV      R0, R12
-    BL       SVC_handler_proc
-    MOV      R12, R0
-    POP      {R0-R3,LR}
-    CMP      R12,#0                  //make sure current point isn't null
-    BLXNE    R12
-    BX       LR                      ; RETI
-SVC_Dead
-    B        SVC_Dead                ; None Existing SVC
-    ALIGN
-}
-
-#elif defined ( __GNUC__ )
-
-SECTION_RAM_CODE void __attribute__((naked))SVC_Handler(void)
-{
-    __asm("TST R14,$4\n");
-    __asm("IT NE\n");
-    __asm("MRSNE   R12,PSP\n");
-    __asm("IT EQ\n");
-    __asm("MOVEQ   R12,SP\n");
-    __asm("PUSH    {R0-R3,LR}\n");
-    __asm("MOV  R0, R12\n");
-    __asm("BL  SVC_handler_proc\n");
-    __asm("MOV  R12, R0\n");
-    __asm("POP {R0-R3,LR}\n");
-    __asm("CMP R12,$0\n");
-    __asm("IT NE\n");
-    __asm("BLXNE     R12\n");
-    __asm("BX      LR\n");
-}
-
-#elif defined (__ICCARM__)
-
-extern uint32_t *SVC_Table;
-extern uint32_t get_patch_rep_addr(uint32_t ori_func);
-SECTION_RAM_CODE uint32_t SVC_handler_proc(uint32_t *svc_args)
-{
-    uint16_t svc_cmd;
-    uint32_t svc_func_addr;
-    uint32_t func_addr=0;
-    svc_func_addr =svc_args[6];
-    svc_cmd = *((uint16_t*)svc_func_addr-1);
-    if((svc_cmd<=0xDFFF)&&(svc_cmd>=0xDF00))
-    {
-        func_addr =(uint32_t)SVC_Table[svc_cmd&(0xFF)];
-        return func_addr ;
-    }
-    else
-    {
-        func_addr=get_patch_rep_addr(svc_func_addr);
-        svc_args[6]=func_addr;
-        return 0;
-    }
-}
-
-SECTION_RAM_CODE void __attribute__((naked))SVC_Handler (void)
-{
-    asm volatile (
-                  "TST R14,#4\n\t"
-                  "IT NE\n\t"
-                  "MRSNE   R12,PSP\n\t"
-                  "IT EQ\n"
-                  "MOVEQ   R12,SP \n\t"
-                  "PUSH    {R0-R3,LR} \n\t"
-                  "MOV  R0, R12 \n\t"
-                  "BL  SVC_handler_proc \n\t"
-                  "MOV  R12, R0 \n\t"
-                  "POP {R0-R3,LR} \n\t"
-                  "CMP R12,#0\n\t"
-                  "IT NE\n\t"
-                  "BLXNE R12\n\t"
-                  "BX      LR\n\t");
-}
-
-#endif
 
 __ALIGNED(0x100) FuncVector_t FuncVector_table[MAX_NUMS_IRQn + NVIC_USER_IRQ_OFFSET] = {
     0,
@@ -162,7 +73,18 @@ void soc_register_nvic(IRQn_Type indx, uint32_t func)
     FuncVector_table[indx + 16] = (FuncVector_t)func;
 }
 
-#if (PLAT_SUPPORT_SLEEP == 1)
+static fun_t svc_user_func = NULL;
+
+void svc_func_register(uint8_t svc_num, uint32_t user_func)
+{
+    svc_user_func = (fun_t)user_func;
+}
+
+void svc_user_handler(uint8_t svc_num)
+{
+    if (svc_user_func)
+        svc_user_func();
+}
 
 __WEAK void nvds_init_error_handler(uint8_t err_code)
 {
@@ -196,53 +118,6 @@ static void nvds_setup(void)
             break;
     }
 }
-#endif
-
-
-void ble_sdk_env_init(void)
-{
-#if (PLAT_SUPPORT_BLE == 1)
-#if (CFG_MAX_CONNECTIONS || CFG_MAX_SCAN || CFG_MAX_ADVS)
-    #if (CFG_MAX_CONNECTIONS < 3) && (CFG_MAX_ADVS < 2) && (CFG_MESH_SUPPORT < 1)
-    register_rwip_reset(rwip_reset_patch);
-    register_rwip_init(rwip_init_patch);
-    #endif
-
-    // register the msg handler for patch
-    uint16_t msg_cnt = sizeof(msg_tab) / sizeof(msg_tab_item_t);
-    reg_msg_patch_tab(msg_tab, msg_cnt);
-
-    // register the hci cmd handler for patch
-    uint16_t hci_cmd_cnt = sizeof(hci_cmd_tab) / sizeof(hci_cmd_tab_item_t);
-    reg_hci_cmd_patch_tab(hci_cmd_tab, hci_cmd_cnt);
-
-    // register the gapm hci evt handler for patch
-    uint16_t hci_evt_cnt = sizeof(gapm_hci_evt_tab) / sizeof(gapm_hci_evt_tab_item_t);
-    reg_gapm_hci_evt_patch_tab(gapm_hci_evt_tab, hci_evt_cnt);
-
-    #if CFG_MAX_CONNECTIONS
-    ble_con_env_init();
-    ble_adv_param_init(CFG_MAX_CONNECTIONS);
-    #endif
-
-    #if CFG_MAX_SCAN
-    ble_scan_env_init();
-    #endif
-
-    #if CFG_MAX_ADVS
-    ble_adv_env_init();
-    #endif
-
-    #if CFG_MUL_LINK_WITH_SAME_DEV
-    ble_sup_mul_link_with_same_dev();
-    #endif
-
-    #if CFG_BT_BREDR
-    ble_enable_bt_bredr();
-    #endif
-#endif
-#endif
-}
 
 static void exflash_io_pull_config(void)
 {
@@ -254,15 +129,6 @@ static void exflash_io_pull_config(void)
     HAL_EXFLASH_IO_PULL_SET(FLASH_IO_1, LL_GPIO_PULL_UP); /* MISO */
     HAL_EXFLASH_IO_PULL_SET(FLASH_IO_2, LL_GPIO_PULL_UP); /* WP   */
     HAL_EXFLASH_IO_PULL_SET(FLASH_IO_3, LL_GPIO_PULL_UP); /* HOLD */
-}
-
-hal_status_t hal_exflash_read(exflash_handle_t *p_exflash, uint32_t addr, uint8_t *p_data, uint32_t size)
-{
-#if (ENCRYPT_ENABLE || (CHIP_TYPE == 1) || (EXT_EXFLASH_ENABLE == 1))
-    return hal_exflash_read_patch(p_exflash, addr, p_data, size);
-#else
-    return hal_exflash_read_rom(p_exflash, addr, p_data, size);
-#endif
 }
 
 uint8_t sys_device_reset_reason(void)
@@ -303,12 +169,8 @@ void platform_init(void)
     ble_wakeup_osc_time_set(run_mode, osc_time);
     #endif
 
-    /* enable protection. */
-    platform_init_push();
-    
-#if (PLAT_SUPPORT_SLEEP == 1)
     /* set sram power state. */
-    mem_pwr_mgmt_init();
+    mem_pwr_mgmt_mode_set(MEM_POWER_AUTO_MODE);
 
     /* nvds module init process. */
     nvds_setup();
@@ -322,17 +184,6 @@ void platform_init(void)
     #endif
     platform_clock_init((mcu_clock_type_t)SYSTEM_CLOCK, RTC_OSC_CLK, CFG_LF_ACCURACY_PPM, 0);
     #endif
-#endif
-
-    /* Register the SVC Table. */
-    svc_table_register(SVC_TABLE_USER_SPACE);
-    
-#if (PLAT_SUPPORT_SLEEP == 1)
-#if ENCRYPT_ENABLE
-    fpb_register_patch_init_func(fpb_encrypt_mode_patch_enable);
-#else
-    fpb_register_patch_init_func(fpb_patch_enable);
-#endif
 
     /* platform init process. */
     platform_sdk_init();
@@ -341,19 +192,9 @@ void platform_init(void)
     dfu_cmd_handler_replace_for_encrypt();
 #endif
 
-    #ifndef DRIVER_TEST
-    /* Enable auto pmu calibration function period =3s on default. */
-    system_pmu_calibration_init(30000);
-    #endif
-
     system_pmu_deinit();
-#endif
     SystemCoreSetClock((mcu_clock_type_t)SYSTEM_CLOCK);
-#if (PLAT_SUPPORT_SLEEP == 1)
     system_pmu_init((mcu_clock_type_t)SYSTEM_CLOCK);
-
-    // recover the default setting by temperature, should be called in the end
-    pmu_calibration_handler(NULL);
 
     /* RTC calibration function */
     #if !CFG_LPCLK_INTERNAL_EN
@@ -366,7 +207,6 @@ void platform_init(void)
 
     /* rng calibration */
     rng_calibration();
-#endif
 
     #if (CFG_LCP_SUPPORT && (CHIP_TYPE <= 5))
     gdx_lcp_buf_init((uint32_t)lcp_buf);
@@ -374,8 +214,15 @@ void platform_init(void)
 
     exflash_io_pull_config();
 
-    /* disable protection. */
-    platform_init_pop();
+    #ifndef DRIVER_TEST
+    /* Enable auto pmu calibration which period is 30s on default. */
+    system_pmu_calibration_init(30000);
+    #endif
+
+    /* recover the default setting by temperature, should be called in the end */
+    pmu_calibration_handler(NULL);
+    /* Init peripheral sleep management */
+    app_pwr_mgmt_init();
 
     return;
 }
@@ -394,14 +241,39 @@ void warm_boot_process(void)
     pwr_mgmt_warm_boot();
 }
 
-#define SOFTWARE_REG_WAKEUP_FLAG_POS   (8)
-uint32_t get_wakeup_flag(void)
+static void patch_init(void)
 {
-    return (AON->SOFTWARE_2 & (1 << SOFTWARE_REG_WAKEUP_FLAG_POS));
+    gr5xx_fpb_init(FPB_MODE_PATCH_AND_DEBUG);
+
+    #if ENCRYPT_ENABLE
+    extern void encrypt_mode_patch_enable(void);
+    encrypt_mode_patch_enable();
+    #endif
+}
+
+/**
+ ****************************************************************************************
+ * @brief  Check whether the system wakes up from ultra deep sleep. If it wakes up from ultra
+ *         deep sleep, reset the entire system. If not, do nothing.
+ * @retval: void
+ ****************************************************************************************
+ */
+static void ultra_deep_sleep_wakeup_handle(void)
+{
+    if (SOFTWARE_REG1_ULTRA_DEEP_SLEEP_MAGIC == (AON->SOFTWARE_1 & 0xFFFF))
+    {
+        // Reset the whole system
+        hal_nvic_system_reset();
+        while (true)
+            ;
+    }
 }
 
 void soc_init(void)
 {
+    ultra_deep_sleep_wakeup_handle();
+    patch_init();
+
 #if defined (__CC_ARM)
     tiny_rw_section_init();
 #endif
@@ -414,7 +286,6 @@ void soc_init(void)
     }
 
     platform_flash_enable_quad();
-    platform_flash_protection(FLASH_PROTECT_PRIORITY);
 
     platform_init();
     hal_init();

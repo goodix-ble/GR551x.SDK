@@ -761,6 +761,51 @@ typedef hal_status_t (*exflash_operation_func)(exflash_handle_t *p_exflash);
  ****************************************************************************************
  */
 hal_status_t hal_exflash_operation(exflash_handle_t *p_exflash, exflash_operation_func p_func_exflash_operation);
+
+/**
+ ****************************************************************************************
+ * @brief  This function reads the status register of a flash.
+ *
+ * @note The status register is a 16-bit register that provides information about the flash operation status.
+ *
+* @param[in] p_reg_status: Pointer of status register.
+ * @retval ::HAL_OK: Operation is OK.
+ * @retval ::HAL_ERROR: Parameter error or operation not supported.
+ * @retval ::HAL_BUSY: Driver is busy.
+ * @retval ::HAL_TIMEOUT: Timeout occurred.
+ ****************************************************************************************
+ */
+hal_status_t hal_exflash_read_status_reg(uint16_t* p_reg_status);
+
+/**
+ ****************************************************************************************
+ * @brief  This function writes the status register of a flash.
+ *
+ * @note The status register is a 16-bit register that provides information about the flash operation status.
+ *
+ * @param reg_status: An integer value representing the content to be written to the flash status register.
+ *
+ * @retval ::HAL_OK: Operation is OK.
+ * @retval ::HAL_ERROR: Parameter error or operation not supported.
+ * @retval ::HAL_BUSY: Driver is busy.
+ * @retval ::HAL_TIMEOUT: Timeout occurred.
+ ****************************************************************************************
+ */
+hal_status_t hal_exflash_write_status_reg(uint16_t reg_status);
+
+/**
+ ****************************************************************************************
+ * @brief  This function serves to read UID of flash
+ *
+ * @param[out]  uid: store 16 Byte flash UID
+ *
+ * @retval ::HAL_OK: Operation is OK.
+ * @retval ::HAL_ERROR: Parameter error or operation not supported.
+ * @retval ::HAL_BUSY: Driver is busy.
+ * @retval ::HAL_TIMEOUT: Timeout occurred.
+ ****************************************************************************************
+ */
+hal_status_t hal_exflash_read_uid(uint8_t *uid);
 /** @} */
 
 /** @} */

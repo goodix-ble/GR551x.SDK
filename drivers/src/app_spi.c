@@ -42,6 +42,7 @@
 #include "app_pwr_mgmt.h"
 #include "gr_soc.h"
 #include <string.h>
+#include "app_drv.h"
 
 #ifdef HAL_SPI_MODULE_ENABLED
 
@@ -122,7 +123,7 @@ do {                                                                            
  */
 static bool spi_prepare_for_sleep(void);
 static void spi_wake_up_ind(void);
-static uint16_t spi_gpio_config(app_spi_id_t id, app_spi_pin_cfg_t pin_cfg);
+static uint16_t spi_gpio_config(app_spi_id_t id, app_spi_pin_cfg_t *p_pin_cfg);
 void SPI_S_IRQHandler(void);
 void SPI_M_IRQHandler(void);
 
@@ -134,13 +135,10 @@ static const IRQn_Type s_spi_irq[APP_SPI_ID_MAX]      = {SPI_S_IRQn, SPI_M_IRQn}
 static const uint32_t  s_spi_instance[APP_SPI_ID_MAX] = {SPIS_BASE, SPIM_BASE};
 
 spi_env_t  *p_spi_env[APP_SPI_ID_MAX];
-static bool       s_sleep_cb_registered_flag = false;
-static pwr_id_t   s_spi_pwr_id = -1;
 
 static const app_sleep_callbacks_t spi_sleep_cb =
 {
     .app_prepare_for_sleep = spi_prepare_for_sleep,
-    .app_sleep_canceled    = NULL,
     .app_wake_up_ind       = spi_wake_up_ind
 };
 
@@ -151,7 +149,7 @@ static const app_sleep_callbacks_t spi_sleep_cb =
 static bool spi_prepare_for_sleep(void)
 {
     hal_spi_state_t state;
-    uint8_t i;
+    uint32_t i;
 
     for (i = 0; i < APP_SPI_ID_MAX; i++)
     {
@@ -183,7 +181,7 @@ static bool spi_prepare_for_sleep(void)
 SECTION_RAM_CODE static void spi_wake_up_ind(void)
 {
 #ifndef APP_DRIVER_WAKEUP_CALL_FUN
-    uint8_t i;
+    uint32_t i;
 
     for (i = 0; i < APP_SPI_ID_MAX; i++)
     {
@@ -228,75 +226,75 @@ void spi_wake_up(app_spi_id_t id)
 }
 #endif
 
-static uint16_t spi_gpio_config(app_spi_id_t id, app_spi_pin_cfg_t pin_cfg)
+static uint16_t spi_gpio_config(app_spi_id_t id, app_spi_pin_cfg_t *p_pin_cfg)
 {
     app_io_init_t io_init = APP_IO_DEFAULT_CONFIG;
     app_drv_err_t err_code = APP_DRV_SUCCESS;
 
-    if (pin_cfg.cs.enable == APP_SPI_PIN_ENABLE)
+    if (p_pin_cfg->cs.enable == APP_SPI_PIN_ENABLE)
     {
         if (id == APP_SPI_ID_SLAVE)
         {
-            io_init.pull = pin_cfg.cs.pull;
+            io_init.pull = p_pin_cfg->cs.pull;
             io_init.mode = APP_IO_MODE_MUX;
-            io_init.pin  = pin_cfg.cs.pin;
-            io_init.mux  = pin_cfg.cs.mux;
-            err_code = app_io_init(pin_cfg.cs.type, &io_init);
+            io_init.pin  = p_pin_cfg->cs.pin;
+            io_init.mux  = p_pin_cfg->cs.mux;
+            err_code = app_io_init(p_pin_cfg->cs.type, &io_init);
             APP_DRV_ERR_CODE_CHECK(err_code);
         }
         else
         {
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
-            io_init.pull = pin_cfg.cs.pull;
+            io_init.pull = p_pin_cfg->cs.pull;
             io_init.mode = APP_IO_MODE_OUTPUT;
-            io_init.pin  = pin_cfg.cs.pin;
+            io_init.pin  = p_pin_cfg->cs.pin;
             io_init.mux  = APP_IO_MUX_7;
-            err_code = app_io_init(pin_cfg.cs.type, &io_init);
-            app_io_write_pin(pin_cfg.cs.type, pin_cfg.cs.pin, APP_IO_PIN_SET);
+            err_code = app_io_init(p_pin_cfg->cs.type, &io_init);
+            app_io_write_pin(p_pin_cfg->cs.type, p_pin_cfg->cs.pin, APP_IO_PIN_SET);
             APP_DRV_ERR_CODE_CHECK(err_code);
 #else
             if(p_spi_env[id]->is_soft_cs) {
-                io_init.pull = pin_cfg.cs.pull;
+                io_init.pull = p_pin_cfg->cs.pull;
                 io_init.mode = APP_IO_MODE_OUTPUT;
-                io_init.pin  = pin_cfg.cs.pin;
+                io_init.pin  = p_pin_cfg->cs.pin;
                 io_init.mux  = APP_IO_MUX;
-                err_code = app_io_init(pin_cfg.cs.type, &io_init);
-                app_io_write_pin(pin_cfg.cs.type, pin_cfg.cs.pin, APP_IO_PIN_SET);
+                err_code = app_io_init(p_pin_cfg->cs.type, &io_init);
+                app_io_write_pin(p_pin_cfg->cs.type, p_pin_cfg->cs.pin, APP_IO_PIN_SET);
                 APP_DRV_ERR_CODE_CHECK(err_code);
             } else {
-                io_init.pull = pin_cfg.cs.pull;
-                io_init.mode = pin_cfg.cs.mode;
-                io_init.pin  = pin_cfg.cs.pin;
-                io_init.mux  = pin_cfg.cs.mux;
-                err_code = app_io_init(pin_cfg.cs.type, &io_init);
+                io_init.pull = p_pin_cfg->cs.pull;
+                io_init.mode = p_pin_cfg->cs.mode;
+                io_init.pin  = p_pin_cfg->cs.pin;
+                io_init.mux  = p_pin_cfg->cs.mux;
+                err_code = app_io_init(p_pin_cfg->cs.type, &io_init);
                 APP_DRV_ERR_CODE_CHECK(err_code);
             }
 #endif
         }
     }
-    if (pin_cfg.clk.enable == APP_SPI_PIN_ENABLE)
+    if (p_pin_cfg->clk.enable == APP_SPI_PIN_ENABLE)
     {
-        io_init.pull = pin_cfg.clk.pull;
+        io_init.pull = p_pin_cfg->clk.pull;
         io_init.mode = APP_IO_MODE_MUX;
-        io_init.pin  = pin_cfg.clk.pin;
-        io_init.mux  = pin_cfg.clk.mux;
-        err_code = app_io_init(pin_cfg.clk.type, &io_init);
+        io_init.pin  = p_pin_cfg->clk.pin;
+        io_init.mux  = p_pin_cfg->clk.mux;
+        err_code = app_io_init(p_pin_cfg->clk.type, &io_init);
         APP_DRV_ERR_CODE_CHECK(err_code);
     }
-    if (pin_cfg.mosi.enable == APP_SPI_PIN_ENABLE)
+    if (p_pin_cfg->mosi.enable == APP_SPI_PIN_ENABLE)
     {
-        io_init.pull = pin_cfg.mosi.pull;
-        io_init.pin  = pin_cfg.mosi.pin;
-        io_init.mux  = pin_cfg.mosi.mux;
-        err_code = app_io_init(pin_cfg.mosi.type, &io_init);
+        io_init.pull = p_pin_cfg->mosi.pull;
+        io_init.pin  = p_pin_cfg->mosi.pin;
+        io_init.mux  = p_pin_cfg->mosi.mux;
+        err_code = app_io_init(p_pin_cfg->mosi.type, &io_init);
         APP_DRV_ERR_CODE_CHECK(err_code);
     }
-    if (pin_cfg.miso.enable == APP_SPI_PIN_ENABLE)
+    if (p_pin_cfg->miso.enable == APP_SPI_PIN_ENABLE)
     {
-        io_init.pull = pin_cfg.miso.pull;
-        io_init.pin  = pin_cfg.miso.pin;
-        io_init.mux  = pin_cfg.miso.mux;
-        err_code = app_io_init(pin_cfg.miso.type, &io_init);
+        io_init.pull = p_pin_cfg->miso.pull;
+        io_init.pin  = p_pin_cfg->miso.pin;
+        io_init.mux  = p_pin_cfg->miso.mux;
+        err_code = app_io_init(p_pin_cfg->miso.type, &io_init);
         APP_DRV_ERR_CODE_CHECK(err_code);
     }
 
@@ -325,7 +323,7 @@ static inline app_spi_id_t spi_get_id(spi_handle_t *p_spi)
  */
 uint16_t app_spi_init(app_spi_params_t *p_params, app_spi_evt_handler_t evt_handler)
 {
-    app_spi_id_t    id = p_params->id;
+    app_spi_id_t id;
     app_drv_err_t err_code = APP_DRV_SUCCESS;
 
     if (NULL == p_params)
@@ -333,21 +331,18 @@ uint16_t app_spi_init(app_spi_params_t *p_params, app_spi_evt_handler_t evt_hand
         return APP_DRV_ERR_POINTER_NULL;
     }
 
+    id = p_params->id;
+
     if (id >= APP_SPI_ID_MAX)
     {
         return APP_DRV_ERR_INVALID_ID;
     }
     p_spi_env[id] = &(p_params->spi_env);
-    soc_register_nvic(SPI_S_IRQn, (uint32_t)SPI_S_IRQHandler);
-    soc_register_nvic(SPI_M_IRQn, (uint32_t)SPI_M_IRQHandler);
 
     p_spi_env[id]->is_soft_cs = p_params->is_soft_cs;
 
-    err_code = spi_gpio_config(p_params->id, p_params->pin_cfg);
+    err_code = spi_gpio_config(p_params->id, &p_params->pin_cfg);
     APP_DRV_ERR_CODE_CHECK(err_code);
-
-    hal_nvic_clear_pending_irq(s_spi_irq[id]);
-    hal_nvic_enable_irq(s_spi_irq[id]);
 
     p_spi_env[id]->p_pin_cfg = &p_params->pin_cfg;
     p_spi_env[id]->evt_handler = evt_handler;
@@ -370,27 +365,21 @@ uint16_t app_spi_init(app_spi_params_t *p_params, app_spi_evt_handler_t evt_hand
     hal_spi_deinit(&p_spi_env[id]->handle);
     hal_spi_init(&p_spi_env[id]->handle);
 
-    if (s_sleep_cb_registered_flag == false)// register sleep callback
-    {
-        s_sleep_cb_registered_flag = true;
-        s_spi_pwr_id = pwr_register_sleep_cb(&spi_sleep_cb, APP_DRIVER_SPI_WAPEUP_PRIORITY);
-
-        if (s_spi_pwr_id < 0)
-        {
-            return APP_DRV_ERR_INVALID_PARAM;
-        }
-    }
+    pwr_register_sleep_cb(&spi_sleep_cb, APP_DRIVER_SPI_WAKEUP_PRIORITY, SPI_PWR_ID);
 
     p_spi_env[id]->spi_state = APP_SPI_ACTIVITY;
     p_spi_env[id]->start_flag = false;
+
+    soc_register_nvic(SPI_S_IRQn, (uint32_t)SPI_S_IRQHandler);
+    soc_register_nvic(SPI_M_IRQn, (uint32_t)SPI_M_IRQHandler);
+    hal_nvic_clear_pending_irq(s_spi_irq[id]);
+    hal_nvic_enable_irq(s_spi_irq[id]);
 
     return APP_DRV_SUCCESS;
 }
 
 uint16_t app_spi_deinit(app_spi_id_t id)
 {
-    uint8_t i;
-    
     if (id >= APP_SPI_ID_MAX)
     {
         return APP_DRV_ERR_INVALID_ID;
@@ -424,22 +413,19 @@ uint16_t app_spi_deinit(app_spi_id_t id)
     p_spi_env[id]->start_flag = false;
 
     GLOBAL_EXCEPTION_DISABLE();
-    for (i = 0; i < APP_SPI_ID_MAX; i++)
+    for (uint32_t i = 0; i < APP_SPI_ID_MAX; i++)
     {
-        if (p_spi_env[i] != NULL && (p_spi_env[i]->spi_state) != APP_SPI_INVALID)
+        if ((p_spi_env[i]) && ((p_spi_env[i]->spi_state) != APP_SPI_INVALID))
         {
-            break;
+            goto __deinit;
         }
     }
-    if (APP_SPI_ID_MAX == i)
-    {
-        pwr_unregister_sleep_cb(s_spi_pwr_id);
-        s_spi_pwr_id = -1;
-        s_sleep_cb_registered_flag = false;
-    }
+    pwr_unregister_sleep_cb(SPI_PWR_ID);
+__deinit:
     GLOBAL_EXCEPTION_ENABLE();
 
     hal_spi_deinit(&p_spi_env[id]->handle);
+
     if (p_spi_env[id]->spi_dma_state == APP_SPI_DMA_INVALID)
     {
         p_spi_env[id] = NULL;
@@ -608,6 +594,11 @@ uint16_t app_spi_receive_sync(app_spi_id_t id, uint8_t *p_data, uint16_t size, u
     }
 
     if (p_data == NULL || size == 0)
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
     {
         return APP_DRV_ERR_INVALID_PARAM;
     }
@@ -801,6 +792,11 @@ uint16_t app_spi_transmit_sync(app_spi_id_t id, uint8_t *p_data, uint16_t size, 
         return APP_DRV_ERR_INVALID_PARAM;
     }
 
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
 #ifdef APP_DRIVER_WAKEUP_CALL_FUN
     spi_wake_up(id);
 #endif
@@ -832,6 +828,11 @@ uint16_t app_spi_transmit_receive_sync(app_spi_id_t id, uint8_t *p_tx_data, uint
     }
 
     if (p_tx_data == NULL || p_rx_data == NULL || size == 0)
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
     {
         return APP_DRV_ERR_INVALID_PARAM;
     }
@@ -953,6 +954,11 @@ uint16_t app_spi_read_eeprom_sync(app_spi_id_t id, uint8_t *p_tx_data, uint8_t *
     }
 
     if (p_tx_data == NULL || p_rx_data == NULL || tx_size == 0 || rx_size == 0)
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
     {
         return APP_DRV_ERR_INVALID_PARAM;
     }
@@ -1129,13 +1135,24 @@ void hal_spi_soft_cs_deassert(spi_handle_t *p_spi, uint32_t state)
     app_io_write_pin(p_spi_env[id]->p_pin_cfg->cs.type, p_spi_env[id]->p_pin_cfg->cs.pin, APP_IO_PIN_SET);
 }
 
+#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X)
+__weak void _free_dma_llp_resource(void) {
+    // Override this in app_spi_dma.c module when using dma llp to write screen
+}
+#endif
+
 void hal_spi_tx_cplt_callback(spi_handle_t *p_spi)
 {
     app_spi_evt_t spi_evt;
     app_spi_id_t id = spi_get_id(p_spi);
 
     spi_evt.type = APP_SPI_EVT_TX_CPLT;
-    spi_evt.data.size = p_spi->tx_xfer_size - p_spi->tx_xfer_count;
+    uint32_t tx_xfer_size_cb = p_spi->tx_xfer_size;
+    uint32_t tx_xfer_count_cb = p_spi->tx_xfer_count;
+    spi_evt.data.size = tx_xfer_size_cb - tx_xfer_count_cb;
+#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X)
+    _free_dma_llp_resource();
+#endif
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
     p_spi_env[id]->tx_done = 1;
 #endif
@@ -1148,7 +1165,9 @@ void hal_spi_rx_cplt_callback(spi_handle_t *p_spi)
     app_spi_id_t id = spi_get_id(p_spi);
 
     spi_evt.type = APP_SPI_EVT_RX_CPLT;
-    spi_evt.data.size = p_spi->rx_xfer_size - p_spi->rx_xfer_count;
+    uint32_t rx_xfer_size_cb = p_spi->rx_xfer_size;
+    uint32_t rx_xfer_count_cb = p_spi->rx_xfer_count;
+    spi_evt.data.size = rx_xfer_size_cb - rx_xfer_count_cb;
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
     p_spi_env[id]->rx_done = 1;
 #endif
@@ -1161,7 +1180,9 @@ void hal_spi_tx_rx_cplt_callback(spi_handle_t *p_spi)
     app_spi_id_t id = spi_get_id(p_spi);
 
     spi_evt.type = APP_SPI_EVT_TX_RX_CPLT;
-    spi_evt.data.size = p_spi->rx_xfer_size - p_spi->rx_xfer_count;
+    uint32_t rx_xfer_size_cb = p_spi->rx_xfer_size;
+    uint32_t rx_xfer_count_cb = p_spi->rx_xfer_count;
+    spi_evt.data.size = rx_xfer_size_cb - rx_xfer_count_cb;
     APP_SPI_CALLBACK(id, spi_evt);
 }
 

@@ -280,19 +280,6 @@ uint16_t ble_l2cap_lecb_credits_add(uint8_t conn_idx, const ble_l2cap_lecb_add_c
  ****************************************************************************************
  */
 uint16_t ble_l2cap_lecb_sdu_send(uint8_t conn_idx, const ble_l2cap_lecb_sdu_t *p_sdu);
-
-/**
- ****************************************************************************************
- * @brief Register PSM.
- *
- * @param[in] le_psm: The le_psm number.
- *
- * @retval ::SDK_SUCCESS: The callback is successfully registered to the BLE stack.
- * @retval ::SDK_ERR_INVALID_PARAM: Invalid parameter supplied.
- * @retval ::SDK_ERR_INVALID_PSM_EXCEEDED_MAX_PSM_NUM: The maximum PSM number limit is exceeded.
- ****************************************************************************************
- */
-uint16_t ble_l2cap_lecb_psm_register(uint16_t le_psm);
 /** @} */
 
 #endif

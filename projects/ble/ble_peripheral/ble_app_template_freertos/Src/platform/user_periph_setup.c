@@ -57,7 +57,11 @@
 /**@brief Bluetooth device address. */
 static const uint8_t  s_bd_addr[SYS_BD_ADDR_LEN] = {0x11, 0x00, 0xcf, 0x3e, 0xcb, 0xea};
 
+#ifdef SOC_GR533X
+#define DFU_FW_SAVE_ADDR       (FLASH_START_ADDR + 0x40000)
+#else
 #define DFU_FW_SAVE_ADDR       (FLASH_START_ADDR + 0x60000)
+#endif
 
 /*
  * GLOBAL FUNCTION DEFINITIONS
@@ -132,7 +136,7 @@ void app_periph_init(void)
     SYS_SET_BD_ADDR(s_bd_addr);
     board_init();
     dfu_port_init(NULL, DFU_FW_SAVE_ADDR, NULL);
-    
+
 #if APP_LOG_STORE_ENABLE
     log_store_init();
 #endif

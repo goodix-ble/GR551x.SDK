@@ -46,7 +46,7 @@
 #include "app_log.h"
 #include <stdbool.h>
 #include <string.h>
-
+#include <stdarg.h>
 
 #if ENABLE_BACKTRACE_FEA
 
@@ -58,7 +58,7 @@
  * DEFINE
  *****************************************************************************************
  */
-
+#define UNUSED_VARIABLE(x)  ((void)(x))
 #define FAULT_CODE_SECTON_CNT_MAX   0x08          /**< Maximum code sections for fault tracing analysis */
 
 #ifdef APP_IS_USING_FREEROTS
@@ -147,8 +147,8 @@ void __fault_trace_nvds_save_flush(void)
     #pragma section = CMB_CSTACK_BLOCK_NAME
     #pragma section = CMB_CODE_SECTION_NAME
 #elif defined(__GNUC__)
-    #define CSTACK_BLOCK_START         __sstack               /**< C stack block start address, defined on linker script file, default is _sstack. */
-    #define CSTACK_BLOCK_END           __estack               /**< C stack block end address, defined on linker script file, default is _estack. */
+    #define CSTACK_BLOCK_START         __StackLimit               /**< C stack block start address, defined on linker script file, default is _sstack. */
+    #define CSTACK_BLOCK_END           __StackTop               /**< C stack block end address, defined on linker script file, default is _estack. */
     #define CODE_SECTION_START         __stext                /**< code section start address, defined on linker script file, default is _stext. */
     #define CODE_SECTION_END           __etext                /**< code section end address, defined on linker script file, default is _etext. */
 
@@ -784,6 +784,7 @@ void cortex_backtrace_fault_handler(uint32_t fault_handler_lr, uint32_t fault_ha
     uint32_t i_code_size                   = 0;
     i_code_start_addr       = (uint32_t)&CODE_SECTION_START(CODE_SECTION_NAME);
     i_code_size             = (uint32_t)&CODE_SECTION_END(CODE_SECTION_NAME) - i_code_start_addr;
+UNUSED_VARIABLE(i_code_size);
 //    printf("\r\ni_code_start_addr=0X%x,i_code_size=%d\r\n",i_code_start_addr,i_code_size);
     s_code_section_infos[s_code_section_count    ].code_start_addr = (uint32_t)&CODE_SECTION_START(CODE_SECTION_NAME);
     s_code_section_infos[s_code_section_count    ].code_end_addr   = (uint32_t)&CODE_SECTION_END(CODE_SECTION_NAME);
@@ -859,7 +860,7 @@ void cortex_backtrace_fault_handler(uint32_t fault_handler_lr, uint32_t fault_ha
     }
 
     // Dump stack information.
-//    cb_stack_info_dump(stack_start_addr, stack_size, (uint32_t *)stack_pointer);
+    cb_stack_info_dump(stack_start_addr, stack_size, (uint32_t *)stack_pointer);
 #endif
 
     if (!s_is_stack_overflow)

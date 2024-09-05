@@ -61,12 +61,12 @@
 #define APP_SCAN_INTERVAL                    88               /**< Determines scan interval(in units of 0.625 ms). */
 #define APP_SCAN_WINDOW                      88               /**< Determines scan window(in units of 0.625 ms). */
 #define APP_SCAN_DURATION                    10000            /**< Duration of the scanning(in units of 10 ms). */
-#define APP_FIRST_CONN_INTERVAL_MIN          7                /**< Minimal connection interval(in units of 1.25 ms). */
-#define APP_FIRST_CONN_INTERVAL_MAX          7                /**< Maximal connection interval(in units of 1.25 ms). */
-#define APP_SECOND_CONN_INTERVAL_MIN         9                /**< Minimal connection interval(in units of 1.25 ms). */
-#define APP_SECOND_CONN_INTERVAL_MAX         9                /**< Maximal connection interval(in units of 1.25 ms). */
-#define APP_THIRD_CONN_INTERVAL_MIN          11               /**< Minimal connection interval(in units of 1.25 ms). */
-#define APP_THIRD_CONN_INTERVAL_MAX          11               /**< Maximal connection interval(in units of 1.25 ms). */
+#define APP_FIRST_CONN_INTERVAL_MIN          70                /**< Minimal connection interval(in units of 1.25 ms). */
+#define APP_FIRST_CONN_INTERVAL_MAX          70                /**< Maximal connection interval(in units of 1.25 ms). */
+#define APP_SECOND_CONN_INTERVAL_MIN         80                /**< Minimal connection interval(in units of 1.25 ms). */
+#define APP_SECOND_CONN_INTERVAL_MAX         80                /**< Maximal connection interval(in units of 1.25 ms). */
+#define APP_THIRD_CONN_INTERVAL_MIN          90               /**< Minimal connection interval(in units of 1.25 ms). */
+#define APP_THIRD_CONN_INTERVAL_MAX          90               /**< Maximal connection interval(in units of 1.25 ms). */
 #define RECONN_INTERVAL_MIN                  8                /**< Minimal connection interval(in units of 1.25 ms). */
 #define RECONN_INTERVAL_MAX                  8                /**< Minimal connection interval(in units of 1.25 ms). */
 #define APP_FIRST_UPDATE_CONN_INTERVAL_MIN   51               /**< Update minimal connection interval(in units of 1.25 ms). */
@@ -76,8 +76,8 @@
 #define APP_THIRD_UPDATE_CONN_INTERVAL_MIN   55               /**< Update minimal connection interval(in units of 1.25 ms). */
 #define APP_THIRD_UPDATE_CONN_INTERVAL_MAX   55               /**< Update maximal connection interval(in units of 1.25 ms). */
 #define APP_CONN_SLAVE_LATENCY               0                /**< Slave latency. */
-#define APP_CONN_SUP_TIMEOUT                 50              /**< Connection supervisory timeout (in unit of 10 ms). */
-#define MAX_NB_LECB_DEFUALT                  10               /**< Defualt length of maximal number of LE Credit based connection. */
+#define APP_CONN_SUP_TIMEOUT                 200              /**< Connection supervisory timeout (in unit of 10 ms). */
+#define MAX_NB_LECB_DEFUALT                  2               /**< Defualt length of maximal number of LE Credit based connection. */
 #define MAX_TX_OCTET_DEFUALT                 251              /**< Default maximum transmitted number of payload octets. */
 #define MAX_TX_TIME_DEFUALT                  2120             /**< Defualt maximum packet transmission time. */
 
@@ -85,14 +85,15 @@
 #define MASTER_CONN_LINK_MAX            3                /**< Maximum number of connect links as master. */
 #define SLAVE_CONN_LINK_MAX             2                /**< Maximum number of connect links as slave. */
 #define SLAVE_SEND_DATA_INTERVAL        1000             /**< The interval of as slave send data to peer. */
-#define SEND_PACKET_NUM_INTERVAL        60000           
+#define SEND_PACKET_NUM_INTERVAL        60000
 
 /**@brief ble status. */
 #define BLE_STATE_IDLE                  0x00             /**< BLE is idle status. */
 #define BLE_STATE_CONNECTING            0x01             /**< BLE is connecting status. */
 #define BLE_STATE_CONNECTED             0x02             /**< BLE is connected status. */
 
-
+#define BLE_TRANS_DATA_SIZE             241             /**< The size of data transfer between devices. */
+#define ALL_CONNECT_NUM                 4            /**< The value when all devices are successfully connected. */
 /*
  * LOCAL VARIABLE DEFINITIONS
  *****************************************************************************************
@@ -150,7 +151,6 @@ static const uint8_t second_master_target_addr[SYS_BD_ADDR_LEN] = {0x07, 0xae, 0
 /**< Connection information of the peer device. */
 static bool     notify_enable_flag[5] = {0};                            /**< True if notify enable. */
 static uint8_t  s_role[5];                                              /**< The role of peer device. */
-static uint8_t  notify_enable_num = 0;                                  /**< Number of notify enable. */
 static uint8_t  s_master_conn_num = 0;                                  /**< Number of connect as master . */
 static uint8_t  s_slave_conn_num  = 0;                                  /**< Number of connect as slave. */
 
@@ -158,9 +158,9 @@ static uint8_t  s_slave_conn_num  = 0;                                  /**< Num
 static uint8_t       adv_header;
 static uint16_t      adv_length ;
 static uint32_t      adv_crc ;
-static uint8_t       adv_data[510] = {0};
+static uint8_t       adv_data[BLE_TRANS_DATA_SIZE] = {0};
 
-uint8_t  rx_buffer[CFG_BOND_DEVS][516];                                  /**< Buffer used to receiving data. */
+uint8_t  rx_buffer[CFG_BOND_DEVS][BLE_TRANS_DATA_SIZE+6];                                  /**< Buffer used to receiving data. */
 
 /**< security parameters. */
 static ble_sec_param_t s_sec_param =
@@ -189,11 +189,11 @@ static ble_sec_param_t s_sec_param =
 static void slave_timeout_handler(void* p_arg)
 {
     sdk_err_t error_code;
-    uint8_t data[516];
+    uint8_t data[BLE_TRANS_DATA_SIZE+6];
 
     uint8_t *buffer = data;
-    uint16_t length = 516;
-    uint16_t adv_data_len = 510;
+    uint16_t length = BLE_TRANS_DATA_SIZE+6;
+    uint16_t adv_data_len = BLE_TRANS_DATA_SIZE;
     memcpy(buffer, &adv_header, 1);
     buffer += 1;
     memcpy(buffer, &adv_length, 2);
@@ -222,18 +222,18 @@ static void send_packet_num_timeout_handler(void* p_arg)
 {
     float rx_right_rate = 0;
     rx_right_rate = (float)central_received_packet / 3;
-    APP_LOG_INFO("central received packet right rate is %.2f%%.",rx_right_rate);
+    APP_LOG_INFO("The correct rate of central receive packets within 1 minute is %.2f%%.",rx_right_rate);
     central_received_packet = 0;
 }
 
 static void rx_packet_right_rate(uint16_t length, uint8_t *p_data)
 {
     if (memcmp(&(p_data[0]), &adv_header, 1) == 0 &&
-        memcmp(&(p_data[3]), adv_data, 510) == 0 &&
-        memcmp(&(p_data[513]), &adv_crc, 3) == 0)
+        memcmp(&(p_data[3]), adv_data, BLE_TRANS_DATA_SIZE) == 0 &&
+        memcmp(&(p_data[BLE_TRANS_DATA_SIZE+3]), &adv_crc, 3) == 0)
     {
         central_received_packet++;
-        memset(p_data, 0, 516);
+        memset(p_data, 0, BLE_TRANS_DATA_SIZE+6);
     }
 }
 
@@ -248,7 +248,7 @@ static void app_timer_init(void)
 
     error_code = app_timer_create(&s_slave_timer_id, ATIMER_REPEAT, slave_timeout_handler);
     APP_ERROR_CHECK(error_code);
-    
+
     error_code = app_timer_create(&s_send_packet_num_id, ATIMER_REPEAT, send_packet_num_timeout_handler);
     APP_ERROR_CHECK(error_code);
 }
@@ -264,7 +264,7 @@ static void app_timer_init(void)
 static void gap_adv_params_init(void)
 {
     sdk_err_t   error_code;
-    
+
     ble_gap_pair_enable(true);
     ble_sec_params_set(&s_sec_param);
     ble_gap_privacy_params_set(150, true);
@@ -303,20 +303,20 @@ static void gap_adv_params_init(void)
 static void receieve_packet_check_init(void)
 {
     adv_header = 0xA0;
-    adv_length = 516;
+    adv_length = BLE_TRANS_DATA_SIZE+6;
     adv_crc    = 0xA00A0A;
-    
+
     uint8_t tmp[10] = "Goodix_BLE";
     uint8_t *buffer = adv_data;
     uint8_t len = 10;
     memcpy(buffer, tmp, 7);
     buffer += 7;
-    for(int i = 0; i < 50; i++)
+    for(int i = 0; i < 23; i++)
     {
         memcpy(buffer, tmp, len);
         buffer += len;
     }
-    memcpy(buffer, tmp, 3);
+    memcpy(buffer, tmp, 4);
 }
 
 static void gap_scan_params_init(void)
@@ -327,7 +327,7 @@ static void gap_scan_params_init(void)
     ble_gap_pair_enable(true);
     ble_sec_params_set(&s_sec_param);
     ble_gap_privacy_params_set(150, true);
-    
+
     scan_param.scan_type     = BLE_GAP_SCAN_ACTIVE;
     scan_param.scan_mode     = BLE_GAP_SCAN_OBSERVER_MODE;
     scan_param.scan_dup_filt = BLE_GAP_SCAN_FILT_DUPLIC_EN;
@@ -415,12 +415,6 @@ static void mlmr_service_process_event(mlmr_evt_t *p_evt)
             if(notify_enable_flag[p_evt->conn_idx] == false)
             {
                 notify_enable_flag[p_evt->conn_idx] = true;
-                notify_enable_num++;
-            }
-            if(notify_enable_num == 5)
-            {
-                app_timer_start(s_slave_timer_id, SLAVE_SEND_DATA_INTERVAL, NULL);
-                app_timer_start(s_send_packet_num_id, SEND_PACKET_NUM_INTERVAL, NULL);
             }
             break;
 
@@ -460,14 +454,8 @@ static void mlmr_client_process_event(mlmr_c_evt_t *p_evt)
             if(notify_enable_flag[p_evt->conn_idx] == false)
             {
                 notify_enable_flag[p_evt->conn_idx] = true;
-                notify_enable_num++;
             }
-            if(notify_enable_num == 5)
-            {
-                app_timer_start(s_slave_timer_id, SLAVE_SEND_DATA_INTERVAL, NULL);
-                app_timer_start(s_send_packet_num_id,SEND_PACKET_NUM_INTERVAL, NULL);
-            }
-            
+
             error_code = ble_gattc_mtu_exchange(p_evt->conn_idx);
             APP_ERROR_CHECK(error_code);
             break;
@@ -508,7 +496,7 @@ static void app_client_connected_handler(uint8_t conn_idx)
     {
         ble_gap_scan_start();
     }
-    
+
     if(conn_idx < (MASTER_CONN_LINK_MAX + SLAVE_CONN_LINK_MAX))
     {
         error_code = mlmr_c_disc_srvc_start(conn_idx);
@@ -607,7 +595,7 @@ static void app_connected_handler(uint8_t conn_idx, const ble_gap_evt_connected_
         }
         second_slave_conn_index = conn_idx;
     }
-    
+
     if(memcmp(p_param->peer_addr.addr, third_slave_target_addr, SYS_BD_ADDR_LEN) == 0)
     {
         if(p_param->ll_role == BLE_GAP_LL_ROLE_MASTER)
@@ -617,7 +605,7 @@ static void app_connected_handler(uint8_t conn_idx, const ble_gap_evt_connected_
         }
         third_slave_conn_index = conn_idx;
     }
-    
+
     if(memcmp(p_param->peer_addr.addr, first_master_target_addr, SYS_BD_ADDR_LEN) == 0)
     {
         if(p_param->ll_role == BLE_GAP_LL_ROLE_SLAVE)
@@ -626,7 +614,7 @@ static void app_connected_handler(uint8_t conn_idx, const ble_gap_evt_connected_
             slave_tk = 456789;
         }
     }
-    
+
     if(memcmp(p_param->peer_addr.addr, second_master_target_addr, SYS_BD_ADDR_LEN) == 0)
     {
         if(p_param->ll_role == BLE_GAP_LL_ROLE_SLAVE)
@@ -635,7 +623,7 @@ static void app_connected_handler(uint8_t conn_idx, const ble_gap_evt_connected_
             slave_tk = 567890;
         }
     }
-    
+
     if(p_param->ll_role == BLE_GAP_LL_ROLE_SLAVE)
     {
         app_service_connected_handler(conn_idx, p_param);
@@ -669,7 +657,7 @@ static void app_mtu_exchange_handler(uint8_t conn_idx)
             gap_conn_param.interval_min  = APP_THIRD_UPDATE_CONN_INTERVAL_MIN;
             gap_conn_param.interval_max  = APP_THIRD_UPDATE_CONN_INTERVAL_MAX;
         }
-        
+
         gap_conn_param.slave_latency = APP_CONN_SLAVE_LATENCY;
         gap_conn_param.sup_timeout   = APP_CONN_SUP_TIMEOUT;
         gap_conn_param.ce_len        = 2;
@@ -683,7 +671,6 @@ static void app_service_disconnected_handler(uint8_t conn_idx, uint8_t reason)
 {
     sdk_err_t   error_code;
 
-    notify_enable_num--;
     notify_enable_flag[conn_idx] = false;
     s_slave_conn_num--;
     if(s_slave_conn_num == SLAVE_CONN_LINK_MAX - 1)
@@ -695,7 +682,6 @@ static void app_service_disconnected_handler(uint8_t conn_idx, uint8_t reason)
 
 static void app_client_disconnected_handler(uint8_t conn_idx, const uint8_t disconnect_reason)
 {
-    notify_enable_num--;
     notify_enable_flag[conn_idx] = false;
     s_master_conn_num--;
 
@@ -860,7 +846,12 @@ void ble_evt_handler(const ble_evt_t *p_evt)
             break;
         
         case BLE_GAPC_EVT_CONN_PARAM_UPDATED:
-            APP_LOG_INFO("Update connection parameter complete, conn idx is %d.", p_evt->evt.gapc_evt.index);
+             APP_LOG_INFO("Update connection parameter complete, conn idx is %d.", p_evt->evt.gapc_evt.index);
+             if(p_evt->evt.gapc_evt.index == ALL_CONNECT_NUM)
+             {
+                app_timer_start(s_slave_timer_id, SLAVE_SEND_DATA_INTERVAL, NULL);
+                app_timer_start(s_send_packet_num_id,SEND_PACKET_NUM_INTERVAL, NULL);
+             }
         break;
         
         case BLE_SEC_EVT_LINK_ENC_REQUEST:
@@ -915,7 +906,7 @@ void ble_app_init(void)
 
     error_code = ble_gap_scan_start();
     APP_ERROR_CHECK(error_code);
-    
+
     error_code = ble_gap_adv_start(0,&s_gap_adv_time_param);
     APP_ERROR_CHECK(error_code);
 }

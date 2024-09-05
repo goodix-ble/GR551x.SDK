@@ -74,7 +74,7 @@ extern "C" {
   */
 typedef enum
 {
-    APP_I2S_ID_SLAVE,                /**< I2S slave module.  */
+    APP_I2S_ID_SLAVE,                /**< I2S slave module. */
     APP_I2S_ID_MASTER,               /**< I2S master module. */
     APP_I2S_ID_MAX                   /**< Only for check parameter, not used as input parameters. */
 } app_i2s_id_t;
@@ -84,9 +84,9 @@ typedef enum
   */
 typedef enum
 {
-    APP_I2S_EVT_ERROR,                  /**< Error reported by UART peripheral.  */
-    APP_I2S_EVT_TX_CPLT,                /**< Requested TX transfer completed.    */
-    APP_I2S_EVT_RX_DATA,                /**< Requested RX transfer completed.    */
+    APP_I2S_EVT_ERROR,                  /**< Error reported by UART peripheral. */
+    APP_I2S_EVT_TX_CPLT,                /**< Requested TX transfer completed. */
+    APP_I2S_EVT_RX_DATA,                /**< Requested RX transfer completed. */
     APP_I2S_EVT_TX_RX,                  /**< Requested TX/RX transfer completed. */
 } app_i2s_evt_type_t;
 /** @} */
@@ -101,10 +101,10 @@ typedef enum
   */
 typedef struct
 {
-    app_io_type_t        type;        /**< Specifies the type of I2S IO.                                  */
+    app_io_type_t        type;        /**< Specifies the type of I2S IO. */
     app_io_mux_t         mux;         /**< Specifies the Peripheral to be connected to the selected pins. */
     uint32_t             pin;         /**< Specifies the IO pins to be configured.
-                                           This parameter can be any value of @ref GR5xxx_pins.           */
+                                           This parameter can be any value of @ref GR5xxx_pins. */
     app_io_pull_t        pull;        /**< Specifies the Pull-up or Pull-Down activation for the selected pins. */
 } app_i2s_pin_t;
 
@@ -113,10 +113,10 @@ typedef struct
   */
 typedef struct
 {
-    app_i2s_pin_t       ws;          /**< Set the configuration of I2S WS pin.    */
-    app_i2s_pin_t       sdo;         /**< Set the configuration of I2S SDO pin.   */
-    app_i2s_pin_t       sdi;         /**< Set the configuration of I2S SDI pin.   */
-    app_i2s_pin_t       sclk;        /**< Set the configuration of I2S SCLK pin.  */
+    app_i2s_pin_t       ws;          /**< Set the configuration of I2S WS pin. */
+    app_i2s_pin_t       sdo;         /**< Set the configuration of I2S SDO pin. */
+    app_i2s_pin_t       sdi;         /**< Set the configuration of I2S SDI pin. */
+    app_i2s_pin_t       sclk;        /**< Set the configuration of I2S SCLK pin. */
 } app_i2s_pin_cfg_t;
 
 /**
@@ -124,8 +124,8 @@ typedef struct
   */
 typedef struct
 {
-    dma_regs_t          *tx_dma_instance;/**< Specifies the TX DMA inistall.*/
-    dma_regs_t          *rx_dma_instance;/**< Specifies the RX DMA inistall.*/
+    dma_regs_t          *tx_dma_instance;/**< Specifies the TX DMA instance.*/
+    dma_regs_t          *rx_dma_instance;/**< Specifies the RX DMA instance.*/
     dma_channel_t       tx_dma_channel; /**< Specifies the dma channel of I2S TX. */
     dma_channel_t       rx_dma_channel; /**< Specifies the dma channel of I2S RX. */
 } app_i2s_dma_cfg_t;
@@ -143,6 +143,11 @@ typedef struct
     } data;                             /**< Data of event. */
 } app_i2s_evt_t;
 
+/** @} */
+
+/** @addtogroup APP_I2S_ENUM Enumerations
+  * @{
+  */
 /**@brief App i2s state types. */
 typedef enum
 {
@@ -161,6 +166,11 @@ typedef enum
     APP_I2S_DMA_ACTIVITY,
 } app_i2s_dma_state_t;
 
+/** @} */
+
+/** @addtogroup APP_I2S_TYPEDEFS Type definitions
+  * @{
+  */
 /**
   * @brief I2S event callback definition
   */
@@ -168,18 +178,21 @@ typedef void (*app_i2s_evt_handler_t)(app_i2s_evt_t *p_evt);
 
 /** @} */
 
+/** @addtogroup APP_I2S_STRUCTURES Structures
+  * @{
+  */
 /**
   * @brief I2S device structure definition
   */
 typedef struct
 {
-    app_i2s_evt_handler_t   evt_handler;       /**< I2S event callback definition.                   */
-    i2s_handle_t            handle;            /**< I2S handle definition.                           */
-    app_i2s_pin_cfg_t       *p_pin_cfg;        /**< I2S pins config Structures.                      */
-    dma_id_t                dma_id[2];         /**< DMA id definition.                               */
-    app_i2s_state_t         i2s_state;         /**< I2S state types.                                 */
-    app_i2s_dma_state_t     i2s_dma_state;     /**< I2S dma state types..                            */
-    bool                    start_flag;        /**< Start flag definition.                           */
+    app_i2s_evt_handler_t   evt_handler;       /**< I2S event callback definition. */
+    i2s_handle_t            handle;            /**< I2S handle definition. */
+    app_i2s_pin_cfg_t       *p_pin_cfg;        /**< I2S pins config Structures. */
+    dma_id_t                dma_id[2];         /**< DMA id definition. */
+    app_i2s_state_t         i2s_state;         /**< I2S state types. */
+    app_i2s_dma_state_t     i2s_dma_state;     /**< I2S dma state types. */
+    bool                    start_flag;        /**< Start flag definition. */
 } i2s_env_t;
 
 /**
@@ -187,12 +200,14 @@ typedef struct
   */
 typedef struct
 {
-    app_i2s_id_t        id;             /**< specified I2S module ID.                                        */
+    app_i2s_id_t        id;             /**< specified I2S module ID. */
     app_i2s_pin_cfg_t   pin_cfg;        /**< the pin configuration information for the specified I2S module. */
-    app_i2s_dma_cfg_t   dma_cfg;        /**< I2S operate mode Enumerations definition.                       */
-    i2s_init_t          init;           /**< I2S communication parameters.                                   */
-    i2s_env_t           i2s_env;        /**< I2S device structure definition.                                */
+    app_i2s_dma_cfg_t   dma_cfg;        /**< I2S operate mode Enumerations definition. */
+    i2s_init_t          init;           /**< I2S communication parameters. */
+    i2s_env_t           i2s_env;        /**< I2S device structure definition. */
 } app_i2s_params_t;
+
+/** @} */
 
 /* Exported functions --------------------------------------------------------*/
 /** @addtogroup HAL_APP_I2S_DRIVER_FUNCTIONS Functions
@@ -282,7 +297,7 @@ uint16_t app_i2s_transmit_async(app_i2s_id_t id, uint16_t *p_data, uint16_t size
 
 /**
  ****************************************************************************************
- * @brief  Enable the I2S moudle.
+ * @brief  Enable the I2S module.
  *
  * @param[in]  id: The I2S module id.
  *
@@ -294,7 +309,7 @@ uint16_t app_i2s_enable(app_i2s_id_t id);
 
 /**
  ****************************************************************************************
- * @brief  Disable the I2S moudle.
+ * @brief  Disable the I2S module.
  *
  * @param[in]  id: The I2S module id.
  *

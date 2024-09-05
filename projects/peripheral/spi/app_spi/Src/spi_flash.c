@@ -223,17 +223,19 @@ void spi_flash_wakeup(void)
 
 void spi_flash_init(uint32_t clock_prescaler)
 {
-    app_drv_err_t ret = 0;
+    app_drv_err_t ret = APP_DRV_SUCCESS;
 
     spi_params.init.baudrate_prescaler = clock_prescaler;
+    /* Please initialize DMA in the following order. */
+    /* Note: Initialization is not allowed during the transmission process. */
     ret = app_spi_init(&spi_params, app_spi_master_callback);
-    if (ret != 0)
+    if (ret != APP_DRV_SUCCESS)
     {
         printf("SPI master initial failed! Please check the input paraments.\r\n");
     }
 
     ret = app_spi_dma_init(&spi_params);
-    if (ret != 0)
+    if (ret != APP_DRV_SUCCESS)
     {
         printf("SPI master dma initial failed! Please check the input paraments.\r\n");
     }
@@ -245,3 +247,9 @@ void spi_flash_init(uint32_t clock_prescaler)
     spi_flash_wakeup();
 }
 
+void spi_flash_deinit(void)
+{
+    /* Please deinitialize DMA in the following order. */
+    app_spi_dma_deinit(spi_params.id);
+    app_spi_deinit(spi_params.id);
+}

@@ -111,6 +111,7 @@ void bsp_itm_send(uint8_t *p_data, uint16_t length)
 {
     for(uint16_t i = 0; i < length; i++)
     {
+        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
         ITM_SendChar(p_data[i]);
     }
 }
@@ -123,7 +124,7 @@ void bsp_log_init(void)
 #if (APP_LOG_PORT == 0)
     bsp_uart_init();
 #elif (APP_LOG_PORT == 1)
-    SEGGER_RTT_ConfigUpBuffer(0, NULL, NULL, 0, SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL);
+    SEGGER_RTT_ConfigUpBuffer(0, NULL, NULL, 0, SEGGER_RTT_MODE_NO_BLOCK_TRIM);
 #endif
 
 #if (APP_LOG_PORT <= 2)

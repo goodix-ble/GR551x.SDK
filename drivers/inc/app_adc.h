@@ -76,10 +76,27 @@ typedef enum
     APP_ADC_EVT_CONV_CPLT,           /**< Conversion completed by ADC peripheral. */
 } app_adc_evt_type_t;
 
+/**@brief App adc state types. */
+typedef enum
+{
+    APP_ADC_INVALID = 0,
+    APP_ADC_ACTIVITY,
+#ifdef APP_DRIVER_WAKEUP_CALL_FUN
+    APP_ADC_SLEEP,
+#endif
+} app_adc_state_t;
+
+/**@brief App adc dma state types. */
+typedef enum
+{
+    APP_ADC_DMA_INVALID = 0,
+    APP_ADC_DMA_ACTIVITY,
+} app_adc_dma_state_t;
+
 /** @} */
 
 
-/** @addtogroup APP_ADC_STRUCT Structures
+/** @addtogroup APP_ADC_STRUCTURES Structures
   * @{
   */
 
@@ -113,23 +130,6 @@ typedef struct
     dma_channel_t       dma_channel;  /**< Specifies the dma channel of ADC. */
 } app_adc_dma_cfg_t;
 
-/**@brief App adc state types. */
-typedef enum
-{
-    APP_ADC_INVALID = 0,
-    APP_ADC_ACTIVITY,
-#ifdef APP_DRIVER_WAKEUP_CALL_FUN
-    APP_ADC_SLEEP,
-#endif
-} app_adc_state_t;
-
-/**@brief App adc dma state types. */
-typedef enum
-{
-    APP_ADC_DMA_INVALID = 0,
-    APP_ADC_DMA_ACTIVITY,
-} app_adc_dma_state_t;
-
 /**
   * @brief ADC event structure definition
   */
@@ -138,12 +138,22 @@ typedef struct
     app_adc_evt_type_t  type; /**< Type of event. */
 } app_adc_evt_t;
 
+/** @} */
+
+/** @addtogroup APP_ADC_TYPEDEFS Type definitions
+  * @{
+  */
 /**
   * @brief ADC event callback definition
   */
 typedef void (*app_adc_evt_handler_t)(app_adc_evt_t *p_evt);
 
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
+/** @} */
+
+/** @addtogroup APP_ADC_STRUCTURES Structures
+  * @{
+  */
+
 /**
   * @brief ADC sample-node definition
   */
@@ -154,7 +164,6 @@ typedef struct link_node
     uint32_t          len;        /**< Sample len codes on current channel. */
     struct link_node *next;      /**< Point to the next sample node. */
 } app_adc_sample_node_t;
-#endif
 
 /**
   * @brief ADC device structure definition
@@ -166,10 +175,8 @@ typedef struct
     dma_id_t                dma_id;                    /**< DMA id definition . */
     app_adc_state_t         adc_state;                 /**< ADC state types. */
     app_adc_dma_state_t     adc_dma_state;             /**< ADC dma state types. */
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
     app_adc_sample_node_t *p_current_sample_node;      /**< ADC sample-node definition. */
     uint32_t multi_channel;                            /**< multi channel definition. */
-#endif
 } adc_env_t;
 
 /**
@@ -234,6 +241,7 @@ uint16_t app_adc_conversion_sync(uint16_t *p_data, uint32_t length, uint32_t tim
  *
  * @param[in]  p_data: Pointer to data buffer which to storage ADC conversion results.
  * @param[in]  length: Length of data buffer,  ranging between 0 and 4095.
+ * Note: Length must be aligned on a four-byte boundary.
  *
  * @return Result of operation.
  ****************************************************************************************
@@ -304,7 +312,6 @@ uint16_t app_adc_vbat_conv(uint16_t *inbuf, double *outbuf, uint32_t buflen);
  */
 adc_handle_t *app_adc_get_handle(void);
 
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
 /**
  ****************************************************************************************
  * @brief  DMA for multi channels conversion; evt_handler in app_adc_init will callback when all channels finish.
@@ -316,7 +323,31 @@ adc_handle_t *app_adc_get_handle(void);
  ****************************************************************************************
  */
 uint16_t app_adc_multi_channel_conversion_async(app_adc_sample_node_t *p_begin_node, uint32_t total_nodes);
+
+#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X)
+/**
+ ****************************************************************************************
+ * @brief  Clear the ADC FIFO, filter the first two incorrect code values , and start the ADC clock.
+ *
+ * @return Result of operation.
+ ****************************************************************************************
+ */
+uint16_t app_adc_clock_start(void);
+
+/**
+ ****************************************************************************************
+ * @brief  Get the ADC sampling code by polling, and convert sampling code of the specified length to the average voltage.
+ *
+ * @param[out] avg_voltage: Pointer to data which to storage average voltage results.
+ * @param[in]  length: Length of the ADC sample values to be averaged.
+ *
+ * @return Result of operation.
+ ****************************************************************************************
+ */
+uint16_t app_adc_get_avg_voltage(float *avg_voltage, uint32_t length);
+
 #endif
+
 
 /** @} */
 

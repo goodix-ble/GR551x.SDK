@@ -59,7 +59,7 @@
 uint8_t g_tx_buffer[UART_DATA_LEN] = {0};
 uint8_t g_rx_buffer[UART_DATA_LEN] = {0};
 uint8_t g_ring_buffer[UART_DATA_LEN] = {0};
-uint8_t g_message_0[] = "Please input characters(<126) and end with newline.\r\n";
+uint8_t g_message_0[] = "APP UART example.\r\nPlease input characters(<126) and end with newline.\r\n";
 uint8_t g_message_1[] = "Input:\r\n";
 volatile uint16_t rlen = 0;
 volatile uint8_t g_tdone = 0;

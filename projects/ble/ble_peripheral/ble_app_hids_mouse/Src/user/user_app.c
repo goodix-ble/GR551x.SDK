@@ -191,7 +191,6 @@ static const uint8_t s_adv_rsp_data_set[] =             /**< Scan responce data.
 #endif
 
 static ble_gap_bdaddr_t s_conn_bdaddr;
-static ble_gap_bdaddr_t s_bonded_bdaddr;
 
 static app_timer_id_t    s_hw_simulator_timer_id;
 static sensorsim_cfg_t   s_battery_sim_cfg;
@@ -553,8 +552,6 @@ static void services_init(void)
 
 static void app_paring_succeed_handler(void)
 {
-    s_bonded_bdaddr = s_conn_bdaddr;
-    ble_gap_privacy_mode_set(s_bonded_bdaddr, BLE_GAP_PRIVACY_MODE_DEVICE);
 }
 
 static void app_sec_rcv_enc_req_handler(uint8_t conn_idx, const ble_sec_evt_enc_req_t *p_enc_req)
@@ -642,6 +639,11 @@ void ble_evt_handler(const ble_evt_t *p_evt)
 
 void ble_app_init(void)
 {
+    sdk_version_t     version;
+
+    sys_sdk_verison_get(&version);
+    APP_LOG_INFO("Goodix BLE SDK V%d.%d.%d (commit %x)",
+                version.major, version.minor, version.build, version.commit_id);
     APP_LOG_INFO("HID Mouse example started.");
     hw_simulator_init();
     timer_init();

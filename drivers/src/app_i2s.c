@@ -42,6 +42,7 @@
 #include "app_pwr_mgmt.h"
 #include "gr_soc.h"
 #include <string.h>
+#include "app_drv.h"
 
 #ifdef HAL_I2S_MODULE_ENABLED
 
@@ -70,7 +71,7 @@
  */
 static bool     i2s_prepare_for_sleep(void);
 static void     i2s_wake_up_ind(void);
-static uint16_t i2s_gpio_config(app_i2s_id_t id, app_i2s_pin_cfg_t pin_cfg);
+static uint16_t i2s_gpio_config(app_i2s_id_t id, app_i2s_pin_cfg_t *p_pin_cfg);
 void I2S_M_IRQHandler(void);
 void I2S_S_IRQHandler(void);
 
@@ -82,13 +83,10 @@ static const IRQn_Type s_i2s_irq[APP_I2S_ID_MAX] = {I2S_S_IRQn, I2S_M_IRQn};
 static const uint32_t  s_i2s_instance[APP_I2S_ID_MAX] = {I2S_S_BASE, I2S_M_BASE};
 
 i2s_env_t *p_i2s_env[APP_I2S_ID_MAX];
-static bool      s_sleep_cb_registered_flag = false;
-static pwr_id_t  s_i2s_pwr_id;
 
 const static app_sleep_callbacks_t i2s_sleep_cb =
 {
     .app_prepare_for_sleep = i2s_prepare_for_sleep,
-    .app_sleep_canceled    = NULL,
     .app_wake_up_ind       = i2s_wake_up_ind
 };
 
@@ -99,7 +97,7 @@ const static app_sleep_callbacks_t i2s_sleep_cb =
 static bool i2s_prepare_for_sleep(void)
 {
     hal_i2s_state_t state;
-    uint8_t i;
+    uint32_t i;
 
     for (i = 0; i < APP_I2S_ID_MAX; i++)
     {
@@ -132,7 +130,7 @@ static bool i2s_prepare_for_sleep(void)
 SECTION_RAM_CODE static void i2s_wake_up_ind(void)
 {
 #ifndef APP_DRIVER_WAKEUP_CALL_FUN
-    uint8_t i;
+    uint32_t i;
 
     for (i = 0; i < APP_I2S_ID_MAX; i++)
     {
@@ -166,41 +164,41 @@ void i2s_wake_up(app_i2s_id_t id)
         hal_nvic_clear_pending_irq(s_i2s_irq[id]);
         hal_nvic_enable_irq(s_i2s_irq[id]);
 
-        p_i2s_env[id]->i2s_state = APP_I2S_ACTIVITY; 
+        p_i2s_env[id]->i2s_state = APP_I2S_ACTIVITY;
         dma_wake_up(p_i2s_env[id]->dma_id[0]);
         dma_wake_up(p_i2s_env[id]->dma_id[1]);
     }
 }
 #endif
 
-static uint16_t i2s_gpio_config(app_i2s_id_t id, app_i2s_pin_cfg_t pin_cfg)
+static uint16_t i2s_gpio_config(app_i2s_id_t id, app_i2s_pin_cfg_t *p_pin_cfg)
 {
     app_io_init_t io_init = APP_IO_DEFAULT_CONFIG;
     app_drv_err_t err_code = APP_DRV_SUCCESS;
 
-    io_init.pull = pin_cfg.ws.pull;
+    io_init.pull = p_pin_cfg->ws.pull;
     io_init.mode = APP_IO_MODE_MUX;
-    io_init.pin  = pin_cfg.ws.pin;
-    io_init.mux  = pin_cfg.ws.mux;
-    err_code = app_io_init(pin_cfg.ws.type, &io_init);
+    io_init.pin  = p_pin_cfg->ws.pin;
+    io_init.mux  = p_pin_cfg->ws.mux;
+    err_code = app_io_init(p_pin_cfg->ws.type, &io_init);
     APP_DRV_ERR_CODE_CHECK(err_code);
 
-    io_init.pull = pin_cfg.sdo.pull;
-    io_init.pin  = pin_cfg.sdo.pin;
-    io_init.mux  = pin_cfg.sdo.mux;
-    err_code = app_io_init(pin_cfg.sdo.type, &io_init);
+    io_init.pull = p_pin_cfg->sdo.pull;
+    io_init.pin  = p_pin_cfg->sdo.pin;
+    io_init.mux  = p_pin_cfg->sdo.mux;
+    err_code = app_io_init(p_pin_cfg->sdo.type, &io_init);
     APP_DRV_ERR_CODE_CHECK(err_code);
 
-    io_init.pull = pin_cfg.sdi.pull;
-    io_init.pin  = pin_cfg.sdi.pin;
-    io_init.mux  = pin_cfg.sdi.mux;
-    err_code = app_io_init(pin_cfg.sdi.type, &io_init);
+    io_init.pull = p_pin_cfg->sdi.pull;
+    io_init.pin  = p_pin_cfg->sdi.pin;
+    io_init.mux  = p_pin_cfg->sdi.mux;
+    err_code = app_io_init(p_pin_cfg->sdi.type, &io_init);
     APP_DRV_ERR_CODE_CHECK(err_code);
 
-    io_init.pull = pin_cfg.sclk.pull;
-    io_init.pin  = pin_cfg.sclk.pin;
-    io_init.mux  = pin_cfg.sclk.mux;
-    err_code = app_io_init(pin_cfg.sclk.type, &io_init);
+    io_init.pull = p_pin_cfg->sclk.pull;
+    io_init.pin  = p_pin_cfg->sclk.pin;
+    io_init.mux  = p_pin_cfg->sclk.mux;
+    err_code = app_io_init(p_pin_cfg->sclk.type, &io_init);
     APP_DRV_ERR_CODE_CHECK(err_code);
 
     return err_code;
@@ -228,28 +226,25 @@ static app_i2s_id_t i2s_get_id(i2s_handle_t *p_i2s)
  */
 uint16_t app_i2s_init(app_i2s_params_t *p_params, app_i2s_evt_handler_t evt_handler)
 {
-    app_i2s_id_t id = p_params->id;
+    app_i2s_id_t id;
     app_drv_err_t app_err_code;
     hal_status_t  hal_err_code;
 
-    if (p_params == NULL)
+    if (NULL == p_params)
     {
         return APP_DRV_ERR_POINTER_NULL;
     }
+
+    id = p_params->id;
 
     if (id >= APP_I2S_ID_MAX)
     {
         return APP_DRV_ERR_INVALID_ID;
     }
     p_i2s_env[id] = &(p_params->i2s_env);
-    app_err_code = i2s_gpio_config(p_params->id, p_params->pin_cfg);
+    app_err_code = i2s_gpio_config(p_params->id, &p_params->pin_cfg);
     APP_DRV_ERR_CODE_CHECK(app_err_code);
 
-    soc_register_nvic(I2S_S_IRQn, (uint32_t)I2S_S_IRQHandler);
-    soc_register_nvic(I2S_M_IRQn, (uint32_t)I2S_M_IRQHandler);
-  
-    hal_nvic_clear_pending_irq(s_i2s_irq[id]);
-    hal_nvic_enable_irq(s_i2s_irq[id]);
     p_i2s_env[id]->p_pin_cfg = &p_params->pin_cfg;
     p_i2s_env[id]->evt_handler = evt_handler;
 
@@ -261,25 +256,21 @@ uint16_t app_i2s_init(app_i2s_params_t *p_params, app_i2s_evt_handler_t evt_hand
     hal_err_code = hal_i2s_init(&p_i2s_env[id]->handle);
     HAL_ERR_CODE_CHECK(hal_err_code);
 
-    if (s_sleep_cb_registered_flag == false)// register sleep callback
-    {
-        s_sleep_cb_registered_flag = true;
-        s_i2s_pwr_id = pwr_register_sleep_cb(&i2s_sleep_cb, APP_DRIVER_I2S_WAPEUP_PRIORITY);
-        if (s_i2s_pwr_id < 0)
-        {
-            return APP_DRV_ERR_INVALID_PARAM;
-        }
-    }
+    pwr_register_sleep_cb(&i2s_sleep_cb, APP_DRIVER_I2S_WAKEUP_PRIORITY, I2S_PWR_ID);
 
     p_i2s_env[id]->i2s_state = APP_I2S_ACTIVITY;
     p_i2s_env[id]->start_flag = false;
+
+    soc_register_nvic(I2S_S_IRQn, (uint32_t)I2S_S_IRQHandler);
+    soc_register_nvic(I2S_M_IRQn, (uint32_t)I2S_M_IRQHandler);
+    hal_nvic_clear_pending_irq(s_i2s_irq[id]);
+    hal_nvic_enable_irq(s_i2s_irq[id]);
 
     return APP_DRV_SUCCESS;
 }
 
 uint16_t app_i2s_deinit(app_i2s_id_t id)
 {
-    uint8_t i;
     app_drv_err_t app_err_code;
     hal_status_t  hal_err_code;
 
@@ -311,19 +302,15 @@ uint16_t app_i2s_deinit(app_i2s_id_t id)
     p_i2s_env[id]->start_flag = false;
 
     GLOBAL_EXCEPTION_DISABLE();
-    for (i = 0; i < APP_I2S_ID_MAX; i++)
+    for (uint32_t i = 0; i < APP_I2S_ID_MAX; i++)
     {
-        if (p_i2s_env[i] != NULL && (p_i2s_env[i]->i2s_state) != APP_I2S_INVALID)
+        if ((p_i2s_env[i]) && ((p_i2s_env[i]->i2s_state) != APP_I2S_INVALID))
         {
-            break;
+            goto __deinit;
         }
     }
-    if (APP_I2S_ID_MAX == i)
-    {
-        pwr_unregister_sleep_cb(s_i2s_pwr_id);
-        s_i2s_pwr_id = -1;
-        s_sleep_cb_registered_flag = false;
-    }
+    pwr_unregister_sleep_cb(I2S_PWR_ID);
+__deinit:
     GLOBAL_EXCEPTION_ENABLE();
 
     hal_err_code = hal_i2s_deinit(&p_i2s_env[id]->handle);
@@ -392,6 +379,11 @@ uint16_t app_i2s_receive_sync(app_i2s_id_t id, uint16_t *p_data, uint16_t size, 
     }
 
     if (p_data == NULL || size == 0)
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
     {
         return APP_DRV_ERR_INVALID_PARAM;
     }
@@ -471,6 +463,11 @@ uint16_t app_i2s_transmit_receive_sync(app_i2s_id_t id,
     }
 
     if (p_tx_data == NULL || p_rx_data == NULL)
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
     {
         return APP_DRV_ERR_INVALID_PARAM;
     }
@@ -602,6 +599,11 @@ uint16_t app_i2s_transmit_sync(app_i2s_id_t id, uint16_t *p_data, uint16_t size,
     }
 
     if (p_data == NULL || size == 0)
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
     {
         return APP_DRV_ERR_INVALID_PARAM;
     }
@@ -770,7 +772,9 @@ void hal_i2s_tx_cplt_callback(i2s_handle_t *p_i2s)
     app_i2s_id_t id = i2s_get_id(p_i2s);
 
     i2s_evt.type = APP_I2S_EVT_TX_CPLT;
-    i2s_evt.data.size = p_i2s->tx_xfer_size - p_i2s->tx_xfer_count;
+    uint32_t tx_xfer_size_cb = p_i2s->tx_xfer_size;
+    uint32_t tx_xfer_count_cb = p_i2s->tx_xfer_count;
+    i2s_evt.data.size = tx_xfer_size_cb - tx_xfer_count_cb;
     APP_I2S_CALLBACK(id, i2s_evt);
 }
 
@@ -780,7 +784,9 @@ void hal_i2s_rx_cplt_callback(i2s_handle_t *p_i2s)
     app_i2s_id_t id = i2s_get_id(p_i2s);
 
     i2s_evt.type = APP_I2S_EVT_RX_DATA;
-    i2s_evt.data.size = p_i2s->rx_xfer_size - p_i2s->rx_xfer_count;
+    uint32_t rx_xfer_size_cb = p_i2s->rx_xfer_size;
+    uint32_t rx_xfer_count_cb = p_i2s->rx_xfer_count;
+    i2s_evt.data.size = rx_xfer_size_cb - rx_xfer_count_cb;
     __HAL_I2S_DISABLE_RX_BLOCK(p_i2s);
     APP_I2S_CALLBACK(id, i2s_evt);
 }
@@ -791,7 +797,9 @@ void hal_i2s_tx_rx_cplt_callback(i2s_handle_t *p_i2s)
     app_i2s_id_t id = i2s_get_id(p_i2s);
 
     i2s_evt.type = APP_I2S_EVT_TX_RX;
-    i2s_evt.data.size = p_i2s->rx_xfer_size - p_i2s->rx_xfer_count;
+    uint32_t rx_xfer_size_cb = p_i2s->rx_xfer_size;
+    uint32_t rx_xfer_count_cb = p_i2s->rx_xfer_count;
+    i2s_evt.data.size = rx_xfer_size_cb - rx_xfer_count_cb;
     __HAL_I2S_DISABLE_RX_BLOCK(p_i2s);
     APP_I2S_CALLBACK(id, i2s_evt);
 }

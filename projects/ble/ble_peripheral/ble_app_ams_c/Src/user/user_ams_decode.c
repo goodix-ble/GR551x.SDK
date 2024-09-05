@@ -38,6 +38,7 @@
 
 #include "user_ams_decode.h"
 #include "app_log.h"
+#include "utility.h"
 #include <stdio.h>
 
 /*
@@ -113,10 +114,13 @@ void print_new_cmd_list(const ams_c_cmd_list_t *p_cmd_list)
     {
         APP_LOG_RAW_INFO("Available CMD: %s\r\n", cmd_name[p_cmd_list->p_cmd[i]]);
     }
+    UNUSED_VARIABLE(cmd_name[0]);
 }
 
 void print_update_attr_info(ams_c_attr_info_t *p_attr_info)
 {
+    UNUSED_VARIABLE(ett_name[0]);
+    UNUSED_VARIABLE(attr_name[0]);
     APP_LOG_RAW_INFO("%s-%s: ", ett_name[p_attr_info->ett_id],
                      attr_name[p_attr_info->ett_id][p_attr_info->attr_id]);
     for (uint16_t i = 0; i < p_attr_info->length; i++)

@@ -1,6 +1,7 @@
 #include "grx_sys.h"
 #include "bootloader_config.h"
 
+#ifndef SOC_GR533X
 #if (BOOTLOADER_SIGN_ENABLE && !BOOTLOADER_BOOT_PORT_ENABLE)
 
 #include "drv_common.h"
@@ -238,6 +239,6 @@ int bl_rsa_rsassa_pss_verify(bl_rsa_context *ctx, const uint8_t *hash, const uin
     else
         return GM_BL_ERROR_RSA_VERIFY_FAILED;
 }
-
 #endif
 
+#endif

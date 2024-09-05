@@ -157,7 +157,7 @@ void hal_aon_wdt_alarm_callback(aon_wdt_handle_t *p_aon_wdt)
     app_aon_wdt_event_call(p_aon_wdt);
 }
 
-SECTION_RAM_CODE void AON_WDT_IRQHandler(void)
+void AON_WDT_IRQHandler(void)
 {
     hal_aon_wdt_irq_handler(&p_aon_wdt_env->handle);
 }

@@ -111,10 +111,10 @@ typedef struct _aon_gpio_init
 /**
   * @brief HAL AON_GPIO Callback function definition
   */
-typedef struct _aon_gpio_callback
+typedef struct _hal_aon_gpio_callback
 {
     void (*aon_gpio_callback)(uint16_t aon_gpio_pin);           /**< AON GPIO pin detection callback   */
-} aon_gpio_callback_t;
+} hal_aon_gpio_callback_t;
 
 /** @} */
 

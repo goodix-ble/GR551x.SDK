@@ -121,7 +121,7 @@ static void log_flush(void)
     app_uart_flush(APP_UART_ID);
 }
 
-static void app_log_assert_init(void)
+static void app_assert_log_init(void)
 {
     app_log_init_t log_init;
 
@@ -148,7 +148,7 @@ void app_periph_init(void)
 {
     SYS_SET_BD_ADDR(s_bd_addr);
     uart_init();
-    app_log_assert_init();
+    app_assert_log_init();
     pwr_mgmt_mode_set(PMR_MGMT_ACTIVE_MODE);
 }
 

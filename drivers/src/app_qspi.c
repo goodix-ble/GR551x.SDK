@@ -54,31 +54,7 @@
  * DEFINES
  *****************************************************************************************
  */
-
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
-#define QSPI_SMART_CS_LOW(id)                                           \
-    do {                                                                \
-            if(p_qspi_env[id]->p_pin_cfg->cs.enable == APP_QSPI_PIN_ENABLE) \
-            {                                                           \
-                app_io_write_pin(p_qspi_env[id]->p_pin_cfg->cs.type,    \
-                                p_qspi_env[id]->p_pin_cfg->cs.pin,      \
-                                APP_IO_PIN_RESET);                      \
-            }                                                           \
-        } while(0)
-
-#define QSPI_SMART_CS_HIGH(id)                                          \
-    do {                                                                \
-            if(p_qspi_env[id]->p_pin_cfg->cs.enable == APP_QSPI_PIN_ENABLE) \
-            {                                                           \
-                app_io_write_pin(p_qspi_env[id]->p_pin_cfg->cs.type,    \
-                                 p_qspi_env[id]->p_pin_cfg->cs.pin,     \
-                                 APP_IO_PIN_SET);                       \
-            }                                                           \
-    } while(0)
-#else
-#define QSPI_SMART_CS_LOW(id)
-#define QSPI_SMART_CS_HIGH(id)
-#endif
+#define REG(x)                              (*(volatile uint32_t*)(x))
 
 #define APP_QSPI_EXCEPT_DEBUG_EN            1u
 
@@ -104,7 +80,7 @@
  */
 bool qspi_prepare_for_sleep(void);
 void qspi_wake_up_ind(void);
-static uint16_t qspi_gpio_config(app_qspi_pin_cfg_t pin_cfg);
+static uint16_t qspi_gpio_config(app_qspi_pin_cfg_t *p_pin_cfg);
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X)
 void app_qspi_force_cs(app_qspi_id_t screen_id, bool low_level);
 #endif
@@ -152,10 +128,10 @@ const qspi_memorymapped_t g_flash_typical_mmap_read_cmd[FLASH_MMAP_CMD_READ_MAX]
         .x_instruction_size             = QSPI_CONCURRENT_XIP_INSTSIZE_8BIT,
         .x_address_size                 = QSPI_CONCURRENT_XIP_ADDRSIZE_24BIT,
         .x_inst_addr_transfer_format    = QSPI_CONCURRENT_XIP_INST_IN_SPI_ADDR_IN_SPIFRF,
-        .x_mode_bits_en                 = QSPI_CONCURRENT_XIP_MODE_BITS_DISABLE,
-        .x_mode_bits_length             = QSPI_CONCURRENT_XIP_MBL_8,
+        .x_mode_bits_en                 = QSPI_CONCURRENT_XIP_MODE_BITS_ENABLE,
+        .x_mode_bits_length             = QSPI_CONCURRENT_XIP_MBL_4,
         .x_mode_bits_data               = 0x00,
-        .x_dummy_cycles                 = 4,
+        .x_dummy_cycles                 = 2,
         .x_continous_xfer_toc           = 0,
         .x_sioo_mode                    = QSPI_CONCURRENT_XIP_INST_SENT_EVERY_ACCESS,
         .x_data_frame_format            = QSPI_CONCURRENT_XIP_FRF_DUAL_SPI,
@@ -170,9 +146,9 @@ const qspi_memorymapped_t g_flash_typical_mmap_read_cmd[FLASH_MMAP_CMD_READ_MAX]
         .x_address_size                 = QSPI_CONCURRENT_XIP_ADDRSIZE_24BIT,
         .x_inst_addr_transfer_format    = QSPI_CONCURRENT_XIP_INST_IN_SPI_ADDR_IN_SPIFRF,
         .x_mode_bits_en                 = QSPI_CONCURRENT_XIP_MODE_BITS_ENABLE,
-        .x_mode_bits_length             = QSPI_CONCURRENT_XIP_MBL_8,
+        .x_mode_bits_length             = QSPI_CONCURRENT_XIP_MBL_4,
         .x_mode_bits_data               = 0x20,
-        .x_dummy_cycles                 = 0,
+        .x_dummy_cycles                 = 2,
         .x_continous_xfer_toc           = 0,
         .x_sioo_mode                    = QSPI_CONCURRENT_XIP_INST_SENT_ONLY_FIRST_ACCESS,
         .x_data_frame_format            = QSPI_CONCURRENT_XIP_FRF_DUAL_SPI,
@@ -203,10 +179,10 @@ const qspi_memorymapped_t g_flash_typical_mmap_read_cmd[FLASH_MMAP_CMD_READ_MAX]
         .x_instruction_size             = QSPI_CONCURRENT_XIP_INSTSIZE_8BIT,
         .x_address_size                 = QSPI_CONCURRENT_XIP_ADDRSIZE_24BIT,
         .x_inst_addr_transfer_format    = QSPI_CONCURRENT_XIP_INST_IN_SPI_ADDR_IN_SPIFRF,
-        .x_mode_bits_en                 = QSPI_CONCURRENT_XIP_MODE_BITS_DISABLE,
+        .x_mode_bits_en                 = QSPI_CONCURRENT_XIP_MODE_BITS_ENABLE,
         .x_mode_bits_length             = QSPI_CONCURRENT_XIP_MBL_8,
         .x_mode_bits_data               = 0x00,
-        .x_dummy_cycles                 = 6,
+        .x_dummy_cycles                 = 4,
         .x_continous_xfer_toc           = 0,
         .x_sioo_mode                    = QSPI_CONCURRENT_XIP_INST_SENT_EVERY_ACCESS,
         .x_data_frame_format            = QSPI_CONCURRENT_XIP_FRF_QUAD_SPI,
@@ -379,13 +355,9 @@ static const uint32_t    s_qspi_instance[APP_QSPI_ID_MAX] = { QSPI0_BASE, QSPI1_
 
 qspi_env_t *p_qspi_env[APP_QSPI_ID_MAX];
 
-static bool       s_sleep_cb_registered_flag = false;
-static pwr_id_t   s_qspi_pwr_id = -1;
-
 static const app_sleep_callbacks_t qspi_sleep_cb =
 {
     .app_prepare_for_sleep = qspi_prepare_for_sleep,
-    .app_sleep_canceled    = NULL,
     .app_wake_up_ind       = qspi_wake_up_ind
 };
 
@@ -396,7 +368,7 @@ static const app_sleep_callbacks_t qspi_sleep_cb =
 bool qspi_prepare_for_sleep(void)
 {
     hal_qspi_state_t state;
-    uint8_t i;
+    uint32_t i;
 
     for (i = 0; i < APP_QSPI_ID_MAX; i++)
     {
@@ -428,7 +400,7 @@ bool qspi_prepare_for_sleep(void)
 SECTION_RAM_CODE void qspi_wake_up_ind(void)
 {
 #ifndef APP_DRIVER_WAKEUP_CALL_FUN
-    uint8_t i;
+    uint32_t i;
 
     for (i = 0; i < APP_QSPI_ID_MAX; i++)
     {
@@ -442,7 +414,7 @@ SECTION_RAM_CODE void qspi_wake_up_ind(void)
             GLOBAL_EXCEPTION_DISABLE();
             hal_qspi_resume_reg(&p_qspi_env[i]->handle);
             GLOBAL_EXCEPTION_ENABLE();
- 
+
             hal_nvic_clear_pending_irq(s_qspi_irq[i]);
             hal_nvic_enable_irq(s_qspi_irq[i]);
         }
@@ -489,7 +461,7 @@ QSPI_HANDLER(2, APP_QSPI_ID_2)
  */
 uint16_t app_qspi_init(app_qspi_params_t *p_params, app_qspi_evt_handler_t evt_handler)
 {
-    app_qspi_id_t id = p_params->id;
+    app_qspi_id_t id;
     app_drv_err_t app_err_code;
     hal_status_t  hal_err_code;
 
@@ -498,22 +470,16 @@ uint16_t app_qspi_init(app_qspi_params_t *p_params, app_qspi_evt_handler_t evt_h
         return APP_DRV_ERR_POINTER_NULL;
     }
 
+    id = p_params->id;
+
     if (id >= APP_QSPI_ID_MAX)
     {
         return APP_DRV_ERR_INVALID_ID;
     }
     p_qspi_env[id] = &p_params->qspi_env;
-    soc_register_nvic(QSPI0_IRQn, (uint32_t)QSPI0_IRQHandler);
-    soc_register_nvic(QSPI1_IRQn, (uint32_t)QSPI1_IRQHandler);
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X)
-    soc_register_nvic(QSPI2_IRQn, (uint32_t)QSPI2_IRQHandler);
-#endif
 
-    app_err_code = qspi_gpio_config(p_params->pin_cfg);
+    app_err_code = qspi_gpio_config(&p_params->pin_cfg);
     APP_DRV_ERR_CODE_CHECK(app_err_code);
-
-    hal_nvic_clear_pending_irq(s_qspi_irq[id]);
-    hal_nvic_enable_irq(s_qspi_irq[id]);
 
     p_qspi_env[id]->p_pin_cfg = &p_params->pin_cfg;
     p_qspi_env[id]->evt_handler = evt_handler;
@@ -537,25 +503,25 @@ uint16_t app_qspi_init(app_qspi_params_t *p_params, app_qspi_evt_handler_t evt_h
     p_qspi_env[id]->is_mmap_inited   = false;
     p_qspi_env[id]->is_mmap_prefetch_en = false;
 #endif
-    if(!s_sleep_cb_registered_flag)// register sleep callback
-    {
-        s_sleep_cb_registered_flag = true;
-        s_qspi_pwr_id = pwr_register_sleep_cb(&qspi_sleep_cb, APP_DRIVER_QSPI_WAPEUP_PRIORITY);
-        if (s_qspi_pwr_id < 0)
-        {
-            return APP_DRV_ERR_INVALID_PARAM;
-        }
-    }
+
+    pwr_register_sleep_cb(&qspi_sleep_cb, APP_DRIVER_QSPI_WAKEUP_PRIORITY, QSPI_PWR_ID);
 
     p_qspi_env[id]->qspi_state = APP_QSPI_ACTIVITY;
     p_qspi_env[id]->start_flag = false;
+
+    soc_register_nvic(QSPI0_IRQn, (uint32_t)QSPI0_IRQHandler);
+    soc_register_nvic(QSPI1_IRQn, (uint32_t)QSPI1_IRQHandler);
+#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X)
+    soc_register_nvic(QSPI2_IRQn, (uint32_t)QSPI2_IRQHandler);
+#endif
+    hal_nvic_clear_pending_irq(s_qspi_irq[id]);
+    hal_nvic_enable_irq(s_qspi_irq[id]);
 
     return APP_DRV_SUCCESS;
 }
 
 uint16_t app_qspi_deinit(app_qspi_id_t id)
 {
-    uint8_t i;
     app_drv_err_t app_err_code;
     hal_status_t  hal_err_code;
 
@@ -610,21 +576,16 @@ uint16_t app_qspi_deinit(app_qspi_id_t id)
     p_qspi_env[id]->is_mmap_inited   = false;
     p_qspi_env[id]->is_mmap_prefetch_en = false;
 #endif
-
     GLOBAL_EXCEPTION_DISABLE();
-    for (i = 0; i < APP_QSPI_ID_MAX; i++)
+    for (uint32_t i = 0; i < APP_QSPI_ID_MAX; i++)
     {
-        if (p_qspi_env[i] != NULL && (p_qspi_env[i]->qspi_state) != APP_QSPI_INVALID)
+        if ((p_qspi_env[i]) && ((p_qspi_env[i]->qspi_state) != APP_QSPI_INVALID))
         {
-            break;
+            goto __deinit;
         }
     }
-    if (APP_QSPI_ID_MAX == i)
-    {
-        pwr_unregister_sleep_cb(s_qspi_pwr_id);
-        s_qspi_pwr_id = -1;
-        s_sleep_cb_registered_flag = false;
-    }
+    pwr_unregister_sleep_cb(QSPI_PWR_ID);
+__deinit:
     GLOBAL_EXCEPTION_ENABLE();
 
     hal_err_code = hal_qspi_deinit(&p_qspi_env[id]->handle);
@@ -765,6 +726,11 @@ uint16_t app_qspi_command_receive_sync(app_qspi_id_t id, app_qspi_command_t *p_c
         return APP_DRV_ERR_POINTER_NULL;
     }
 
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
 #ifdef APP_DRIVER_WAKEUP_CALL_FUN
     qspi_wake_up(id);
 #endif
@@ -840,6 +806,11 @@ uint16_t app_qspi_command_transmit_sync(app_qspi_id_t id, app_qspi_command_t *p_
     if (p_cmd == NULL || p_data == NULL)
     {
         return APP_DRV_ERR_POINTER_NULL;
+    }
+
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
     }
 
 #ifdef APP_DRIVER_WAKEUP_CALL_FUN
@@ -918,6 +889,11 @@ uint16_t app_qspi_command_sync(app_qspi_id_t id, app_qspi_command_t *p_cmd, uint
     if (p_cmd == NULL)
     {
         return APP_DRV_ERR_POINTER_NULL;
+    }
+
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
     }
 
 #ifdef APP_DRIVER_WAKEUP_CALL_FUN
@@ -1008,6 +984,11 @@ uint16_t app_qspi_transmit_sync_ex(app_qspi_id_t id, uint32_t qspi_mode, uint32_
         return APP_DRV_ERR_INVALID_PARAM;
     }
 
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
 #ifdef APP_DRIVER_WAKEUP_CALL_FUN
     qspi_wake_up(id);
 #endif
@@ -1067,7 +1048,7 @@ uint16_t app_qspi_transmit_async_ex(app_qspi_id_t id, uint32_t qspi_mode, uint32
     {
         p_qspi_env[id]->start_flag = true;
         QSPI_SMART_CS_LOW(id);
-        
+
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
         err_code = hal_qspi_transmit_it(&p_qspi_env[id]->handle, p_data, length);
 #endif
@@ -1115,6 +1096,11 @@ uint16_t app_qspi_receive_sync_ex(app_qspi_id_t id, uint32_t qspi_mode, uint32_t
     }
 
     if (p_data == NULL || length == 0)
+    {
+        return APP_DRV_ERR_INVALID_PARAM;
+    }
+
+    if ((APP_DRV_NEVER_TIMEOUT != timeout) && (APP_DRV_MAX_TIMEOUT < timeout))
     {
         return APP_DRV_ERR_INVALID_PARAM;
     }
@@ -1216,6 +1202,25 @@ bool app_qspi_mmap_set_endian_mode(app_qspi_id_t id, app_qspi_mmap_endian_mode_e
 
     status = hal_qspi_memorymapped_update(&p_qspi_env[id]->handle, &mmap_set, 1);
 
+    //override the xip mode
+#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X)
+    if(id == APP_QSPI_ID_0) {
+        REG(0xA000E180) = REG(0xA000E180) & 0xFFFFFFFE;
+    } else if (id == APP_QSPI_ID_1) {
+        REG(0xA000E180) = REG(0xA000E180) & 0xFFFFFFEF;
+    } else if (id == APP_QSPI_ID_2) {
+        REG(0xA000E180) = REG(0xA000E180) & 0xFFFFFEFF;
+    }
+#elif (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X)
+    if(id == APP_QSPI_ID_0) {
+        REG(0x4000E180) = REG(0x4000E180) & 0xFFFFFFFE;
+    } else if (id == APP_QSPI_ID_1) {
+        REG(0x4000E180) = REG(0x4000E180) & 0xFFFFFFEF;
+    } else if (id == APP_QSPI_ID_2) {
+        REG(0x4000E180) = REG(0x4000E180) & 0xFFFFFEFF;
+    }
+#endif
+
     if(HAL_OK == status) {
         p_qspi_env[id]->mmap_endian_mode = mode;
         return true;
@@ -1251,12 +1256,12 @@ bool app_qspi_mmap_set_prefetch(app_qspi_id_t id, bool prefetch_en) {
 uint8_t app_qspi_mmap_read_u8(app_qspi_id_t id, uint32_t address) {
     if (id >= APP_QSPI_ID_MAX)
     {
-        return APP_DRV_ERR_INVALID_ID;
+        return 0;
     }
 
     if ((p_qspi_env[id] == NULL) || (p_qspi_env[id]->qspi_state == APP_QSPI_INVALID))
     {
-        return APP_DRV_ERR_NOT_INIT;
+        return 0;
     }
     //APP_ASSERT_CHECK(p_qspi_env[id]->is_mmap_inited);
     app_qspi_mmap_set_endian_mode(id, APP_QSPI_MMAP_ENDIAN_MODE_0);
@@ -1319,74 +1324,73 @@ uint32_t app_qspi_get_xip_base_address(app_qspi_id_t id) {
  * LOCAL FUNCTION DEFINITIONS
  *****************************************************************************************
  */
-static uint16_t qspi_gpio_config(app_qspi_pin_cfg_t pin_cfg)
+static uint16_t qspi_gpio_config(app_qspi_pin_cfg_t *p_pin_cfg)
 {
     app_io_init_t io_init = APP_IO_DEFAULT_CONFIG;
     app_drv_err_t err_code = APP_DRV_SUCCESS;
 
-    if (pin_cfg.cs.enable == APP_QSPI_PIN_ENABLE)
+    if (p_pin_cfg->cs.enable == APP_QSPI_PIN_ENABLE)
     {
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X)
-        io_init.pull = pin_cfg.cs.pull;
-        io_init.pin  = pin_cfg.cs.pin;
-        io_init.mux  = pin_cfg.cs.mux;
-        io_init.mode = pin_cfg.cs.mode;
-        err_code = app_io_init(pin_cfg.cs.type, &io_init);
-        APP_DRV_ERR_CODE_CHECK(err_code);
-#endif
-#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
-        io_init.pull = pin_cfg.cs.pull;
+#if QSPI_SMART_CS_ENABLE
+        io_init.pull = p_pin_cfg->cs.pull;
         io_init.mode = APP_IO_MODE_OUTPUT;
-        io_init.pin  = pin_cfg.cs.pin;
-        io_init.mux  = APP_IO_MUX_7;
-        err_code = app_io_init(pin_cfg.cs.type, &io_init);
+        io_init.pin  = p_pin_cfg->cs.pin;
+        io_init.mux  = APP_IO_MUX;
+        err_code = app_io_init(p_pin_cfg->cs.type, &io_init);
         APP_DRV_ERR_CODE_CHECK(err_code);
-        app_io_write_pin(pin_cfg.cs.type, pin_cfg.cs.pin, APP_IO_PIN_SET);
+        app_io_write_pin(p_pin_cfg->cs.type, p_pin_cfg->cs.pin, APP_IO_PIN_SET);
+#else
+        io_init.pull = p_pin_cfg->cs.pull;
+        io_init.pin  = p_pin_cfg->cs.pin;
+        io_init.mux  = p_pin_cfg->cs.mux;
+        io_init.mode = p_pin_cfg->cs.mode;
+        err_code = app_io_init(p_pin_cfg->cs.type, &io_init);
+        APP_DRV_ERR_CODE_CHECK(err_code);
 #endif
     }
-    if (pin_cfg.clk.enable == APP_QSPI_PIN_ENABLE)
+    if (p_pin_cfg->clk.enable == APP_QSPI_PIN_ENABLE)
     {
-        io_init.pull = pin_cfg.clk.pull;
-        io_init.pin  = pin_cfg.clk.pin;
-        io_init.mux  = pin_cfg.clk.mux;
-        io_init.mode = pin_cfg.clk.mode;
-        err_code = app_io_init(pin_cfg.clk.type, &io_init);
+        io_init.pull = p_pin_cfg->clk.pull;
+        io_init.pin  = p_pin_cfg->clk.pin;
+        io_init.mux  = p_pin_cfg->clk.mux;
+        io_init.mode = p_pin_cfg->clk.mode;
+        err_code = app_io_init(p_pin_cfg->clk.type, &io_init);
         APP_DRV_ERR_CODE_CHECK(err_code);
     }
-    if (pin_cfg.io_0.enable == APP_QSPI_PIN_ENABLE)
+    if (p_pin_cfg->io_0.enable == APP_QSPI_PIN_ENABLE)
     {
-        io_init.pull = pin_cfg.io_0.pull;
-        io_init.pin  = pin_cfg.io_0.pin;
-        io_init.mux  = pin_cfg.io_0.mux;
-        io_init.mode = pin_cfg.io_0.mode;
-        err_code = app_io_init(pin_cfg.io_0.type, &io_init);
+        io_init.pull = p_pin_cfg->io_0.pull;
+        io_init.pin  = p_pin_cfg->io_0.pin;
+        io_init.mux  = p_pin_cfg->io_0.mux;
+        io_init.mode = p_pin_cfg->io_0.mode;
+        err_code = app_io_init(p_pin_cfg->io_0.type, &io_init);
         APP_DRV_ERR_CODE_CHECK(err_code);
     }
-    if (pin_cfg.io_1.enable == APP_QSPI_PIN_ENABLE)
+    if (p_pin_cfg->io_1.enable == APP_QSPI_PIN_ENABLE)
     {
-        io_init.pull = pin_cfg.io_1.pull;
-        io_init.pin  = pin_cfg.io_1.pin;
-        io_init.mux  = pin_cfg.io_1.mux;
-        io_init.mode = pin_cfg.io_1.mode;
-        err_code = app_io_init(pin_cfg.io_1.type, &io_init);
+        io_init.pull = p_pin_cfg->io_1.pull;
+        io_init.pin  = p_pin_cfg->io_1.pin;
+        io_init.mux  = p_pin_cfg->io_1.mux;
+        io_init.mode = p_pin_cfg->io_1.mode;
+        err_code = app_io_init(p_pin_cfg->io_1.type, &io_init);
         APP_DRV_ERR_CODE_CHECK(err_code);
     }
-    if (pin_cfg.io_2.enable == APP_QSPI_PIN_ENABLE)
+    if (p_pin_cfg->io_2.enable == APP_QSPI_PIN_ENABLE)
     {
-        io_init.pull = pin_cfg.io_2.pull;
-        io_init.pin  = pin_cfg.io_2.pin;
-        io_init.mux  = pin_cfg.io_2.mux;
-        io_init.mode = pin_cfg.io_2.mode;
-        err_code = app_io_init(pin_cfg.io_2.type, &io_init);
+        io_init.pull = p_pin_cfg->io_2.pull;
+        io_init.pin  = p_pin_cfg->io_2.pin;
+        io_init.mux  = p_pin_cfg->io_2.mux;
+        io_init.mode = p_pin_cfg->io_2.mode;
+        err_code = app_io_init(p_pin_cfg->io_2.type, &io_init);
         APP_DRV_ERR_CODE_CHECK(err_code);
     }
-    if (pin_cfg.io_3.enable == APP_QSPI_PIN_ENABLE)
+    if (p_pin_cfg->io_3.enable == APP_QSPI_PIN_ENABLE)
     {
-        io_init.pull = pin_cfg.io_3.pull;
-        io_init.pin  = pin_cfg.io_3.pin;
-        io_init.mux  = pin_cfg.io_3.mux;
-        io_init.mode = pin_cfg.io_3.mode;
-        err_code = app_io_init(pin_cfg.io_3.type, &io_init);
+        io_init.pull = p_pin_cfg->io_3.pull;
+        io_init.pin  = p_pin_cfg->io_3.pin;
+        io_init.mux  = p_pin_cfg->io_3.mux;
+        io_init.mode = p_pin_cfg->io_3.mode;
+        err_code = app_io_init(p_pin_cfg->io_3.type, &io_init);
         APP_DRV_ERR_CODE_CHECK(err_code);
     }
 
@@ -1400,27 +1404,15 @@ void app_qspi_force_cs(app_qspi_id_t screen_id, bool low_level) {
 
     io_init.pull = p_qspi_env[screen_id]->p_pin_cfg->cs.pull;
     io_init.pin  = p_qspi_env[screen_id]->p_pin_cfg->cs.pin;
-
+    io_init.mux  = APP_IO_MUX;
+    io_init.mode = APP_IO_MODE_OUTPUT;
+    app_io_init(p_qspi_env[screen_id]->p_pin_cfg->cs.type, &io_init);
     if(low_level) {
-#if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5525X)
-        io_init.mux  = APP_IO_MUX_7;
-#else
-        io_init.mux  = APP_IO_MUX_8;
-#endif
-        io_init.mode = APP_IO_MODE_OUTPUT;
-        app_io_init(p_qspi_env[screen_id]->p_pin_cfg->cs.type, &io_init);
         app_io_write_pin(p_qspi_env[screen_id]->p_pin_cfg->cs.type, io_init.pin, APP_IO_PIN_SET);
         delay_us(1);
         app_io_write_pin(p_qspi_env[screen_id]->p_pin_cfg->cs.type, io_init.pin, APP_IO_PIN_RESET);
     } else {
         /* first : release cs */
-#if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5525X)
-        io_init.mux  = APP_IO_MUX_7;
-#else
-        io_init.mux  = APP_IO_MUX_8;
-#endif
-        io_init.mode = APP_IO_MODE_OUTPUT;
-        app_io_init(p_qspi_env[screen_id]->p_pin_cfg->cs.type, &io_init);
         app_io_write_pin(p_qspi_env[screen_id]->p_pin_cfg->cs.type, io_init.pin, APP_IO_PIN_SET);
 
         /* then : restore hard-cs */
@@ -1435,8 +1427,17 @@ void app_qspi_force_cs(app_qspi_id_t screen_id, bool low_level) {
 
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X)
 #if (QSPI_DMA_LLP_FEATUTE_SUPPORT > 0u)
-    extern bool app_graphics_qspi_draw_screen_continue(app_qspi_id_t id, app_qspi_evt_t qspi_evt);
+__weak bool app_graphics_qspi_draw_screen_continue(app_qspi_id_t id, app_qspi_evt_t qspi_evt)
+{
+    UNUSED(id);
+    UNUSED(qspi_evt);
+    return false;
+}
 #endif
+
+__weak void _free_qspi_dma_llp_resource(void) {
+    //override this in app_graphics_qspi.c
+}
 #endif
 
 static void app_qspi_event_call(qspi_handle_t *p_qspi, app_qspi_evt_type_t evt_type)
@@ -1476,13 +1477,21 @@ static void app_qspi_event_call(qspi_handle_t *p_qspi, app_qspi_evt_type_t evt_t
     }
     else if (evt_type == APP_QSPI_EVT_TX_CPLT)
     {
-        qspi_evt.data.size = p_qspi->tx_xfer_size - p_qspi->tx_xfer_count;
+        uint32_t tx_xfer_size_cb = p_qspi->tx_xfer_size;
+        uint32_t tx_xfer_count_cb = p_qspi->tx_xfer_count;
+        qspi_evt.data.size = tx_xfer_size_cb - tx_xfer_count_cb;
         p_qspi_env[id]->is_xfer_err = 0;
         p_qspi_env[id]->is_tx_done  = 1;
+
+#if ((APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X))
+        _free_qspi_dma_llp_resource();
+#endif
     }
     else if (evt_type == APP_QSPI_EVT_RX_DATA)
     {
-        qspi_evt.data.size = p_qspi->rx_xfer_size - p_qspi->rx_xfer_count;
+        uint32_t rx_xfer_size_cb = p_qspi->rx_xfer_size;
+        uint32_t rx_xfer_count_cb = p_qspi->rx_xfer_count;
+        qspi_evt.data.size = rx_xfer_size_cb - rx_xfer_count_cb;
         p_qspi_env[id]->is_xfer_err = 0;
         p_qspi_env[id]->is_rx_done  = 1;
     }

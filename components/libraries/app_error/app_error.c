@@ -70,9 +70,9 @@ typedef struct
  * LOCAL VARIABLE DEFINITIONS
  *****************************************************************************************
  */
-static char  s_error_print_info[APP_ERROR_INFO_LEN] = { 0 };
+static char s_error_print_info[APP_ERROR_INFO_LEN] = { 0 };
 
-static error_code_info_t s_error_code_info[APP_ERROR_CODE_NB] =
+static const error_code_info_t s_error_code_info[APP_ERROR_CODE_NB] =
 {
     {SDK_SUCCESS,                              "Successful."},
     {SDK_ERR_INVALID_PARAM,                    "Invalid parameter supplied."},
