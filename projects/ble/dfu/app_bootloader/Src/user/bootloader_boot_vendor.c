@@ -52,6 +52,7 @@
 #include "grx_sys.h"
 #include "grx_hal.h"
 
+#include "platform_sdk.h"
 /*
  * DEFINES
  *****************************************************************************************
@@ -328,6 +329,7 @@ static void app_bootloader_jump(dfu_boot_info_t *p_boot_info)
         memcpy((uint8_t*)p_boot_info->run_addr, (uint8_t*)p_boot_info->load_addr, p_boot_info->bin_size);
     }
 
+    mem_pwr_mgmt_mode_set(MEM_POWER_FULL_MODE);
     sys_firmware_jump(p_boot_info->run_addr, p_boot_info->bin_size);
 }
 
