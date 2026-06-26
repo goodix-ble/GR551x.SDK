@@ -15,7 +15,7 @@
         <TargetCommonOption>
           <Device>ARMCM4_FP</Device>
           <Vendor>ARM</Vendor>
-          <PackID>ARM.CMSIS.5.6.0</PackID>
+          <PackID>ARM.CMSIS.5.9.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IRAM(0x20000000,0x00020000) IROM(0x00000000,0x00040000) CPUTYPE(&quot;Cortex-M4&quot;) FPU2 CLOCK(12000000) ESEL ELITTLE</Cpu>
           <FlashUtilSpec/>
@@ -184,6 +184,8 @@
             <uocXRam>0</uocXRam>
             <RvdsVP>2</RvdsVP>
             <RvdsMve>0</RvdsMve>
+            <RvdsCdeCp>0</RvdsCdeCp>
+            <nBranchProt>0</nBranchProt>
             <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -335,9 +337,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls/>
-              <Define>BOOTLOADER_ENABLE</Define>
+              <Define>BOOTLOADER_ENABLE,WDT_RUN_ENABLE=1,BOOT_LONG_TIME=0</Define>
               <Undefine/>
-              <IncludePath>..\Src\config;..\Src\platform;..\Src\user;..\Src\config;..\..\..\..\..\components\app_drivers\inc;..\..\..\..\..\components\boards;..\..\..\..\..\components\drivers_ext\gr55xx;..\..\..\..\..\components\libraries\app_alarm;..\..\..\..\..\components\libraries\app_assert;..\..\..\..\..\components\libraries\app_error;..\..\..\..\..\components\libraries\app_key;..\..\..\..\..\components\libraries\app_log;..\..\..\..\..\components\libraries\app_queue;..\..\..\..\..\components\libraries\app_timer;..\..\..\..\..\components\libraries\at_cmd;..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\components\libraries\dfu_master;..\..\..\..\..\components\libraries\gui;..\..\..\..\..\components\libraries\gui\gui_config;..\..\..\..\..\components\libraries\hal_flash;..\..\..\..\..\components\libraries\hci_uart;..\..\..\..\..\components\libraries\pmu_calibration;..\..\..\..\..\components\libraries\ring_buffer;..\..\..\..\..\components\libraries\sensorsim;..\..\..\..\..\components\libraries\utility;..\..\..\..\..\components\libraries\dfu_port;..\..\..\..\..\components\patch\ind;..\..\..\..\..\components\profiles\ams_c;..\..\..\..\..\components\profiles\ancs_c;..\..\..\..\..\components\profiles\ans;..\..\..\..\..\components\profiles\ans_c;..\..\..\..\..\components\profiles\bas;..\..\..\..\..\components\profiles\bas_c;..\..\..\..\..\components\profiles\bcs;..\..\..\..\..\components\profiles\bps;..\..\..\..\..\components\profiles\common;..\..\..\..\..\components\profiles\cscs;..\..\..\..\..\components\profiles\cts;..\..\..\..\..\components\profiles\cts_c;..\..\..\..\..\components\profiles\dis;..\..\..\..\..\components\profiles\dis_c;..\..\..\..\..\components\profiles\gls;..\..\..\..\..\components\profiles\gus;..\..\..\..\..\components\profiles\gus_c;..\..\..\..\..\components\profiles\hids;..\..\..\..\..\components\profiles\hrrcps;..\..\..\..\..\components\profiles\hrs;..\..\..\..\..\components\profiles\hrs_c;..\..\..\..\..\components\profiles\hts;..\..\..\..\..\components\profiles\ias;..\..\..\..\..\components\profiles\lls;..\..\..\..\..\components\profiles\ndcs;..\..\..\..\..\components\profiles\otas_c;..\..\..\..\..\components\profiles\pass;..\..\..\..\..\components\profiles\pass_c;..\..\..\..\..\components\profiles\pcs;..\..\..\..\..\components\profiles\rscs;..\..\..\..\..\components\profiles\rscs_c;..\..\..\..\..\components\profiles\rtus;..\..\..\..\..\components\profiles\sample;..\..\..\..\..\components\profiles\ths;..\..\..\..\..\components\profiles\ths_c;..\..\..\..\..\components\profiles\thscps;..\..\..\..\..\components\profiles\tps;..\..\..\..\..\components\profiles\wechat;..\..\..\..\..\components\profiles\otas;..\..\..\..\..\components\sdk\;..\..\..\..\..\drivers\inc;..\..\..\..\..\drivers\inc\hal;..\..\..\..\..\external\freertos\include;..\..\..\..\..\external\segger_rtt;..\..\..\..\..\platform\arch\arm\cortex-m\cmsis\core\include;..\..\..\..\..\platform\boards;..\..\..\..\..\platform\include;..\..\..\..\..\platform\soc\include;..\..\..\..\..\platform\soc\linker\keil;..\Src\sign_verify\inc;..\..\..\..\..\components\libraries\app_crypto</IncludePath>
+              <IncludePath>..\Src\config;..\Src\platform;..\Src\user;..\Src\config;..\..\..\..\..\components\app_drivers\inc;..\..\..\..\..\components\boards;..\..\..\..\..\components\drivers_ext\gr55xx;..\..\..\..\..\components\libraries\app_alarm;..\..\..\..\..\components\libraries\app_assert;..\..\..\..\..\components\libraries\app_error;..\..\..\..\..\components\libraries\app_key;..\..\..\..\..\components\libraries\app_log;..\..\..\..\..\components\libraries\app_queue;..\..\..\..\..\components\libraries\app_timer;..\..\..\..\..\components\libraries\at_cmd;..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\components\libraries\dfu_master;..\..\..\..\..\components\libraries\gui;..\..\..\..\..\components\libraries\gui\gui_config;..\..\..\..\..\components\libraries\hal_flash;..\..\..\..\..\components\libraries\hci_uart;..\..\..\..\..\components\libraries\pmu_calibration;..\..\..\..\..\components\libraries\ring_buffer;..\..\..\..\..\components\libraries\sensorsim;..\..\..\..\..\components\libraries\utility;..\..\..\..\..\components\libraries\dfu_port;..\..\..\..\..\components\patch\ind;..\..\..\..\..\components\profiles\ams_c;..\..\..\..\..\components\profiles\ancs_c;..\..\..\..\..\components\profiles\ans;..\..\..\..\..\components\profiles\ans_c;..\..\..\..\..\components\profiles\bas;..\..\..\..\..\components\profiles\bas_c;..\..\..\..\..\components\profiles\bcs;..\..\..\..\..\components\profiles\bps;..\..\..\..\..\components\profiles\common;..\..\..\..\..\components\profiles\cscs;..\..\..\..\..\components\profiles\cts;..\..\..\..\..\components\profiles\cts_c;..\..\..\..\..\components\profiles\dis;..\..\..\..\..\components\profiles\dis_c;..\..\..\..\..\components\profiles\gls;..\..\..\..\..\components\profiles\gus;..\..\..\..\..\components\profiles\gus_c;..\..\..\..\..\components\profiles\hids;..\..\..\..\..\components\profiles\hrrcps;..\..\..\..\..\components\profiles\hrs;..\..\..\..\..\components\profiles\hrs_c;..\..\..\..\..\components\profiles\hts;..\..\..\..\..\components\profiles\ias;..\..\..\..\..\components\profiles\lls;..\..\..\..\..\components\profiles\ndcs;..\..\..\..\..\components\profiles\otas_c;..\..\..\..\..\components\profiles\pass;..\..\..\..\..\components\profiles\pass_c;..\..\..\..\..\components\profiles\pcs;..\..\..\..\..\components\profiles\rscs;..\..\..\..\..\components\profiles\rscs_c;..\..\..\..\..\components\profiles\rtus;..\..\..\..\..\components\profiles\sample;..\..\..\..\..\components\profiles\ths;..\..\..\..\..\components\profiles\ths_c;..\..\..\..\..\components\profiles\thscps;..\..\..\..\..\components\profiles\tps;..\..\..\..\..\components\profiles\wechat;..\..\..\..\..\components\profiles\otas;..\..\..\..\..\components\sdk\;..\..\..\..\..\drivers\inc;..\..\..\..\..\drivers\inc\hal;..\..\..\..\..\external\freertos\include;..\..\..\..\..\external\segger_rtt;..\..\..\..\..\platform\arch\arm\cortex-m\cmsis\core\include;..\..\..\..\..\platform\boards;..\..\..\..\..\platform\include;..\..\..\..\..\platform\soc\include;..\..\..\..\..\platform\soc\linker\keil;..\..\..\..\..\components\libraries\app_bootloader\sign_verify\inc;..\..\..\..\..\components\libraries\app_crypto;..\..\..\..\..\components\libraries\app_bootloader</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -350,7 +352,7 @@
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
             <useXO>0</useXO>
-            <uClangAs>0</uClangAs>
+            <ClangAsOpt>4</ClangAsOpt>
             <VariousControls>
               <MiscControls/>
               <Define/>
@@ -599,17 +601,17 @@
             <File>
               <FileName>rsa.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Src\sign_verify\src\rsa.c</FilePath>
+              <FilePath>..\..\..\..\..\components\libraries\app_bootloader\sign_verify\src\rsa.c</FilePath>
             </File>
             <File>
               <FileName>pkc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Src\sign_verify\src\pkc.c</FilePath>
+              <FilePath>..\..\..\..\..\components\libraries\app_bootloader\sign_verify\src\pkc.c</FilePath>
             </File>
             <File>
               <FileName>sign_verify.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Src\sign_verify\src\sign_verify.c</FilePath>
+              <FilePath>..\..\..\..\..\components\libraries\app_bootloader\sign_verify\src\sign_verify.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -624,12 +626,12 @@
             <File>
               <FileName>bootloader_ota.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Src\user\bootloader_ota.c</FilePath>
+              <FilePath>..\..\..\..\..\components\libraries\app_bootloader\bootloader_ota.c</FilePath>
             </File>
             <File>
               <FileName>bootloader_boot_vendor.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Src\user\bootloader_boot_vendor.c</FilePath>
+              <FilePath>..\..\..\..\..\components\libraries\app_bootloader\bootloader_boot_vendor.c</FilePath>
             </File>
             <File>
               <FileName>bootloader_boot_port.c</FileName>

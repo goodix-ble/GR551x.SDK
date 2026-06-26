@@ -7,7 +7,7 @@
  *
  ****************************************************************************************
  * @attention
-  #####Copyright (c) 2019 GOODIX
+  #####Copyright (c) 2024 GOODIX
   All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -56,6 +56,8 @@
 extern "C" {
 #endif
 
+/* Includes ------------------------------------------------------------------*/
+#include "hal.h"
 
 /* Exported types ------------------------------------------------------------*/
 
@@ -439,18 +441,6 @@ uint32_t hal_systick_config(uint32_t ticks);
  * @{
  */
 
-#if (__MPU_PRESENT == 1U)
-/**
- ****************************************************************************************
- * @brief  Initialize and configures the Region and the memory to be protected.
- *
- * @param[in]  p_mpu_init: Pointer to a mpu_region_init_t structure that contains
- *                     the initialization and configuration information.
- ****************************************************************************************
- */
-void hal_mpu_config_region(mpu_region_init_t *p_mpu_init);
-#endif /* __MPU_PRESENT */
-
 /* Private functions ---------------------------------------------------------*/
 /** @defgroup CORTEX_Private_Functions CORTEX Private Functions
   * @brief    CORTEX private  functions
@@ -480,6 +470,50 @@ void hal_mpu_disable(void);
  ****************************************************************************************
  */
 void hal_mpu_enable(uint32_t mpu_control);
+
+/**
+ ****************************************************************************************
+ * @brief  Initialize and configures the Region and the memory to be protected.
+ *
+ * @param[in]  p_mpu_init: Pointer to a mpu_region_init_t structure that contains
+ *                     the initialization and configuration information.
+ ****************************************************************************************
+ */
+void hal_mpu_config_region(mpu_region_init_t *p_mpu_init);
+
+/**
+ ****************************************************************************************
+ * @brief  Suspend some registers related to MPU configuration before sleep.
+ ****************************************************************************************
+ */
+void hal_mpu_suspend_reg(void);
+
+/**
+ ****************************************************************************************
+ * @brief  Restore some registers related to MPU configuration after sleep.
+ *         This function must be used in conjunction with the hal_mpu_suspend_reg().
+ ****************************************************************************************
+ */
+void hal_mpu_resume_reg(void);
+
+#ifdef HAL_PM_ENABLE
+/**
+ ****************************************************************************************
+ * @brief  Suspend MPU.
+ * @retval ::HAL_PM_SLEEP: Allow sleep.
+ ****************************************************************************************
+ */
+hal_pm_status_t hal_pm_mpu_suspend(void);
+
+/**
+ ****************************************************************************************
+ * @brief  Resume MPU.
+ *         This function must be used in conjunction with the hal_pm_mpu_suspend().
+ * @retval ::None
+ ****************************************************************************************
+ */
+void hal_pm_mpu_resume(void);
+#endif /* HAL_PM_ENABLE */
 
 #endif /* __MPU_PRESENT */
 

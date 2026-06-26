@@ -175,10 +175,10 @@ typedef struct
 
 #endif
 
-#if defined(SOC_GR533X) || defined(SOC_GR5405)
+#if defined(SOC_GR533X) || defined(SOC_GR5405) || defined(SOC_SGP)
 /**@brief Boot information definition. */
 typedef struct
-{   
+{
     uint32_t bin_size;                /**< Firmware Size. */
     uint32_t check_sum;               /**< Firmware Check Sum Value. */
     uint32_t load_addr;               /**< Firmware Load Address. */
@@ -189,7 +189,12 @@ typedef struct
     uint32_t system_clk:3;            /**< bit: 5..7 system clock */
     uint32_t check_image:1;           /**< bit: 8 check image */
     uint32_t boot_delay:1;            /**< bit: 9 boot delay time */
-    uint32_t reserved:22;             /**< bit: 22 reserved */
+#if defined(SOC_SGP)
+    uint32_t signature_algorithm:2;   /**< bit: 10..11 signature algorithm */
+    uint32_t reserved:20;             /**< bit: 12..31 reserved */
+#else
+    uint32_t reserved:22;             /**< bit: 10..31 reserved */
+#endif
 }dfu_boot_info_t;
 
 /**@brief DFU used functions config definition. */
@@ -302,7 +307,7 @@ void dfu_init(dfu_func_t *p_app_dfu_func, uint8_t* p_dfu_buffer, dfu_pro_callbac
 void dfu_init(dfu_func_t *p_app_dfu_func, dfu_buffer_t *p_dfu_buffer, dfu_pro_callback_t *p_dfu_callback);
 #endif
 
-#if defined(SOC_GR533X) || defined(SOC_GR5405)
+#if defined(SOC_GR533X) || defined(SOC_GR5405) || defined(SOC_SGP)
 /**
  *****************************************************************************************
  * @brief Function for initializing the DFU Used and Program State Callback.
@@ -349,7 +354,7 @@ void dfu_set_cmd_handler(uint8_t index, uint16_t cmd, dfu_receive_cmd_handler_t 
  *****************************************************************************************
  * @brief Function for setting the BLE MTU size.
  *
- * @note If the user wants to create his or her own DFU bootloader, the DFU MTU size should be 
+ * @note If the user wants to create his or her own DFU bootloader, the DFU MTU size should be
  *       set by using this function (when the MTU size is updated, this function should be called).
  *
  * @param[in]  mtu_size: The BLE MTU size.

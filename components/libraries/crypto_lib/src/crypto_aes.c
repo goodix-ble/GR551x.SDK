@@ -1,3 +1,8 @@
+
+
+#include  "custom_config.h"
+#if !defined(SOC_GR533X) && !defined(SOC_SGP)
+
 #include "crypto_aes.h"
 #include "grx_hal.h"
 
@@ -613,3 +618,5 @@ exit:
     aes_hardware_reset();
     return( ret );
 }
+
+#endif

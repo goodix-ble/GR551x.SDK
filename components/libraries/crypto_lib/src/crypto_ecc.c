@@ -1,3 +1,8 @@
+
+
+#include  "custom_config.h"
+#if !defined(SOC_GR533X) && !defined(SOC_SGP)
+
 #include "crypto_ecc.h"
 #include "crypto_pkc.h"
 #include "crypto_pkc_port.h"
@@ -5,7 +10,7 @@
 
 static bool ecc_is_zero_value(uint32_t *value, uint32_t len)
 {
-    for (int i = 0; i < len; i++)
+    for (uint32_t i = 0; i < len; i++)
     {
         if (value[i])
         {
@@ -653,3 +658,5 @@ algo_ecc_ret_e crypto_ecc_ecdh_compute_shared(algo_ecc_ecdh_config_t *ecdh_data,
         &ecdh_data->calc_options, ecdh_data->our_secret_value, &ecdh_data->peer_public_point, &ecdh_data->shared_point);
     return ECC_OK;
 }
+
+#endif

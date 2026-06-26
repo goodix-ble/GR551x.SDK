@@ -1091,9 +1091,6 @@
 <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\app_assert\app_assert.c</name>
 </file>
 <file>
-<name>$PROJ_DIR$\..\..\..\..\..\drivers\src\app_spi.c</name>
-</file>
-<file>
 <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\app_key\app_key.c</name>
 </file>
 <file>

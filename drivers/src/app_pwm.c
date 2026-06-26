@@ -5,7 +5,7 @@
   * @brief   HAL APP module driver.
   ****************************************************************************************
   * @attention
-  #####Copyright (c) 2019 GOODIX
+  #####Copyright (c) 2019-2025 GOODIX
    All rights reserved.
 
    Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,10 @@
  * STRUCT DEFINE
  *****************************************************************************************
  */
-
+#if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
+    #define PWM_MODE_FLICKER    PWM_FLICKER_MODE
+    #define PWM_MODE_BREATH     PWM_BREATH_MODE
+#endif
 /*
  * LOCAL FUNCTION DEFINITIONS
  *****************************************************************************************
@@ -124,11 +127,6 @@ SECTION_RAM_CODE void pwm_wake_up_ind(void)
             GLOBAL_EXCEPTION_DISABLE();
             hal_pwm_resume_reg(&p_pwm_env[i]->handle);
             GLOBAL_EXCEPTION_ENABLE();
-
-            if (p_pwm_env[i]->pwm_module_state == APP_PWM_START)
-            {
-                hal_pwm_start(&p_pwm_env[i]->handle);
-            }
         }
     }
 #endif
@@ -185,6 +183,29 @@ static uint16_t pwm_gpio_config(app_pwm_pin_cfg_t *p_pin_cfg)
 
     return err_code;
 }
+
+#if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR551X)
+static void configure_channel_io(app_pwm_pin_t *p_pwm_pin, app_io_init_t *p_io_init, uint32_t io_level)
+{
+    if (APP_PWM_PIN_ENABLE == p_pwm_pin->enable)
+    {
+        app_io_pin_state_t pin_state = (io_level == PWM_STOP_LVL_LOW) ? APP_IO_PIN_RESET : APP_IO_PIN_SET;
+        app_io_write_pin(p_pwm_pin->type, p_pwm_pin->pin, pin_state);
+        p_io_init->pin = p_pwm_pin->pin;
+        app_io_init(p_pwm_pin->type, p_io_init);
+    }
+}
+
+static void configure_all_channels_io(app_pwm_pin_cfg_t *p_pin_cfg, app_io_init_t *p_io_init, uint32_t *p_stoplvls)
+{
+    app_pwm_pin_t *channels[] = { &(p_pin_cfg->channel_a), &(p_pin_cfg->channel_b), &(p_pin_cfg->channel_c) };
+
+    for (size_t i = 0; i < 3; i++)
+    {
+        configure_channel_io(channels[i], p_io_init, p_stoplvls[i]);
+    }
+}
+#endif /* APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR551X */
 
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
 
@@ -343,7 +364,7 @@ uint16_t app_pwm_start(app_pwm_id_t id)
 
     err_code = hal_pwm_start(&p_pwm_env[id]->handle);
     HAL_ERR_CODE_CHECK(err_code);
-
+    pwm_gpio_config(p_pwm_env[id]->p_pin_cfg);
     p_pwm_env[id]->pwm_module_state = APP_PWM_START;
 
     return APP_DRV_SUCCESS;
@@ -363,7 +384,6 @@ uint16_t app_pwm_stop(app_pwm_id_t id)
         return APP_DRV_ERR_NOT_INIT;
     }
 
-
 #ifdef APP_DRIVER_WAKEUP_CALL_FUN
     pwm_wake_up(id);
 #endif
@@ -372,6 +392,38 @@ uint16_t app_pwm_stop(app_pwm_id_t id)
     HAL_ERR_CODE_CHECK(err_code);
 
     p_pwm_env[id]->pwm_module_state = APP_PWM_STOP;
+
+#if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR551X)
+    app_io_init_t io_init = APP_IO_DEFAULT_CONFIG;
+    io_init.pull = APP_IO_NOPULL;
+    io_init.mode = APP_IO_MODE_OUTPUT;
+    io_init.mux  = APP_IO_MUX;
+    uint32_t stoplvls[3]; // Array to hold stop levels for each channel
+    if (PWM_MODE_BREATH == p_pwm_env[id]->handle.init.mode)
+    {
+    #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5332X)
+        stoplvls[0] = p_pwm_env[id]->handle.init.bstoplvl;
+    #else
+        stoplvls[0] = p_pwm_env[id]->handle.init.none_coding_mode_cfg.bstoplvl;
+    #endif
+        stoplvls[1] = stoplvls[0];
+        stoplvls[2] = stoplvls[0];
+        configure_all_channels_io(p_pwm_env[id]->p_pin_cfg, &io_init, stoplvls);
+    }
+    else if (PWM_MODE_FLICKER == p_pwm_env[id]->handle.init.mode)
+    {
+    #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5332X)
+        stoplvls[0] = p_pwm_env[id]->handle.init.channel_a.fstoplvl;
+        stoplvls[1] = p_pwm_env[id]->handle.init.channel_b.fstoplvl;
+        stoplvls[2] = p_pwm_env[id]->handle.init.channel_c.fstoplvl;
+    #else
+        stoplvls[0] = p_pwm_env[id]->handle.init.none_coding_mode_cfg.channel_a.fstoplvl;
+        stoplvls[1] = p_pwm_env[id]->handle.init.none_coding_mode_cfg.channel_b.fstoplvl;
+        stoplvls[2] = p_pwm_env[id]->handle.init.none_coding_mode_cfg.channel_c.fstoplvl;
+    #endif
+        configure_all_channels_io(p_pwm_env[id]->p_pin_cfg, &io_init, stoplvls);
+    }
+#endif // APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR551X
 
     return APP_DRV_SUCCESS;
 }

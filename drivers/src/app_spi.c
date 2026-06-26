@@ -135,6 +135,7 @@ static const IRQn_Type s_spi_irq[APP_SPI_ID_MAX]      = {SPI_S_IRQn, SPI_M_IRQn}
 static const uint32_t  s_spi_instance[APP_SPI_ID_MAX] = {SPIS_BASE, SPIM_BASE};
 
 spi_env_t  *p_spi_env[APP_SPI_ID_MAX];
+volatile bool g_spi_reg_resumed = false;
 
 static const app_sleep_callbacks_t spi_sleep_cb =
 {
@@ -190,7 +191,7 @@ SECTION_RAM_CODE static void spi_wake_up_ind(void)
             continue;
         }
 
-        if (p_spi_env[i]->spi_state == APP_SPI_ACTIVITY)
+        if (p_spi_env[i]->spi_state == APP_SPI_ACTIVITY && !g_spi_reg_resumed)
         {
             GLOBAL_EXCEPTION_DISABLE();
             hal_spi_resume_reg(&p_spi_env[i]->handle);
@@ -1126,13 +1127,19 @@ uint16_t app_spi_abort(app_spi_id_t id)
 void hal_spi_soft_cs_assert(spi_handle_t *p_spi, uint32_t state)
 {
     app_spi_id_t id = spi_get_id(p_spi);
-    app_io_write_pin(p_spi_env[id]->p_pin_cfg->cs.type, p_spi_env[id]->p_pin_cfg->cs.pin, APP_IO_PIN_RESET);
+    if (APP_SPI_PIN_ENABLE == (p_spi_env[id]->p_pin_cfg->cs.enable))
+    {
+        app_io_write_pin(p_spi_env[id]->p_pin_cfg->cs.type, p_spi_env[id]->p_pin_cfg->cs.pin, APP_IO_PIN_RESET);
+    }
 }
 
 void hal_spi_soft_cs_deassert(spi_handle_t *p_spi, uint32_t state)
 {
     app_spi_id_t id = spi_get_id(p_spi);
-    app_io_write_pin(p_spi_env[id]->p_pin_cfg->cs.type, p_spi_env[id]->p_pin_cfg->cs.pin, APP_IO_PIN_SET);
+    if (APP_SPI_PIN_ENABLE == (p_spi_env[id]->p_pin_cfg->cs.enable))
+    {
+        app_io_write_pin(p_spi_env[id]->p_pin_cfg->cs.type, p_spi_env[id]->p_pin_cfg->cs.pin, APP_IO_PIN_SET);
+    }
 }
 
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X)

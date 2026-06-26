@@ -262,7 +262,7 @@ static void   mlmr_write_att_evt_handler(uint8_t conn_idx, const ble_gatts_evt_w
             else
             {
                 mlmr_combin_received_packet(conn_idx, p_param->length, (uint8_t *)p_param->value, rx_buffer[conn_idx]);
-                
+
                 if(received_data_len[conn_idx] == send_data_len[conn_idx])
                 {
                     event.p_data = rx_buffer[conn_idx];

@@ -32,8 +32,8 @@
    POSSIBILITY OF SUCH DAMAGE.
   ****************************************************************************************
   */
-#ifndef __GR55XX_SPI_FLASH_H__
-#define __GR55XX_SPI_FLASH_H__
+#ifndef GR55XX_SPI_FLASH_H
+#define GR55XX_SPI_FLASH_H
 
 #include <stdbool.h>
 #include "grx_hal.h"
@@ -47,6 +47,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+//lint -e755 [advisory] global macro 'xxx' not referenced
+//lint -e769 [info] global enumeration constant 'xxx' not referenced
+//lint -e768 [info] global struct member 'xxx' not referenced
+//lint -e759 [Info] header declaration for symbol 'xxx' defined at 'xxx' could be moved from header to module
 
 /** @addtogroup Flash operation instruction macro definition
   * @{
@@ -135,7 +140,7 @@ typedef enum
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X)
     FLASH_QSPI_ID2,                  /**< QSPI master module 2.  */
 #endif
-    FLASH_SPI_ID_MAX,                /**< Only for check parameter, not used as input parameters. */
+    FLASH_SPI_ID_MAX                 /**< Only for check parameter, not used as input parameters. */
 } spi_type_t;
 
 typedef struct _spi_io
@@ -333,4 +338,4 @@ bool spi_flash_erase(uint32_t erase_type, uint32_t address, uint32_t size);
 }
 #endif
 
-#endif // __GR55XX_SPI_FLASH_H__
+#endif // GR55XX_SPI_FLASH_H

@@ -374,6 +374,9 @@ static void lns_evt_handler(lns_evt_t *p_evt)
         case LNS_EVT_TRACE_INFO_CLEAR:
             fault_db_record_clear();
             break;
+
+        default:
+            break;
     }
 
     if (LNS_EVT_INVALID != p_evt->evt_type && s_lns_env.evt_handler)

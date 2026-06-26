@@ -97,7 +97,7 @@ static const uint8_t s_adv_rsp_data_set[] =
 };
 
 
-/**@brief Default UART init configuretion definition. */
+/**@brief Default UART init configuration definition. */
 #define DFU_UART_DEFAULT_CONFIG               \
 {                                             \
     .state     = DFU_INFO_ENABLE,             \

@@ -10,7 +10,7 @@
     <aExt>*.s*; *.src; *.a*</aExt>
     <oExt>*.obj; *.o</oExt>
     <lExt>*.lib</lExt>
-    <tExt>*.txt; *.h; *.inc</tExt>
+    <tExt>*.txt; *.h; *.inc; *.md</tExt>
     <pExt>*.plm</pExt>
     <CppX>*.cpp</CppX>
     <nMigrate>0</nMigrate>
@@ -737,7 +737,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\Src\sign_verify\src\rsa.c</PathWithFileName>
+      <PathWithFileName>..\..\..\..\..\components\libraries\app_bootloader\sign_verify\src\rsa.c</PathWithFileName>
       <FilenameWithoutPath>rsa.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -749,7 +749,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\Src\sign_verify\src\pkc.c</PathWithFileName>
+      <PathWithFileName>..\..\..\..\..\components\libraries\app_bootloader\sign_verify\src\pkc.c</PathWithFileName>
       <FilenameWithoutPath>pkc.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -761,7 +761,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\Src\sign_verify\src\sign_verify.c</PathWithFileName>
+      <PathWithFileName>..\..\..\..\..\components\libraries\app_bootloader\sign_verify\src\sign_verify.c</PathWithFileName>
       <FilenameWithoutPath>sign_verify.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -793,7 +793,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\Src\user\bootloader_ota.c</PathWithFileName>
+      <PathWithFileName>..\..\..\..\..\components\libraries\app_bootloader\bootloader_ota.c</PathWithFileName>
       <FilenameWithoutPath>bootloader_ota.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -805,7 +805,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\Src\user\bootloader_boot_vendor.c</PathWithFileName>
+      <PathWithFileName>..\..\..\..\..\components\libraries\app_bootloader\bootloader_boot_vendor.c</PathWithFileName>
       <FilenameWithoutPath>bootloader_boot_vendor.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>

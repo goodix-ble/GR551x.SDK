@@ -59,7 +59,7 @@ void RNG_IRQHandler(void);
  */
 rng_env_t *p_rng_env = NULL;
 
-const static app_sleep_callbacks_t rng_sleep_cb =
+static const app_sleep_callbacks_t rng_sleep_cb =
 {
     .app_prepare_for_sleep = rng_prepare_for_sleep,
     .app_wake_up_ind       = rng_wake_up_ind

@@ -262,7 +262,7 @@ static void hrs_c_srvc_browse_evt_handler(uint8_t conn_idx, uint8_t status, cons
             s_hrs_c_env.handles.hrs_srvc_start_handle = p_browse_srvc->start_hdl;
             s_hrs_c_env.handles.hrs_srvc_end_handle   = p_browse_srvc->end_hdl;
 
-            for (uint32_t i = 0; i < (p_browse_srvc->end_hdl - p_browse_srvc->start_hdl); i++)
+            for (uint16_t i = 0; i < (p_browse_srvc->end_hdl - p_browse_srvc->start_hdl); i++)
             {
                 uuid_disc   = p_browse_srvc->info[i].attr.uuid[0] | p_browse_srvc->info[i].attr.uuid[1] << 8;
                 handle_disc = p_browse_srvc->start_hdl + i + 1;

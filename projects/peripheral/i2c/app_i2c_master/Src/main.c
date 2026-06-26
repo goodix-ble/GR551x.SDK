@@ -111,6 +111,9 @@ static void app_i2c_master_evt_handler(app_i2c_evt_t * p_evt)
         case APP_I2C_EVT_RX_DATA:
             g_master_rdone = 1;
             break;
+
+        default:
+            break;
     }
 }
 

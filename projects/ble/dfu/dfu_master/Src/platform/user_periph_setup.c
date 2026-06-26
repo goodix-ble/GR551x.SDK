@@ -39,237 +39,157 @@
  * INCLUDE FILES
  *****************************************************************************************
  */
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include "user_periph_setup.h"
 #include "user_app.h"
 #include "grx_sys.h"
-#include "hal_flash.h"
 #include "custom_config.h"
 #include "grx_hal.h"
 #include "board_SK.h"
 #include "dfu_master.h"
-#include "user_dfu_m_cfg.h"
+#include "user_dfu_master.h"
 #include "app_uart.h"
 #include "app_log.h"
-#include "flash_scatter_config.h"
 
 /*
  * DEFINES
  *****************************************************************************************
  */
-#define FW_IMG_PATTERN                 0x4744
-#define FW_MAX_IMG_CNT                 10
-#define FW_MAX_COMMENTS_CNT            12
+#define UART_CONSOLE_RX_BUF_SIZE    64
+// Systick generates an interrupt once per SYSTICK_IRQ_PERIOD
+#define SYSTICK_IRQ_PERIOD          10  //Unit: ms
 
-#define FW_FIRST_BOOT_INFO_ADDR        FLASH_START_ADDR                 //boot info size 32 Bytes
-#define FW_IMG_INFO_ADDR               (FW_FIRST_BOOT_INFO_ADDR + 0x40) //400 Bytes
-#define FW_IMG_INFO_SIZE               400
-#define DFU_UART_TX_BUFF_SIZE          0x400                            //<Size of app uart tx buffer
 /*
  * GLOBAL VARIABLE DEFINITIONS
  *****************************************************************************************
  */
-uart_handle_t g_uart_handle;
 
 /*
  * LOCAL VARIABLE DEFINITIONS
  *****************************************************************************************
  */
-static uint8_t s_uart_rx_data[DFU_DATA_SEND_SIZE];
-static uint8_t s_dfu_uart_rx_data[DFU_DATA_SEND_SIZE];
-static uint8_t s_master_sts = MASTER_IDLE;
-static uint8_t        s_all_img_count   = 0;
-static dfu_img_info_t s_fw_img_info[FW_MAX_IMG_CNT];
-static uint8_t s_dfu_uart_tx_buffer[DFU_UART_TX_BUFF_SIZE];
-static app_uart_params_t uart_param;
-void user_prompt_message_output(void);
+static uint8_t s_master_sts = MASTER_DFU_FW_INFO_SET;
+static uint8_t s_uart_rx_cmd[UART_CONSOLE_RX_BUF_SIZE];
+static uint32_t s_uart_console_rx_size = 0;
+static size_t s_systick_irq_count = 0;
 
 /*
- * GLOBAL FUNCTION DEFINITIONS
+ * LOCAL FUNCTION DEFINITIONS
  *****************************************************************************************
  */
-static void dfu_app_uart_evt_handler(app_uart_evt_t * p_evt)
+#if DFU_UART_ENABLE
+static void user_uart_dfu_start(void)
 {
-    switch(p_evt->type)
-    {
-        case APP_UART_EVT_TX_CPLT:
-            dfu_m_send_data_cmpl_process();
-            break;
-
-        case APP_UART_EVT_RX_DATA:
-            dfu_m_cmd_prase(s_dfu_uart_rx_data, p_evt->data.size);
-            app_uart_receive_async(APP_UART1_ID, s_dfu_uart_rx_data, DFU_DATA_SEND_SIZE);
-            break;
-
-        case APP_UART_EVT_ERROR:
-            break;
-
-        default:
-            break;
-    }
+    dfu_m_start();
+    user_master_status_set(MASTER_UART_UPDATING);
 }
-
-void dfu_uart_init(void)
-{
-    app_uart_tx_buf_t uart_buffer;
-
-    uart_buffer.tx_buf       = s_dfu_uart_tx_buffer;
-    uart_buffer.tx_buf_size  = DFU_UART_TX_BUFF_SIZE;
-
-    uart_param.id                   = APP_UART1_ID;
-    uart_param.init.baud_rate       = APP_UART_BAUDRATE;
-    uart_param.init.data_bits       = UART_DATABITS_8;
-    uart_param.init.stop_bits       = UART_STOPBITS_1;
-    uart_param.init.parity          = UART_PARITY_NONE;
-    uart_param.init.hw_flow_ctrl    = UART_HWCONTROL_NONE;
-    uart_param.init.rx_timeout_mode = UART_RECEIVER_TIMEOUT_ENABLE;
-    uart_param.pin_cfg.rx.type      = APP_UART1_RX_IO_TYPE;
-    uart_param.pin_cfg.rx.pin       = APP_UART1_RX_PIN;
-    uart_param.pin_cfg.rx.mux       = APP_UART1_RX_PINMUX;
-    uart_param.pin_cfg.rx.pull      = APP_UART_RX_PULL;
-    uart_param.pin_cfg.tx.type      = APP_UART1_TX_IO_TYPE;
-    uart_param.pin_cfg.tx.pin       = APP_UART1_TX_PIN;
-    uart_param.pin_cfg.tx.mux       = APP_UART1_TX_PINMUX;
-    uart_param.pin_cfg.tx.pull      = APP_UART_TX_PULL;
-
-    app_uart_init(&uart_param, dfu_app_uart_evt_handler, &uart_buffer);
-
-    app_uart_receive_async(APP_UART1_ID, s_dfu_uart_rx_data, DFU_DATA_SEND_SIZE);
-}
-
-static uint8_t user_fw_img_info_get(dfu_img_info_t s_fw_img_info[])
-{
-    uint8_t i;
-    uint8_t img_count = 0;
-    uint8_t once_img_size = 40;
-    uint8_t read_buffer[FW_IMG_INFO_SIZE];
-
-#ifndef SOC_GR533X
-    bool flash_security_status = false;
-    uint32_t sys_security = sys_security_enable_status_check();
-    if(sys_security)
-    {
-        flash_security_status = hal_flash_get_security();
-        hal_flash_set_security(true);
-    }
 #endif
 
-    hal_flash_read(FW_IMG_INFO_ADDR, read_buffer, FW_IMG_INFO_SIZE);//read decoded data
-
-#ifndef SOC_GR533X
-    if(sys_security)
-    {
-        hal_flash_set_security(flash_security_status);
-    }
+#if DFU_BLE_ENABLE
+static void user_ble_dfu_start(void)
+{
+    dfu_m_start();
+    user_master_status_set(MASTER_BLE_UPDATING);
+}
 #endif
 
-    for(i=0; i<FW_MAX_IMG_CNT; i++)
+static void uart_console_get_dfu_fw_info(uint8_t *input, uint16_t size)
+{
+    char *token;
+    char str_copy[UART_CONSOLE_RX_BUF_SIZE];
+    strncpy(str_copy, (char *)input, sizeof(str_copy) - 1);
+    str_copy[sizeof(str_copy) - 1] = '\0';
+    uint32_t fw_addr = 0;
+    uint32_t fw_max_size = 0;
+    token = strtok(str_copy, ",");
+    if (token != NULL)
     {
-        if(((read_buffer[i * once_img_size + 1] << 8) | read_buffer[i * once_img_size]) == FW_IMG_PATTERN)
-        {
-            memcpy((uint8_t*)&s_fw_img_info[img_count], &read_buffer[i*once_img_size], once_img_size);
-
-            if(s_fw_img_info[img_count].boot_info.load_addr != APP_CODE_LOAD_ADDR)
-            {
-                img_count++;
-            }
-        }
+        fw_addr = (uint32_t)strtol(token, NULL, 16);
+        set_fw_save_addr(fw_addr);
     }
 
-    return img_count;
-}
-
-void user_master_status_set(uint8_t status)
-{
-    s_master_sts = status;
-    user_prompt_message_output();
-}
-
-uint8_t user_master_status_get(void)
-{
-    return s_master_sts;
-}
-
-void user_master_idle(uint8_t select)
-{
-    extern uint8_t fast_dfu_mode;
-
-    if(select ==  1)
+    token = strtok(NULL, ",");
+    if (token != NULL)
     {
-        fast_dfu_mode = FAST_DFU_MODE_DISABLE;
-        user_dfu_m_init(DFU_MODE_UART, DFU_DATA_SEND_SIZE);
-        dfu_m_get_info();
-        user_master_status_set(MASTER_UART_SELECT_IMG);
+        fw_max_size = (uint32_t)strtol(token, NULL, 16);
+        set_fw_max_size(fw_max_size);
     }
-    else if(select == 2)
+
+    APP_LOG_DEBUG("FW save address: 0x%08x, max size 0x%x", fw_addr, fw_max_size);
+    if (user_get_img_info())
     {
-        user_dfu_m_init(DFU_MODE_BLE, DFU_DATA_SEND_SIZE);
-        user_master_status_set(MASTER_BLE_SELECT_DEVICE);
+        user_master_status_set(MASTER_SELECT_UART_OR_BLE);
+    }
+    else
+    {
+        user_master_status_set(MASTER_DFU_FW_INFO_SET);
+    }
+}
+
+static void user_master_select_uart_or_ble(uint8_t select)
+{
+    if (select == UART_UPGRADE_MODE)
+    {
+    #if DFU_UART_ENABLE
+        #if DFU_BLE_ENABLE
+        dfu_m_fast_dfu_mode_set(FAST_DFU_MODE_DISABLE);
+        #endif
+        user_dfu_m_init(UART_UPGRADE_MODE, DFU_SEND_SIZE_MAX);
+        user_master_status_set(MASTER_UART_DFU_START);
+        user_uart_dfu_start();
+    #else
+        APP_LOG_WARNING("NOT SUPPORT UART MODE");
+    #endif
+    }
+    else if (select == BLE_UPGRADE_MODE)
+    {
+    #if DFU_BLE_ENABLE
+        user_dfu_m_init(BLE_UPGRADE_MODE, DFU_SEND_SIZE_MAX);
+        user_master_status_set(MASTER_BLE_DFU_SCAN);
         app_start_scan();
+    #else
+        APP_LOG_WARNING("NOT SUPPORT BLE MODE");
+        uart_console_reset();
+    #endif
     }
 }
 
-void user_uart_select_img(uint8_t select)
+#if DFU_BLE_ENABLE
+static void user_fast_dfu_mode_set(uint8_t select)
 {
-    if (s_all_img_count)
-    {
-        user_dfu_m_start(&s_fw_img_info[select]);
-        user_master_status_set(MASTER_UART_UPDATING);
-    }
-}
-
-void user_ble_select_device(uint8_t select)
-{
-
-}
-
-void user_ble_select_img(uint8_t select)
-{
-    if (s_all_img_count)
-    {
-        user_dfu_m_start(&s_fw_img_info[select]);
-        user_master_status_set(MASTER_BLE_UPDATING);
-    }
-}
-
-void user_fast_dfu_mode_set(uint8_t select)
-{
-    extern uint8_t fast_dfu_mode;
-
     if (select == 1)
     {
-        fast_dfu_mode = FAST_DFU_MODE_DISABLE;
+        dfu_m_fast_dfu_mode_set(FAST_DFU_MODE_DISABLE);
     }
     else if (select == 2)
     {
-        fast_dfu_mode = FAST_DFU_MODE_ENABLE;
+        dfu_m_fast_dfu_mode_set(FAST_DFU_MODE_ENABLE);
     }
 
-    user_master_status_set(MASTER_BLE_SELECT_IMG);
+    user_master_status_set(MASTER_BLE_DFU_START);
 }
+#endif
 
-void uart_cmd_handler(uint8_t* data, uint16_t len)
+static void uart_console_handler(uint8_t* data, uint16_t len)
 {
-    if(len == 1)
+    if (len)
     {
-        uint8_t select = data[0] - 0x30;
-
-        switch(s_master_sts)
+        uint8_t select = data[0] - '0';
+        switch (s_master_sts)
         {
-            case MASTER_IDLE:
-                user_master_idle(select);
+            case MASTER_DFU_FW_INFO_SET:
+                uart_console_get_dfu_fw_info(data, len);
                 break;
-
-            case MASTER_UART_SELECT_IMG:
-                user_uart_select_img(select);
+            case MASTER_SELECT_UART_OR_BLE:
+                user_master_select_uart_or_ble(select);
                 break;
-
-            case MASTER_BLE_SELECT_IMG:
-                user_ble_select_img(select);
-                break;
-
+        #if DFU_BLE_ENABLE
             case MASTER_FAST_DFU_MODE_SET:
                 user_fast_dfu_mode_set(select);
                 break;
+        #endif
 
             default:
                 APP_LOG_WARNING("%s:Master Status(0x%x) Error", __FUNCTION__, s_master_sts);
@@ -278,33 +198,39 @@ void uart_cmd_handler(uint8_t* data, uint16_t len)
     }
 }
 
-void user_prompt_message_output(void)
+/*
+ * GLOBAL FUNCTION DEFINITIONS
+ *****************************************************************************************
+ */
+void user_master_status_set(uint8_t status)
 {
-    switch(s_master_sts)
+    s_master_sts = status;
+    switch (status)
     {
-        case MASTER_IDLE:
-            APP_LOG_DEBUG("Select an Upgrade Mode:\n1.UART\n2.BLE");
+        case MASTER_SELECT_UART_OR_BLE:
+            APP_LOG_DEBUG("Select an Upgrade Mode and Start:\n1.UART\n2.BLE");
             break;
 
         case MASTER_BLE_CONNECTED:
+        #if DFU_BLE_ENABLE
             APP_LOG_DEBUG("BLE Device Connected");
-            otas_c_ctrl_data_send(0, 0x474f4f44);
-            dfu_m_get_info();
+            otas_c_ctrl_data_send(0, OTAS_C_CTRL_PT_OP_DFU_ENTER);
+        #endif
             break;
 
-        case MASTER_BLE_SELECT_DEVICE:
+        case MASTER_BLE_DFU_START:
+        #if DFU_BLE_ENABLE
+            user_ble_dfu_start();
+        #endif
+            break;
+
+        case MASTER_BLE_DFU_SCAN:
             APP_LOG_DEBUG("BLE Start Scanning...");
             break;
 
-        case MASTER_UART_SELECT_IMG:
-        case MASTER_BLE_SELECT_IMG:
-           {
-                APP_LOG_DEBUG("Select an Firmware:");
-                for(int i = 0; i < s_all_img_count; i++)
-                {
-                    APP_LOG_DEBUG("%d.%s", i, (char*)&s_fw_img_info[i].comments);
-                }
-            }
+        case MASTER_DFU_FW_INFO_SET:
+            APP_LOG_DEBUG("Input the FW save address and maximum size, e.g:\r\n"
+                          "0x00240000,0x30000");
             break;
 
         case MASTER_FAST_DFU_MODE_SET:
@@ -316,20 +242,26 @@ void user_prompt_message_output(void)
     }
 }
 
+uint8_t user_master_status_get(void)
+{
+    return s_master_sts;
+}
+
+// uart console irq callback
 void app_uart_evt_handler(app_uart_evt_t * p_evt)
 {
-    switch(p_evt->type)
+    switch (p_evt->type)
     {
         case APP_UART_EVT_TX_CPLT:
             break;
 
         case APP_UART_EVT_RX_DATA:
-            uart_cmd_handler(s_uart_rx_data, p_evt->data.size);
-            dfu_m_cmd_prase(s_uart_rx_data, p_evt->data.size);
-            app_uart_receive_async(APP_UART_ID, s_uart_rx_data, DFU_DATA_SEND_SIZE);
+            s_uart_console_rx_size = p_evt->data.size;
+            app_uart_receive_async(APP_UART_ID, s_uart_rx_cmd, sizeof(s_uart_rx_cmd));
             break;
 
         case APP_UART_EVT_ERROR:
+            app_uart_receive_async(APP_UART_ID, s_uart_rx_cmd, sizeof(s_uart_rx_cmd));
             break;
 
         default:
@@ -337,23 +269,42 @@ void app_uart_evt_handler(app_uart_evt_t * p_evt)
     }
 }
 
-void app_periph_init(void)
+void uart_console_init(void)
 {
-    board_init();
-    dfu_uart_init();
-    user_dfu_m_init(DFU_MODE_UART, DFU_DATA_SEND_SIZE);
-    app_uart_receive_async(APP_UART1_ID, s_dfu_uart_rx_data, DFU_DATA_SEND_SIZE);
-    app_uart_receive_async(APP_UART_ID, s_uart_rx_data, DFU_DATA_SEND_SIZE);
-    s_all_img_count = user_fw_img_info_get(s_fw_img_info);
-    pwr_mgmt_mode_set(PMR_MGMT_ACTIVE_MODE);
+    bsp_log_init();
+    app_uart_receive_async(APP_UART_ID, s_uart_rx_cmd, sizeof(s_uart_rx_cmd));
 }
 
-void uart_data_send(uint8_t *p_data, uint16_t length)
+void uart_console_reset(void)
 {
-    app_uart_transmit_async(APP_UART_ID, p_data, length);
+    user_master_status_set(MASTER_DFU_FW_INFO_SET);
+    dfu_m_parse_state_reset();
 }
 
-void dfu_uart_data_send(uint8_t *p_data, uint16_t length)
+void uart_console_schedule(void)
 {
-    app_uart_transmit_async(APP_UART1_ID, p_data, length);
+    if (s_uart_console_rx_size)
+    {
+        uart_console_handler(s_uart_rx_cmd, s_uart_console_rx_size);
+        s_uart_console_rx_size = 0;
+        memset(s_uart_rx_cmd, 0, sizeof(s_uart_rx_cmd));
+    }
+}
+
+void systick_init(void)
+{
+    SystemCoreUpdateClock();
+    // Generates an interrupt once per SYSTICK_IRQ_PERIOD
+    SysTick_Config(SystemCoreClock/(1000/SYSTICK_IRQ_PERIOD));
+    hal_nvic_enable_irq(SysTick_IRQn);
+}
+
+uint32_t systick_get_time(void)
+{
+    return s_systick_irq_count*(SYSTICK_IRQ_PERIOD);
+}
+
+void SysTick_Handler(void)
+{
+    s_systick_irq_count++;
 }

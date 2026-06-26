@@ -47,7 +47,6 @@
  * DEFINES
  *****************************************************************************************
  */
-// #define APP_FW_RUN_ADDR                 (0x01040000)
 
 /*
  * GLOBAL FUNCTION DEFINITIONS
@@ -55,18 +54,22 @@
  */
 void bootloader_dfu_task(void)
 {
-    // TODO
+
 }
 
 void bootloader_verify_task(void)
 {
-    // TODO
+
 }
 
 void bootloader_jump_task(void)
 {
-    // TODO
-    // sys_firmware_jump(APP_FW_RUN_ADDR);
+
+}
+
+void bootloader_timeout_task(void)
+{
+
 }
 #endif
 

@@ -8,6 +8,7 @@
 //lint -e9031 [required] Composite expression assigned to a wider essential type
 //lint -e9032 [required] Composite expression with smaller essential type than other operand
 //lint -e9053 [required] the shift value is at least the precision of the essential type of the left hand side
+//lint -e578  [required] Declaration of symbol 'xxx' hides symbol 'xxx'
 //lint -e715  [advisory] Symbol not referenced
 //lint -e750  [advisory][Info] local macro not referenced
 //lint -e765  [advisory][Info] XXX could be made static
@@ -131,6 +132,24 @@ do {                                                         \
     __set_BASEPRI(__l_irq_rest);                             \
 } while(0)
 
+/** @brief Disable only the specified IRQ.
+ *  This macro must be used in conjunction with SPECIFIC_IRQ_RESTORE().
+ *  Both macros must be located at the same scope level.
+ */
+#define SPECIFIC_IRQ_DISABLE(IRQn)                           \
+do {                                                         \
+    uint32_t __l_irq_status = NVIC_GetEnableIRQ(IRQn);       \
+    NVIC_DisableIRQ(IRQn);
+
+/** @brief Restore the IRQ state saved by SPECIFIC_IRQ_DISABLE().
+ *  @sa SPECIFIC_IRQ_DISABLE
+ */
+#define SPECIFIC_IRQ_RESTORE(IRQn)                           \
+    if (__l_irq_status)                                      \
+    {                                                        \
+        NVIC_EnableIRQ(IRQn);                                \
+    }                                                        \
+} while(0)
 
 /**
   * @brief  HAL Status structures definition

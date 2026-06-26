@@ -184,6 +184,7 @@
 #define BLE_GATT_ERR_BROWSE_NO_ANY_MORE             0x57        /**< GATT browses no any more contents. */
 #define BLE_GATT_ERR_CACHE_UPDATING                 0x58        /**< GATT Cache in updating process. */
 #define BLE_GATT_ERR_CACHE_FINISH                   0x59        /**< GATT Cache is updated or checked. */
+#define BLE_GATT_ERR_SERVICE_NOT_EXIST              0x5a        /**< GATT service is not exist. */
 
 /**@brief SEC Specific Error. */
 #define BLE_SEC_ERR_PASSKEY_ENTRY_FAIL              0x61        /**< The user input of passkey failed. */

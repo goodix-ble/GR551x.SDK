@@ -242,7 +242,7 @@ static void gap_params_init(void)
     ble_gap_pair_enable(true);
 
     error_code = ble_gap_device_name_set(BLE_GAP_WRITE_PERM_DISABLE,
-                                         DEVICE_NAME, strlen(DEVICE_NAME));
+                                         (uint8_t *)DEVICE_NAME, strlen(DEVICE_NAME));
     APP_ERROR_CHECK(error_code);
 
     gap_conn_param.interval_min  = MIN_CONN_INTERVAL;

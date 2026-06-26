@@ -167,7 +167,7 @@ static void pass_c_evt_process(pass_c_evt_t *p_evt)
             }
             else
             {
-                APP_LOG_INFO("Diaplay State: No Active.");
+                APP_LOG_INFO("Display State: No Active.");
             }
 
             break;

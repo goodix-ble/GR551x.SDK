@@ -115,9 +115,7 @@ pwr_mgmt_dev_state_t pwr_enter_sleep_check_new(void)
         if((g_devices_state == 0x0) && (g_extra_devices_state == 0x0))
 #endif
         {
-            #ifdef HAL_RECOVER_WHEN_USING
             g_devices_sleep = ALL_DEVICES_SLEEP;
-            #endif
         }
         else
         {
@@ -132,23 +130,8 @@ pwr_mgmt_dev_state_t pwr_enter_sleep_check_new(void)
 
 SECTION_RAM_CODE void pwr_wake_up_ind_new(void)
 {
-    uint32_t i;
-
-#ifndef HAL_RECOVER_WHEN_USING
-    for (i = 0x0; i < MAX_PERIPH_DEVICE_NUM; i++)
-    {
-        if (devices_resume_cb[i] == NULL)
-            continue;
-
-        if (devices_handle[i] == NULL)
-            continue;
-
-        devices_resume_cb[i](devices_handle[i]);
-    }
-#endif
-
 #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5332X)
-    for (i = 0x0; i < MAX_EXTRA_DEVICE_NUM; i++)
+    for (uint32_t i = 0x0; i < MAX_EXTRA_DEVICE_NUM; i++)
     {
         if (extra_devices_resume_cb[i] == NULL)
             continue;

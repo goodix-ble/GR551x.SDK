@@ -52,12 +52,12 @@ PRJ_C_SRC_FILES:=   \
 ../../../../../components/profiles/otas/otas.c  \
 ../../../../../components/drivers_ext/gr55xx/gr55xx_spi_flash.c  \
 ../Src/platform/user_periph_setup.c  \
-../Src/sign_verify/src/rsa.c  \
-../Src/sign_verify/src/pkc.c  \
-../Src/sign_verify/src/sign_verify.c  \
+../../../../../components/libraries/app_bootloader/sign_verify/src/rsa.c  \
+../../../../../components/libraries/app_bootloader/sign_verify/src/pkc.c  \
+../../../../../components/libraries/app_bootloader/sign_verify/src/sign_verify.c  \
 ../Src/user/main.c  \
-../Src/user/bootloader_ota.c  \
-../Src/user/bootloader_boot_vendor.c  \
+../../../../../components/libraries/app_bootloader/bootloader_ota.c  \
+../../../../../components/libraries/app_bootloader/bootloader_boot_vendor.c  \
 ../Src/user/bootloader_boot_port.c  \
 
 
@@ -141,12 +141,15 @@ PRJ_C_INCLUDE_PATH :=   \
 ../../../../../platform/include  \
 ../../../../../platform/soc/include  \
 ../../../../../platform/soc/linker/keil  \
-../Src/sign_verify/inc  \
+../../../../../components/libraries/app_bootloader/sign_verify/inc  \
 ../../../../../components/libraries/app_crypto  \
+../../../../../components/libraries/app_bootloader  \
 
 
 PRJ_C_MICRO_DEFINES :=   \
 BOOTLOADER_ENABLE  \
+WDT_RUN_ENABLE=1  \
+BOOT_LONG_TIME=0  \
 
 
 PRJ_ASM_INCLUDE_PATH :=   \
@@ -202,8 +205,8 @@ GCC_STARTUP_ASM_FILE 	= ../../../../../platform/arch/arm/cortex-m/gcc/startup_gr
 
 ## Set LDFLAGS
 LDFLAGS += -Wl,--gc-sections
-LDFLAGS += -L../../../../../platform/soc/linker/gcc/ -lble_sdk
 LDFLAGS += -L../../../../../components/libraries/app_crypto/gcc/ -lapp_crypto
+LDFLAGS += -L../../../../../platform/soc/linker/gcc/ -lble_sdk
 
 ## Set compile output directory
 BUILD       ?= out
@@ -254,6 +257,9 @@ $(BUILD_OBJ)/%.o : %.s
 $(BUILD)/$(MAKE_TARGET_NAME).hex: $(BUILD_LST)/$(MAKE_TARGET_NAME).elf
 	$(ECHO) "compile hex file ..."
 	$(V_OBJCOPY) $(OBJCOPY) -O ihex $< $@
+
+	arm-none-eabi-objdump -d $(BUILD_LST)/$(MAKE_TARGET_NAME).elf > $(BUILD_LST)/$(MAKE_TARGET_NAME).s
+	arm-none-eabi-size $(BUILD_LST)/$(MAKE_TARGET_NAME).elf
 
 $(BUILD)/$(MAKE_TARGET_NAME).bin: $(BUILD_LST)/$(MAKE_TARGET_NAME).elf
 	$(ECHO) "compile binary file ..."

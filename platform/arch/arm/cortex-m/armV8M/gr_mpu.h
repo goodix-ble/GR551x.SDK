@@ -64,6 +64,7 @@ extern "C" {
   */
 
 #if (__MPU_PRESENT == 1U)
+#include "mpu_armv8.h"
 
 /** @defgroup CORTEX_MPU_Region_Configuration MPU Region Configuration
   * @{
@@ -419,6 +420,40 @@ void hal_mpu_config_region(mpu_region_init_t *p_mpu_region_init);
  ****************************************************************************************
  */
 void hal_mpu_config_memory_attributes(mpu_attributes_init_t *p_mpu_attributes_init);
+
+/**
+ ****************************************************************************************
+ * @brief  Suspend some registers related to MPU configuration before sleep.
+ ****************************************************************************************
+ */
+void hal_mpu_suspend_reg(void);
+
+/**
+ ****************************************************************************************
+ * @brief  Restore some registers related to MPU configuration after sleep.
+ *         This function must be used in conjunction with the hal_mpu_suspend_reg().
+ ****************************************************************************************
+ */
+void hal_mpu_resume_reg(void);
+
+#ifdef HAL_PM_ENABLE
+/**
+ ****************************************************************************************
+ * @brief  Suspend MPU.
+ * @retval ::HAL_PM_SLEEP: Allow sleep.
+ ****************************************************************************************
+ */
+hal_pm_status_t hal_pm_mpu_suspend(void);
+
+/**
+ ****************************************************************************************
+ * @brief  Resume MPU.
+ *         This function must be used in conjunction with the hal_pm_mpu_suspend().
+ * @retval ::None
+ ****************************************************************************************
+ */
+void hal_pm_mpu_resume(void);
+#endif /* HAL_PM_ENABLE */
 
 #endif /* __MPU_PRESENT */
 

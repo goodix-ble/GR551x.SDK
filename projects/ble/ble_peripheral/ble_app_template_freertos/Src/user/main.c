@@ -59,7 +59,7 @@
  * DEFINES
  *****************************************************************************************
  */
-#define APP_TASK_STACK_SIZE             ( 128 )//unit : word
+#define APP_TASK_STACK_SIZE             ( 256 )//unit : word
 #define LOG_STORE_DUMP_TASK_STACK_SIZE  ( 512 )//unit : word
 
 #ifdef SOC_GR5515

@@ -90,7 +90,7 @@
  * @{
  */
 /** @brief The operation code used to get connection info */
-typedef enum  
+typedef enum
 {
     BLE_GAP_GET_CON_RSSI = 0,        /**< Get connection RSSI info. */
     BLE_GAP_GET_CON_CHANNEL_MAP,     /**< Get connection channel map. */
@@ -98,8 +98,17 @@ typedef enum
     BLE_GAP_GET_CHAN_SEL_ALGO        /**< Get selection algorithm for connection channel. */
 } ble_gap_get_conn_info_op_t;
 
+/** @brief Bit field use to select the preferred TX or RX LE PHY. */
+typedef enum
+{
+    BLE_GAP_PHY_ANY               = 0x00,          /**< No preferred PHY. */
+    BLE_GAP_PHY_LE_1MBPS          = (1 << 0),      /**< LE 1M PHY preferred for an active link. */
+    BLE_GAP_PHY_LE_2MBPS          = (1 << 1),      /**< LE 2M PHY preferred for an active link. */
+    BLE_GAP_PHY_LE_CODED          = (1 << 2),      /**< LE Coded PHY preferred for an active link. */
+} ble_gap_phy_bit_t;
+
 /**@brief The operation code used to get peer device info. */
-typedef enum 
+typedef enum
 {
     BLE_GAP_GET_PEER_VERSION = 0,    /**< Get peer device version info. */
     BLE_GAP_GET_PEER_FEATURES        /**< Get peer device features info. */
@@ -573,17 +582,17 @@ uint16_t ble_gap_data_length_update(uint8_t conn_idx, uint16_t tx_octects , uint
  ****************************************************************************************
  * @brief Set the PHY preferences for the connection identified by the connection index.
  *
- * @param[in] conn_idx:   The index of connection.
- * @param[in] tx_phys:    The transmitter PHYs that the Host prefers the Controller to use (see @ref BLE_GAP_PHY_OPTIONS).
- * @param[in] rx_phys:    A bit field that indicates the receiver PHYs that the Host prefers the Controller to use (see @ref BLE_GAP_PHY_OPTIONS).
- * @param[in] phy_opt:    A bit field that allows the Host to specify options for PHYs (see @ref BLE_GAP_PHY_OPTIONS).
+ * @param[in] conn_idx:  The index of connection.
+ * @param[in] tx_phys:   The transmitter PHYs that the Host prefers the Controller to use (see @ref ble_gap_phy_bit_t).
+ * @param[in] rx_phys:   A bit field that indicates the receiver PHYs that the Host prefers the Controller to use (see @ref ble_gap_phy_bit_t).
+ * @param[in] phy_opt:   A bit field that allows the Host to specify options for PHYs (see @ref BLE_GAP_PHY_OPTIONS), only valid for coded phy.
  *
  * @retval ::SDK_SUCCESS: Operation is Success.
  * @retval ::SDK_ERR_INVALID_CONN_IDX: Invalid connection index supplied.
  * @retval ::SDK_ERR_NO_RESOURCES: Not enough resources.
  ****************************************************************************************
  */
-uint16_t ble_gap_phy_update(uint8_t conn_idx, uint8_t tx_phys , uint8_t rx_phys, uint8_t phy_opt);
+uint16_t ble_gap_phy_update(uint8_t conn_idx, uint8_t tx_phys, uint8_t rx_phys, uint8_t phy_opt);
 
 /**
  ****************************************************************************************

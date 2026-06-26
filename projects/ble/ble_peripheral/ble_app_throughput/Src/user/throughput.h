@@ -107,5 +107,6 @@ void thrpt_update_stat_clean(thrpt_param_type_t param_type);
  */
 void thrpt_update_mtu(uint16_t new_mtu);
 
+void thrpt_rssi_update(int8_t rssi);
 #endif
 

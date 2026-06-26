@@ -6,18 +6,19 @@ static uint32_t dwt_counter;
 void hal_dwt_enable(uint32_t _demcr_initial, uint32_t _dwt_ctrl_initial)
 {
     GLOBAL_EXCEPTION_DISABLE();
-    dwt_counter ++;
+    dwt_counter++;
     CoreDebug->DEMCR = _demcr_initial | CoreDebug_DEMCR_TRCENA_Msk;
+    while (!(CoreDebug->DEMCR & CoreDebug_DEMCR_TRCENA_Msk));
     DWT->CTRL = _dwt_ctrl_initial | DWT_CTRL_CYCCNTENA_Msk;
     //lint -e9036
     GLOBAL_EXCEPTION_ENABLE();
-    return ;
+    return;
 }
 
 void hal_dwt_disable(uint32_t _demcr_initial, uint32_t _dwt_ctrl_initial)
 {
     GLOBAL_EXCEPTION_DISABLE();
-    dwt_counter --;
+    dwt_counter--;
     if (dwt_counter == 0U)
     {
         DWT->CTRL = _dwt_ctrl_initial;
@@ -25,5 +26,5 @@ void hal_dwt_disable(uint32_t _demcr_initial, uint32_t _dwt_ctrl_initial)
     }
     //lint -e9036
     GLOBAL_EXCEPTION_ENABLE();
-    return ;
+    return;
 }

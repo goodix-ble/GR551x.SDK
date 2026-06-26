@@ -240,7 +240,7 @@ static void ble_conn_established(uint8_t conn_idx, const ble_gap_evt_connected_t
     }
 
     s_conn_env.link_info[conn_idx].conn_state = BLE_CONN_STATE_CONNECTED;
-    s_conn_env.link_info[conn_idx].local_role = p_conn_param->ll_role;
+    s_conn_env.link_info[conn_idx].local_role = (ble_conn_role_t)p_conn_param->ll_role;
     s_conn_env.link_info[conn_idx].conn_param.conn_interval = p_conn_param->conn_interval;
     s_conn_env.link_info[conn_idx].conn_param.slave_latency = p_conn_param->slave_latency;
     s_conn_env.link_info[conn_idx].conn_param.sup_timeout   = p_conn_param->sup_timeout;

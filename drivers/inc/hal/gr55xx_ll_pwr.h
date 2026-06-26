@@ -1450,6 +1450,20 @@ SECTION_RAM_CODE __STATIC_INLINE void ll_pwr_clear_wakeup_event(uint32_t event)
 }
 
 /**
+  * @brief  Read the sleep timer interrupt status flag.
+  *
+  *  Register      |BitsName
+  *  --------------|--------
+  *  AON_SLP_EVENT | SLP_TIMER
+  *
+  * @retval  interrupt flag of sleep timer (1 or 0).
+  */
+__STATIC_INLINE uint32_t ll_sleep_timer_read_flag_it(void)
+{
+    return (uint32_t)(READ_BITS(AON->SLP_EVENT, LL_PWR_WKUP_EVENT_TIMER) == LL_PWR_WKUP_EVENT_TIMER);
+}
+
+/**
   * @brief  Indicate if the Power State Controller is in busy state.
   * @note   This is bit set 1 when the PSC_CMD_REQ[0] is set to 1, and will remain 1 until
   *         the PSC_CMD_OPC has been transferred to the PSC.

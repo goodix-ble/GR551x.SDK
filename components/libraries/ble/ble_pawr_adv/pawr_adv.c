@@ -151,10 +151,9 @@ void pawr_adv_env_init(pawr_subevt_data_get_func_t ptr, pawr_rsp_data_report_fun
     pawr_rsp_data_report_func_cb = report_cb;
 }
 
-void pawr_adv_param_fast_set(uint8_t adv_idx, struct ble_per_adv_param_t *per_adv_params_p)
+uint16_t pawr_adv_param_fast_set(uint8_t adv_idx, struct ble_per_adv_param_t *per_adv_params_p)
 {
     ble_gap_ext_adv_param_t gap_adv_param;
-    uint8_t status;
     uint16_t prim_adv_min = per_adv_params_p->interval_min*2;
     uint16_t prim_adv_max = per_adv_params_p->interval_max*2;
 
@@ -192,8 +191,7 @@ void pawr_adv_param_fast_set(uint8_t adv_idx, struct ble_per_adv_param_t *per_ad
     gap_adv_param.period_cfg.pawr_cfg.num_rsp_slots = per_adv_params_p->num_response_slots;
     g_num_rsp_slots = per_adv_params_p->num_response_slots;
 
-    status = ble_gap_ext_adv_param_set(adv_idx, BLE_GAP_OWN_ADDR_STATIC, &gap_adv_param);
-    APP_ERROR_CHECK(status);
+    return ble_gap_ext_adv_param_set(adv_idx, BLE_GAP_OWN_ADDR_STATIC, &gap_adv_param);
 }
 
 void ble_pawr_adv_evt_on_ble_capture(const ble_evt_t *p_evt)

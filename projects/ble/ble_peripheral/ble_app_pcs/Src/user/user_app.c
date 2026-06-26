@@ -60,6 +60,10 @@
 #define MAX_TX_OCTET_DEFUALT            251             /**< Default maximum transmitted number of payload octets. */
 #define MAX_TX_TIME_DEFUALT             2120            /**< Defualt maximum packet transmission time. */
 
+#if defined(SOC_SGP)
+#define APP_ADV_TX_POWER                0               /**< The advertising tx power level, unit: dBm */
+#endif
+
 /*
  * LOCAL VARIABLE DEFINITIONS
  *****************************************************************************************
@@ -141,6 +145,10 @@ static void gap_params_init(void)
     s_gap_adv_param.chnl_map     = BLE_GAP_ADV_CHANNEL_37_38_39;
     s_gap_adv_param.disc_mode    = BLE_GAP_DISC_MODE_GEN_DISCOVERABLE;
     s_gap_adv_param.filter_pol   = BLE_GAP_ADV_ALLOW_SCAN_ANY_CON_ANY;
+
+#if defined(SOC_SGP)
+    s_gap_adv_param.max_tx_pwr   = APP_ADV_TX_POWER;
+#endif
 
     ble_gap_data_length_set(MAX_TX_OCTET_DEFUALT, MAX_TX_TIME_DEFUALT);
     ble_gap_l2cap_params_set(DEFAULT_MTU_SIZE, DEFAULT_MTU_SIZE, 1);
@@ -247,20 +255,19 @@ void pcs_param_parse(uint8_t conn_idx, uint8_t *p_data, uint16_t length)
             break;
 
         case PCS_SETTING_TYPE_TX_POWER:
-            if (0x01 == p_data[1])
+            if (0x01 == p_data[1] || (0x00 == p_data[1]))
             {
-                tx_power_set = 0 - p_data[2];
+                tx_power_set = (p_data[1] == 0x01) ? (0 - p_data[2]) : p_data[2];
+                s_gap_adv_param.max_tx_pwr = tx_power_set;
+                error_code = ble_gap_tx_power_set(BLE_GAP_ACTIVITY_ROLE_CON, conn_idx, tx_power_set);
+                response[1] = (error_code == SDK_SUCCESS) ? PCS_SET_PARAM_SUCCESS : PCS_SET_PARAM_FAIL;
             }
-            else if (0x00 == p_data[1])
+            else
             {
-                tx_power_set = p_data[2];
+                response[1] = PCS_SET_PARAM_FAIL;
             }
-            s_gap_adv_param.max_tx_pwr = tx_power_set;
-
-            error_code = ble_gap_tx_power_set(BLE_GAP_ACTIVITY_ROLE_CON, conn_idx, tx_power_set);
 
             response[0] = PCS_SETTING_TYPE_TX_POWER;
-            response[1] = SDK_SUCCESS == error_code ? PCS_SET_PARAM_SUCCESS : PCS_SET_PARAM_FAIL;
 
             pcs_setting_reply(0, response, 2);
             break;
@@ -376,10 +383,24 @@ void ble_evt_handler(const ble_evt_t *p_evt)
             ble_app_init();
             break;
 
-        case BLE_GAPM_EVT_ADV_START:
+        case BLE_GAPC_EVT_DISCONNECTED:
+            APP_LOG_INFO("Disconnect. status=%d.", p_evt->evt_status);
+            ble_gap_adv_start(0, &s_gap_adv_time_param);
             break;
-            
+        case BLE_GAPC_EVT_CONNECTED:
+            APP_LOG_INFO("Connect.");
+            break;
+
+        case BLE_GAPM_EVT_ADV_START:
+            APP_LOG_INFO("Adv started.");
+            break;
+
         case BLE_GAPC_EVT_PHY_UPDATED:
+             /**< LE PHY for data transmission. (0x00:1M, 0x01:2M, 0x03:coded) @ref ble_gap_phy_type_t. */
+            APP_LOG_INFO("BLE_GAPC_EVT_PHY_UPDATED status=%d, tx phy=%d, rx phy=%d.",
+            p_evt->evt_status, p_evt->evt.gapc_evt.params.phy_update.tx_phy,
+            p_evt->evt.gapc_evt.params.phy_update.rx_phy);
+
             app_gap_phy_update_handler(p_evt->evt.gapc_evt.index, p_evt->evt_status);
             break;
 

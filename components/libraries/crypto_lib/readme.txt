@@ -1,0 +1,1 @@
+crypto_lib为mbedtls的硬件适配。

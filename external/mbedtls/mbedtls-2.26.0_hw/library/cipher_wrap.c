@@ -131,7 +131,7 @@ static int aes_crypt_ecb_wrap( void *ctx, mbedtls_operation_t operation,
         const unsigned char *input, unsigned char *output )
 {
 #if defined(HAS_AES_DRIVER)
-    return crypto_aes_crypt_ecb((crypto_aes_context *)ctx, operation, (uint8_t *)input, 16, output);
+    return crypto_aes_crypt_ecb((crypto_aes_context *)ctx, (uint8_t)operation, (uint8_t *)input, (uint32_t)16, (uint8_t *)output);
 #else
     return mbedtls_aes_crypt_ecb( (mbedtls_aes_context *) ctx, operation, input, output );
 #endif
@@ -142,7 +142,7 @@ static int aes_crypt_cbc_wrap( void *ctx, mbedtls_operation_t operation, size_t 
         unsigned char *iv, const unsigned char *input, unsigned char *output )
 {
 #if defined(HAS_AES_DRIVER)
-    return crypto_aes_crypt_cbc((crypto_aes_context *)ctx, operation, iv, (uint8_t *)input, length, output);
+    return crypto_aes_crypt_cbc((crypto_aes_context *)ctx, (uint8_t)operation, (uint8_t *)iv, (uint8_t *)input, (uint32_t )length, (uint8_t *)output);
 #else
     return mbedtls_aes_crypt_cbc( (mbedtls_aes_context *) ctx, operation, length, iv, input,
                           output );
@@ -156,8 +156,8 @@ static int aes_crypt_cfb128_wrap( void *ctx, mbedtls_operation_t operation,
         const unsigned char *input, unsigned char *output )
 {
 #if defined(HAS_AES_DRIVER)
-    return crypto_aes_crypt_cfb128( (crypto_aes_context *) ctx, operation, length, iv_off, iv,
-                             input, output );
+    return crypto_aes_crypt_cfb128( (crypto_aes_context *) ctx, (uint8_t)operation, (uint32_t)length, (uint32_t *)iv_off, (uint8_t *)iv,
+                             (uint8_t *)input, (uint8_t *)output );
 #else
     return mbedtls_aes_crypt_cfb128( (mbedtls_aes_context *) ctx, operation, length, iv_off, iv,
                              input, output );
@@ -170,8 +170,8 @@ static int aes_crypt_ofb_wrap( void *ctx, size_t length, size_t *iv_off,
         unsigned char *iv, const unsigned char *input, unsigned char *output )
 {
 #if defined(HAS_AES_DRIVER)
-    return crypto_aes_crypt_ofb( (crypto_aes_context *) ctx, length, iv_off,
-                                    iv, input, output );
+    return crypto_aes_crypt_ofb( (crypto_aes_context *) ctx, (uint32_t)length, (uint32_t *)iv_off,
+                                    (uint8_t *)iv, (uint8_t *)input, (uint8_t *)output );
 #else
     return mbedtls_aes_crypt_ofb( (mbedtls_aes_context *) ctx, length, iv_off,
                                     iv, input, output );
@@ -185,8 +185,8 @@ static int aes_crypt_ctr_wrap( void *ctx, size_t length, size_t *nc_off,
         const unsigned char *input, unsigned char *output )
 {
 #if defined(HAS_AES_DRIVER)
-    return crypto_aes_crypt_ctr( (crypto_aes_context *) ctx, length, nc_off, nonce_counter,
-                          stream_block, input, output );
+    return crypto_aes_crypt_ctr( (crypto_aes_context *) ctx, (uint32_t)length, (uint32_t *)nc_off, (uint8_t *)nonce_counter,
+                          (uint8_t *)stream_block, (uint8_t *)input, (uint8_t *)output );
 #else
     return mbedtls_aes_crypt_ctr( (mbedtls_aes_context *) ctx, length, nc_off, nonce_counter,
                           stream_block, input, output );

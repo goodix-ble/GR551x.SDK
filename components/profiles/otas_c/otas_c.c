@@ -187,7 +187,7 @@ static void otas_c_srvc_browse_evt_handler(uint8_t conn_idx, uint8_t status, con
             s_otas_c_env.handles.otas_srvc_start_handle = p_browse_srvc->start_hdl;
             s_otas_c_env.handles.otas_srvc_end_handle   = p_browse_srvc->end_hdl;
 
-            for (uint32_t i = 0; i < (p_browse_srvc->end_hdl - p_browse_srvc->start_hdl); i++)
+            for (uint16_t i = 0; i < (p_browse_srvc->end_hdl - p_browse_srvc->start_hdl); i++)
             {
                 handle_disc = p_browse_srvc->start_hdl + i + 1;
 

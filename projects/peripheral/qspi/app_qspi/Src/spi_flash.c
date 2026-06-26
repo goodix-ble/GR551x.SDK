@@ -267,7 +267,7 @@ static uint32_t spi_flash_read_config(void)
 
 static void spi_flash_write_status(uint32_t status)
 {
-    uint8_t length;
+    uint8_t length = 0;
     uint8_t control_frame[4];
 
     if(SPI_FLASH_Read_Device_ID() == SPI_FLASH_TYE_PY25Q128)

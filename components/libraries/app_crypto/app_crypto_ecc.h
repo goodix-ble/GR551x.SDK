@@ -187,7 +187,7 @@ int ac_ecc_ecdsa_sign(ac_ecc_type_t curve_type, const uint8_t *private_key, cons
  * @param[in] hash_size:    Size of hash of the message to sign.
  * @param[in] signature:    Pointer to signature value.
  *
- * @return Result of sign.
+ * @return Result of verify.
  *****************************************************************************************
  */
 int ac_ecc_ecdsa_verify(ac_ecc_type_t curve_type, const uint8_t *public_key, const uint8_t *message_hash, uint16_t hash_size, uint8_t *signature);
@@ -205,6 +205,58 @@ int ac_ecc_ecdsa_verify(ac_ecc_type_t curve_type, const uint8_t *public_key, con
  *****************************************************************************************
  */
 int ac_ecc_ecdh_shared_secret_compute(ac_ecc_type_t curve_type, uint8_t *public_key, uint8_t *private_key, uint8_t *secret);
+
+/**
+ *****************************************************************************************
+ * @brief Multiplies a point by a scalar.
+ *
+ * @param[in]  curve_type:  ECC curve_type.
+ * @param[out] result:      Pointer to result.
+ * @param[in]  point:       Pointer to point.
+ * @param[in] scalar:       Pointer to scalar.
+ *
+ * @return Result of compute.
+ *****************************************************************************************
+ */   
+int ac_ecc_point_mult( ac_ecc_type_t curve_type, uint32_t *result, const uint32_t *point, const uint32_t *scalar);
+
+/**
+ *****************************************************************************************
+ * @brief Computes result = product % mod, where product is 2N words long. Currently only designed to work for mod == curve->p or curve_n.
+ *
+ * @param[in]  curve_type:  ECC curve_type.
+ * @param[out] result:      Pointer to result.
+ * @param[in]  product:     Pointer to product.
+ * @param[in]  mod:         Pointer to mod.
+ * @param[in]  num_words:   Number of words.
+ *
+ * @return Result of compute.
+ *****************************************************************************************
+ */   
+int ac_ecc_mmod(uint32_t *result, uint32_t *product, const uint32_t *mod, uint8_t num_words);
+
+/**
+ *****************************************************************************************
+ * @brief Converts an integer in native format to big-endian bytes.
+ *
+ * @param[out] bytes:       Output data.
+ * @param[in]  num_bytes:   Num bytes.
+ * @param[in]  native:      native format data.
+ *****************************************************************************************
+ */
+void ac_ecc_native_to_bytes(uint8_t *bytes, int num_bytes, const uint32_t *native);
+
+/**
+ *****************************************************************************************
+ * @brief Converts an integer in native format to big-endian bytes.
+ *
+ * @param[out] native:      native format data.
+ * @param[in]  bytes:       Input data.
+ * @param[in]  num_bytes:   Num bytes.
+ *****************************************************************************************
+ */
+void ac_ecc_bytes_to_native(uint32_t *native, const uint8_t *bytes, int num_bytes);
+
 /** @} */
 
 #endif

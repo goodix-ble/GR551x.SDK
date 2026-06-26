@@ -67,8 +67,9 @@ extern "C" {
 /** @addtogroup APP_UART_MACRO Defines
   * @{
   */
-
+#ifndef TX_ONCE_MAX_SIZE
 #define TX_ONCE_MAX_SIZE     128                 /**< UART max bytes size transmitted at one time */
+#endif
 
 /** @} */
 

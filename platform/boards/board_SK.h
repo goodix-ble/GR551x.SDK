@@ -64,7 +64,7 @@
 #define APP_UART_RX_PIN                 APP_IO_PIN_11
 #define APP_UART_TX_PINMUX              APP_IO_MUX_2
 #define APP_UART_RX_PINMUX              APP_IO_MUX_2
-#define APP_UART_TX_PULL                APP_IO_PULLUP
+#define APP_UART_TX_PULL                APP_IO_NOPULL
 #define APP_UART_RX_PULL                APP_IO_PULLUP
 
 #define APP_UART1_ID                    APP_UART_ID_1
@@ -75,6 +75,9 @@
 #define APP_UART1_RX_PIN                APP_IO_PIN_26
 #define APP_UART1_TX_PINMUX             APP_IO_MUX_1
 #define APP_UART1_RX_PINMUX             APP_IO_MUX_1
+#define APP_UART1_TX_PULL               APP_IO_NOPULL
+#define APP_UART1_RX_PULL               APP_IO_PULLUP
+
 
 /*******KEY DRIVER IO CONFIG********************/
 #define APP_KEY_OK_IO_TYPE              APP_IO_TYPE_AON

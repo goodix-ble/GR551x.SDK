@@ -45,18 +45,43 @@
 #include "bootloader_config.h"
 #include "dfu_port.h"
 
+#ifndef BOOTLOADER_ENABLE
+#error "Not define BOOTLOADER_ENABLE in app bootloader, please define it in this project"
+#endif
+
+/* WDT_RUN_ENABLE = 1 means that the watchdog is enabled until user takes control of the watchdog. */
+#ifdef WDT_RUN_ENABLE
+#if !WDT_RUN_ENABLE
+#warning "Bootloader enable WDT_RUN_ENABLE is recommended"
+#endif
+#endif
+
+/* BOOT_LONG_TIME = 1 means that Boot startup delay which is not recommended to enable in app bootloader  */
+#ifdef BOOT_LONG_TIME
+#if BOOT_LONG_TIME
+#warning "Bootloader enable BOOT_LONG_TIME is not recommended"
+#endif
+#endif
+
+#if APP_CODE_LOAD_ADDR < (DFU_INFO_START_ADDR + DFU_FLASH_SECTOR_SIZE)
+#error "Bootloader Firmware overlaps with DFU_INFO"
+#endif
+
 int main (void)
 {
     app_periph_init();
-
     bootloader_dfu_task();
     bootloader_verify_task();
     bootloader_jump_task();
 
     while (1)
     {
+#if BOOTLOADER_WDT_ENABLE
+        bootloader_wdt_refresh();
+#endif
 #if BOOTLOADER_DFU_ENABLE
         dfu_schedule();
 #endif
+        bootloader_timeout_task();
     }
 }

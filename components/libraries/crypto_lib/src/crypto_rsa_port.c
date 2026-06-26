@@ -1,3 +1,8 @@
+
+
+#include  "custom_config.h"
+#if !defined(SOC_GR533X) && !defined(SOC_SGP)
+
 #include "crypto_rsa_port.h"
 #include "crypto_sha256.h"
 #include "crypto_rsa.h"
@@ -144,3 +149,4 @@ int rsa_safer_memcmp( const void *a, const void *b, size_t n )
 
     return( diff );
 }
+#endif

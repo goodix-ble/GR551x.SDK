@@ -44,17 +44,22 @@
  * DEFINES
  *****************************************************************************************
  */
+// Master status
 #define MASTER_IDLE                 0x00
-#define MASTER_UART_SELECT_IMG      0x01
 #define MASTER_UART_UPDATING        0x02
 #define MASTER_UART_UPDATED         0x03
 #define MASTER_BLE_SELECT_DEVICE    0x04
 #define MASTER_BLE_CONNECTED        0x05
-#define MASTER_BLE_SELECT_IMG       0x06
 #define MASTER_BLE_UPDATING         0x07
 #define MASTER_BLE_UPDATED          0x08
 
 #define MASTER_FAST_DFU_MODE_SET    0x10
+#define MASTER_DFU_START            0x11
+#define MASTER_UART_DFU_START       0x12
+#define MASTER_BLE_DFU_START        0x13
+#define MASTER_DFU_FW_INFO_SET      0x14
+#define MASTER_SELECT_UART_OR_BLE   0x15
+#define MASTER_BLE_DFU_SCAN         0x16
 
 /*
  * GLOBAL FUNCTION DECLARATION
@@ -69,13 +74,61 @@ void app_periph_init(void);
 
 /**
  *****************************************************************************************
- * @brief Send uart data
+ * @brief Set master status.
+ *
+ * @param[in]  status: master status.
  *****************************************************************************************
  */
-void uart_data_send(uint8_t *p_data, uint16_t length);
-void dfu_uart_data_send(uint8_t *p_data, uint16_t length);
 void user_master_status_set(uint8_t status);
+
+/**
+ *****************************************************************************************
+ * @brief Get master status.
+ *
+ * @retval Master status.
+ *****************************************************************************************
+ */
 uint8_t user_master_status_get(void);
-void user_dfu_mode_set(void);
+
+/**
+ *****************************************************************************************
+ * @brief UART console schedule.
+ *
+ *****************************************************************************************
+ */
+void uart_console_schedule(void);
+
+/**
+ *****************************************************************************************
+ * @brief Reset UART console.
+ *
+ *****************************************************************************************
+ */
+void uart_console_reset(void);
+
+/**
+ *****************************************************************************************
+ * @brief  Initialize UART console
+ *
+ *****************************************************************************************
+ */
+void uart_console_init(void);
+
+/**
+ *****************************************************************************************
+ * @brief  Initialize systick
+ *
+ *****************************************************************************************
+ */
+void systick_init(void);
+
+/**
+ *****************************************************************************************
+ * @brief Get systick time.
+ *
+ * @retval Time in milliseconds.
+ *****************************************************************************************
+ */
+uint32_t systick_get_time(void);
 
 #endif

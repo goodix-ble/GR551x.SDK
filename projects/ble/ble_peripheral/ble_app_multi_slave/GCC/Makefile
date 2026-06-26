@@ -35,7 +35,6 @@ PRJ_C_SRC_FILES:=   \
 ../../../../../drivers/src/app_uart.c  \
 ../../../../../drivers/src/app_uart_dma.c  \
 ../../../../../components/libraries/utility/utility.c  \
-../../../../../components/libraries/sensorsim/sensorsim.c  \
 ../../../../../components/libraries/app_timer/app_timer.c  \
 ../../../../../components/libraries/ring_buffer/ring_buffer.c  \
 ../../../../../components/libraries/pmu_calibration/pmu_calibration.c  \
@@ -44,17 +43,17 @@ PRJ_C_SRC_FILES:=   \
 ../../../../../components/libraries/app_assert/app_assert.c  \
 ../../../../../components/libraries/app_key/app_key.c  \
 ../../../../../components/libraries/app_key/app_key_core.c  \
+../../../../../components/libraries/app_error/cortex_backtrace.c  \
+../../../../../components/libraries/fault_trace/fault_trace.c  \
 ../../../../../components/sdk/ble.c  \
 ../../../../../components/profiles/common/ble_prf_utils.c  \
-../../../../../components/profiles/bas/bas.c  \
-../../../../../components/profiles/dis/dis.c  \
-../../../../../components/profiles/hrs/hrs.c  \
 ../../../../../components/profiles/hids/hids.c  \
+../../../../../components/profiles/hrs/hrs.c  \
 ../../../../../external/segger_rtt/SEGGER_RTT.c  \
 ../Src/platform/user_periph_setup.c  \
 ../Src/user/main.c  \
-../Src/user/user_app.c  \
-../Src/user/user_keyboard.c  \
+../Src/user/heartrate_slave.c  \
+../Src/user/keyboard_slave.c  \
 
 
 PRJ_ASM_SRC_FILES :=   \
@@ -86,6 +85,7 @@ PRJ_C_INCLUDE_PATH :=   \
 ../../../../../components/libraries/pmu_calibration  \
 ../../../../../components/libraries/ring_buffer  \
 ../../../../../components/libraries/sensorsim  \
+../../../../../components/libraries/fault_trace  \
 ../../../../../components/libraries/utility  \
 ../../../../../components/patch/ind  \
 ../../../../../components/profiles/ams_c  \
@@ -141,16 +141,12 @@ PRJ_C_INCLUDE_PATH :=   \
 
 PRJ_C_MICRO_DEFINES :=   \
 CFG_MUL_LINK_WITH_SAME_DEV=1  \
-CFG_MAX_SCAN=0  \
-CFG_MAX_ADVS=2  \
-SK_GUI_ENABLE=0  \
 
 
 PRJ_ASM_INCLUDE_PATH :=   \
 
 
 PRJ_ASM_MICRO_DEFINES :=   \
-SVC_HANDLER_IN_PATCH_LIB  \
 
 
 IS_WIN_OS :=  true
@@ -200,6 +196,7 @@ GCC_STARTUP_ASM_FILE 	= ../../../../../platform/arch/arm/cortex-m/gcc/startup_gr
 
 ## Set LDFLAGS
 LDFLAGS += -Wl,--gc-sections
+LDFLAGS += -L../../../../../components/libraries/app_crypto/gcc/ -lapp_crypto
 LDFLAGS += -L../../../../../platform/soc/linker/gcc/ -lble_sdk
 
 ## Set compile output directory
@@ -251,6 +248,9 @@ $(BUILD_OBJ)/%.o : %.s
 $(BUILD)/$(MAKE_TARGET_NAME).hex: $(BUILD_LST)/$(MAKE_TARGET_NAME).elf
 	$(ECHO) "compile hex file ..."
 	$(V_OBJCOPY) $(OBJCOPY) -O ihex $< $@
+
+	arm-none-eabi-objdump -d $(BUILD_LST)/$(MAKE_TARGET_NAME).elf > $(BUILD_LST)/$(MAKE_TARGET_NAME).s
+	arm-none-eabi-size $(BUILD_LST)/$(MAKE_TARGET_NAME).elf
 
 $(BUILD)/$(MAKE_TARGET_NAME).bin: $(BUILD_LST)/$(MAKE_TARGET_NAME).elf
 	$(ECHO) "compile binary file ..."

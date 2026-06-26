@@ -649,7 +649,7 @@ void reference_time_encode(uint8_t *p_data, uint16_t length)
 
 void local_time_encode(uint8_t *p_data, uint8_t length)
 {
-   ble_gatts_write_cfm_t *p_cfm;
+   ble_gatts_write_cfm_t *p_cfm = NULL;
    cts_evt_t p_evt;
 
    p_evt.length = length;
@@ -667,7 +667,7 @@ void local_time_encode(uint8_t *p_data, uint8_t length)
 
 void current_time_encode(uint8_t *p_data, uint16_t length)
 {
-   ble_gatts_write_cfm_t *p_cfm;
+   ble_gatts_write_cfm_t *p_cfm = NULL;
    cts_evt_t p_evt;
 
    p_evt.length = length;

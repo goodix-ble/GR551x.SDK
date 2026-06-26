@@ -181,7 +181,7 @@ void print_buf_32bits(uint32_t *buf, uint32_t nbytes)
 {
     for (uint32_t i = 0; i < (nbytes >> 2); i++)
     {
-        printf("0x%08X ", buf[i]);
+        printf("0x%08lX ", buf[i]);
         if ((i & 0x3) == 0x3)
             printf("\r\n");
     }

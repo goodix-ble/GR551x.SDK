@@ -1,3 +1,8 @@
+
+
+#include  "custom_config.h"
+#if !defined(SOC_GR533X) && !defined(SOC_SGP)
+
 #include "crypto_sha256.h"
 #include "grx_hal.h"
 //#include "mbedtls/sha256.h"
@@ -111,8 +116,8 @@ int crypto_sha256_starts(crypto_sha256_context *ctx)
  */
 int crypto_sha256_update(crypto_sha256_context *ctx, const uint8_t *input, size_t ilen)
 {
-    int total_len = ilen + ctx->total;
-    int i = 0;
+    uint32_t total_len = ilen + ctx->total;
+    uint32_t i = 0;
     uint8_t *new_input = NULL;
 
     if (ctx == NULL || input == NULL)
@@ -133,7 +138,7 @@ int crypto_sha256_update(crypto_sha256_context *ctx, const uint8_t *input, size_
         {
             new_input[i] = ctx->input[i];
         }
-        for (int j = 0; j < ilen; j++)
+        for (uint32_t j = 0; j < ilen; j++)
         {
             new_input[i] = input[j];
             i++;
@@ -147,7 +152,7 @@ int crypto_sha256_update(crypto_sha256_context *ctx, const uint8_t *input, size_
     else
     {
         i = ctx->total;
-        for (int j = 0; j < ilen; j++)
+        for (uint32_t j = 0; j < ilen; j++)
         {
             ctx->input[i] = input[j];
             i++;
@@ -299,3 +304,5 @@ exit:
 
     return (ret);
 }
+
+#endif

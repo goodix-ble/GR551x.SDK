@@ -1,3 +1,8 @@
+
+
+#include  "custom_config.h"
+#if !defined(SOC_GR533X) && !defined(SOC_SGP)
+
 #include "crypto_pkc.h"
 
 static pkc_handle_t pkc_handle = { 0 };
@@ -278,3 +283,4 @@ hal_status_t hal_pkc_modular_add_handle(uint32_t bits_len, uint32_t in_a[], uint
 
     return ret;
 }
+#endif

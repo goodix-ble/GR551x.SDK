@@ -160,7 +160,8 @@ void app_dma0_memory_to_memory(void)
 void app_dma1_memory_to_memory(void)
 {
     uint32_t delay_count = 0;
-    app_dma_params_t dma_params = {DMA1, DMA_Channel0, 0};
+    app_dma_params_t dma_params;
+    memset(&dma_params, 0, sizeof(app_dma_params_t));
 
     dma_test_data_init();
 

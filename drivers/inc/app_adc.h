@@ -172,11 +172,14 @@ typedef struct
 {
     app_adc_evt_handler_t   evt_handler;               /**< ADC event callback definition. */
     adc_handle_t            handle;                    /**< ADC handle definition. */
-    dma_id_t                dma_id;                    /**< DMA id definition . */
+    app_adc_pin_cfg_t       *p_pin_cfg;                /**< ADC pins config Structures.  */
+    dma_id_t                dma_id;                    /**< DMA id definition. */
     app_adc_state_t         adc_state;                 /**< ADC state types. */
     app_adc_dma_state_t     adc_dma_state;             /**< ADC dma state types. */
-    app_adc_sample_node_t *p_current_sample_node;      /**< ADC sample-node definition. */
-    uint32_t multi_channel;                            /**< multi channel definition. */
+    app_adc_sample_node_t   *p_current_sample_node;    /**< ADC current sampling node in multi-sample mode. */
+    app_adc_sample_node_t   *p_first_sample_node;      /**< ADC first sampling node in multi-sample mode. */
+    uint32_t                multi_channel;             /**< Remaining channel count. */
+    uint32_t                multi_channel_total;       /**< Total channel count. */
 } adc_env_t;
 
 /**

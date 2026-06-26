@@ -38,12 +38,6 @@
 #ifndef __USER_PERIPH_SETUP_H__
 #define __USER_PERIPH_SETUP_H__
 
-#include <stdbool.h>
-#include "board_SK.h"
-
-/**@brief Structure that stores the attribute to be concerned or to display completely. */
-typedef void (*uart_rec_handler_reg_t)(app_uart_evt_t *p_rec_line);
-
 /*
  * GLOBAL FUNCTION DECLARATION
  *****************************************************************************************
@@ -51,33 +45,9 @@ typedef void (*uart_rec_handler_reg_t)(app_uart_evt_t *p_rec_line);
 /**
  *****************************************************************************************
  * @brief Init User Periph (GPIO SPI IIC ...)
- *
- * @param[in] p_uart_handler: Serial port receiving data processing function.
  *****************************************************************************************
  */
-void app_periph_init(uart_rec_handler_reg_t p_uart_handler);
+void app_periph_init(void);
 
-/**
- *****************************************************************************************
- *@brief Function for Seting bond state
- *****************************************************************************************
- */
-void ble_bond_state_set(void);
-
-/**
- *****************************************************************************************
- *@brief Function for getting bond state
- *****************************************************************************************
- */
-bool ble_bond_state_get(void);
-
-/**
- *****************************************************************************************
- * @brief Init User Periph (GPIO SPI IIC ...)
- *
- * @param[in] uint8_t *:the pointer to uart rec buf .
- *****************************************************************************************
- */
-uint8_t *uart_rec(void);
 
 #endif

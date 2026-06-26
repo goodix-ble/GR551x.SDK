@@ -1286,9 +1286,6 @@
 <name>$PROJ_DIR$\..\..\..\..\..\external\mbedtls\mbedtls-2.26.0_hw\library\psa_crypto_client.c</name>
 </file>
 <file>
-<name>$PROJ_DIR$\..\..\..\..\..\external\mbedtls\mbedtls-2.26.0_hw\library\psa_crypto_driver_wrappers.c</name>
-</file>
-<file>
 <name>$PROJ_DIR$\..\..\..\..\..\external\mbedtls\mbedtls-2.26.0_hw\library\psa_crypto_ecp.c</name>
 </file>
 <file>

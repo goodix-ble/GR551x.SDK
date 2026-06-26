@@ -183,6 +183,29 @@ sdk_err_t app_queue_peek(app_queue_t *p_queue, void *p_elemment)
     return error_code;
 }
 
+void *app_queue_peek_by_idx(app_queue_t *p_queue, uint16_t idx)
+{
+    void *p_elem  = NULL;
+
+    if (NULL == p_queue || idx == 0)
+    {
+        return NULL;
+    }
+
+    APP_QUEUE_LOCK();
+
+    uint16_t items_count = app_queue_items_count_get(p_queue);
+    if (idx <= items_count)
+    {
+        uint16_t real_idx = (p_queue->start_idx + (idx - 1)) % (p_queue->queue_size + 1);
+        p_elem = (void *)((size_t)p_queue->p_buffer + real_idx * p_queue->element_size);
+    }
+
+    APP_QUEUE_UNLOCK();
+
+    return p_elem;
+}
+
 sdk_err_t app_queue_pop(app_queue_t *p_queue, void *p_elemment)
 {
     uint16_t   peek_idx   = 0;
@@ -257,7 +280,7 @@ uint16_t app_queue_items_count_get(app_queue_t *p_queue)
     }
     else
     {
-        items_count = queue_size - start_idx + end_idx;
+        items_count = queue_size - start_idx + end_idx + 1;
     }
 
     APP_QUEUE_UNLOCK();

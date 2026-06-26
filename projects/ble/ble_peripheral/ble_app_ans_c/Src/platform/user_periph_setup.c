@@ -85,7 +85,7 @@ void app_key_evt_handler(uint8_t key_id, app_key_click_type_t key_click_type)
         {
             if (0 == s_ctrl_point_exchange)
             {
-                APP_LOG_DEBUG("Enable all new alert category notfiy.");
+                APP_LOG_DEBUG("Enable all new alert category notify.");
                 ctrl_pt.cmd_id = ANS_C_CTRL_PT_EN_NEW_INC_ALERT_NTF;
                 ctrl_pt.cat_id = ANS_C_CAT_ID_ALL;
                 ans_c_ctrl_point_set(0, &ctrl_pt);
@@ -93,7 +93,7 @@ void app_key_evt_handler(uint8_t key_id, app_key_click_type_t key_click_type)
             }
             else if (1 == s_ctrl_point_exchange)
             {
-                APP_LOG_DEBUG("Enable all unread alert category notfiy.");
+                APP_LOG_DEBUG("Enable all unread alert category notify.");
                 ctrl_pt.cmd_id = ANS_C_CTRL_PT_EN_UNREAD_CAT_STA_NTF;
                 ctrl_pt.cat_id = ANS_C_CAT_ID_ALL;
                 ans_c_ctrl_point_set(0, &ctrl_pt);

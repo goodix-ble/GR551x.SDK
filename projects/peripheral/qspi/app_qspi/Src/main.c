@@ -61,14 +61,14 @@ void qspi_flash_memcmp(uint32_t address, uint8_t *w_str1, uint8_t *r_str2, uint3
     uint32_t i = 0;
     for (i = 0; i < nbytes; i++) {
         if (!(i & 0x7))
-            printf("\r\n0x%08x: ", address + i);
+            printf("\r\n0x%08lx: ", address + i);
         if (w_str1[i] == r_str2[i])
         {
             printf("0x%02X ", r_str2[i]);
         }
         else
         {
-            printf("\r\nThere is data error at 0x%08x\r\n", address + i);
+            printf("\r\nThere is data error at 0x%08lx\r\n", address + i);
             printf("Flash Data Error %02x\r\n", r_str2[i]);
             break;
         }
@@ -89,7 +89,7 @@ void app_qspi(void)
     }
 
     device_id = SPI_FLASH_Read_Device_ID();
-    printf("Read_Device_ID = 0x%06X\r\n", device_id);
+    printf("Read_Device_ID = 0x%06lX\r\n", device_id);
 
     SPI_FLASH_Disable_Quad();
 

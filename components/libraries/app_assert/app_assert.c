@@ -53,8 +53,7 @@
  * DEFINITIONS
  *****************************************************************************************
  */
-#define APP_ASSERT_FILE_NAME_LEN             64             /**< Length of file name. */
-#define APP_ASSERT_EXPR_NAME_LEN             64             /**< Length of expression. */
+#define APP_ASSERT_EXPR_NAME_LEN             64             /**< Length of expression. Unit: byte. */
 #define APP_ASSERT_ERR_MAGIC_1               0xAAAAAAAA     /**< App assert error magic 1. */
 #define APP_ASSERT_ERR_MAGIC_2               0xBBBBBBBB     /**< App assert error magic 2. */
 #define APP_ASSERT_ERR_MAGIC_3               0xCCCCCCCC     /**< App assert error magic 3. */
@@ -77,7 +76,7 @@
  *****************************************************************************************
  */
 /**@brief Assert information save. */
-struct app_asser_info_t
+struct app_assert_info_t
 {
     char    file_name[APP_ASSERT_FILE_NAME_LEN];
     int     magic1;
@@ -94,7 +93,7 @@ struct app_asser_info_t
  * LOCAL VARIABLE DEFINITIONS
  *****************************************************************************************
  */
-static struct app_asser_info_t  s_assert_info;
+static struct app_assert_info_t  s_assert_info;
 
 static sys_assert_cb_t s_assert_cbs =
 {
@@ -116,7 +115,7 @@ static sys_assert_cb_t s_assert_cbs =
  */
 static void app_assert_info_output(uint8_t assert_type)
 {
-    char  assert_info[1024]  = {0};
+    char  assert_info[512]  = {0};
 
     s_assert_info.file_name[APP_ASSERT_FILE_NAME_LEN - 1] = ' ';
     s_assert_info.expr[APP_ASSERT_FILE_NAME_LEN - 1]      = ' ';
@@ -238,4 +237,22 @@ void app_assert_handler(const char *expr, const char *file, int line)
     }
 }
 
+app_assert_error_t app_assert_get_info(uint8_t *p_info, uint8_t info_len)
+{
+    if (!s_assert_info.magic1)
+    {
+        return APP_ASSERT_NO_INFO;
+    }
 
+    if (info_len < (APP_ASSERT_FILE_NAME_LEN + APP_ASSERT_FILE_LINE_LEN + APP_ASSERT_PARAM0_LEN + APP_ASSERT_PARAM1_LEN) || (NULL == p_info))
+    {
+        return APP_ASSERT_INSUFFICIENT_BUFFER_SPACE;
+    }
+
+    memcpy(p_info, s_assert_info.file_name, APP_ASSERT_FILE_NAME_LEN);
+    memcpy(p_info + APP_ASSERT_FILE_NAME_LEN, &s_assert_info.file_line, APP_ASSERT_FILE_LINE_LEN);
+    memcpy(p_info + APP_ASSERT_FILE_NAME_LEN + APP_ASSERT_FILE_LINE_LEN, &s_assert_info.param0, APP_ASSERT_PARAM0_LEN);
+    memcpy(p_info + APP_ASSERT_FILE_NAME_LEN + APP_ASSERT_FILE_LINE_LEN + APP_ASSERT_PARAM0_LEN, &s_assert_info.param1, APP_ASSERT_PARAM1_LEN);
+
+    return APP_ASSERT_SUCCESS;
+}

@@ -56,11 +56,17 @@
 #define APP_ADV_MIN_INTERVAL         32            /**< The advertising min interval (in units of 0.625 ms). */
 #define APP_ADV_MAX_INTERVAL         160           /**< The advertising max interval (in units of 0.625 ms). */
 #define APP_ADV_TIMEOUT_IN_SECONDS   0             /**< The advertising timeout in units of seconds. */
+#define APP_ADV_MAX_TX_POWER         10             /**< The advertising max tx power (in units dbm). */
+#define APP_DEFAULT_CON_TX_POWER     10             /**< The default connection tx power (in units dbm). */
 #define MIN_CONN_INTERVAL            6             /**< Minimum acceptable connection interval (in units of 1.25 ms.). */
 #define MAX_CONN_INTERVAL            80            /**< Maximum acceptable connection interval (in units of 1.25 ms.). */
 #define SLAVE_LATENCY                0             /**< Slave latency. */
 #define CONN_SUP_TIMEOUT             400           /**< Connection supervisory timeout (in units of 10 ms.). */
 #define DEFAULT_MTU_SIZE             247           /**< Default mtu size. */
+#define MAX_TX_OCTET_DEFUALT         251           /**< Default maximum transmitted number of payload octets. */
+#define MAX_TX_TIME_DEFUALT          17040         /**< Defualt maximum packet transmission time (us). */
+#define MAX_RX_OCTET_DEFUALT         251           /**< Default maximum received number of payload octets. */
+#define MAX_RX_TIME_DEFUALT          17040         /**< Defualt maximum packet recevie time (us). */
 
 /*
  * GLOBAL VARIABLE DEFINITIONS
@@ -122,6 +128,12 @@ static void gap_params_init(void)
     error_code = ble_gap_privacy_params_set(900, true);
     APP_ERROR_CHECK(error_code);
 
+    error_code = ble_gap_data_length_set(MAX_TX_OCTET_DEFUALT, MAX_TX_TIME_DEFUALT);
+    APP_ERROR_CHECK(error_code);
+
+    extern void ble_rx_data_len_set(uint16_t rx_time, uint16_t rx_octets);
+    ble_rx_data_len_set(MAX_RX_TIME_DEFUALT, MAX_RX_OCTET_DEFUALT);
+
     // Set the default security parameters.
     ble_sec_param_t sec_param =
     {
@@ -141,6 +153,7 @@ static void gap_params_init(void)
     s_gap_adv_param.chnl_map      = BLE_GAP_ADV_CHANNEL_37_38_39;
     s_gap_adv_param.disc_mode     = BLE_GAP_DISC_MODE_GEN_DISCOVERABLE;
     s_gap_adv_param.filter_pol    = BLE_GAP_ADV_ALLOW_SCAN_ANY_CON_ANY;
+    s_gap_adv_param.max_tx_pwr    = APP_ADV_MAX_TX_POWER;
 
     error_code = ble_gap_adv_param_set(0, BLE_GAP_OWN_ADDR_STATIC, &s_gap_adv_param);
     APP_ERROR_CHECK(error_code);
@@ -161,6 +174,10 @@ static void gap_params_init(void)
     APP_ERROR_CHECK(error_code);
 
     ble_gap_pref_phy_set(BLE_GAP_PHY_ANY, BLE_GAP_PHY_ANY);
+
+#if defined(SOC_SGP) || defined(SOC_GR5405)
+    ble_gap_default_conn_tx_power_set(APP_DEFAULT_CON_TX_POWER);
+#endif
 }
 
 /**
@@ -345,6 +362,15 @@ void ble_evt_handler(const ble_evt_t *p_evt)
 
         case BLE_SEC_EVT_LINK_ENC_REQUEST:
             app_sec_rcv_enc_req_handler(p_evt->evt.sec_evt.index, &(p_evt->evt.sec_evt.params.enc_req));
+            break;
+
+        case BLE_GAPC_EVT_CONN_INFO_GOT:
+            if (BLE_SUCCESS == p_evt->evt_status && BLE_GAP_GET_CON_RSSI == p_evt->evt.gapc_evt.params.conn_info.opcode)
+            {
+                thrpt_rssi_update(p_evt->evt.gapc_evt.params.conn_info.info.rssi);
+            }
+            break;
+        default:
             break;
     }
 }

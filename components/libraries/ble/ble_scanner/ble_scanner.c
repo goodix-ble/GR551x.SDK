@@ -132,24 +132,27 @@ static void ble_scanner_uuid_encode(const uint8_t *p_uuid_data, uint16_t length,
                 {
                     memcpy(&p_uuid_buff->uuid_16_bit[p_uuid_buff->uuid_16_bit_count++], &p_uuid_data[current_offset], UUID_16_BIT_BYTES);
                     current_offset += UUID_16_BIT_BYTES;
+                    break;
                 }
-                break;
+                return;
 
             case UUID_32_BIT_BYTES:
                 if (p_uuid_buff->uuid_32_bit_count < UUID_32_BIT_NUM_MAX)
                 {
                     memcpy(&p_uuid_buff->uuid_16_bit[p_uuid_buff->uuid_32_bit_count++], &p_uuid_data[current_offset], UUID_32_BIT_BYTES);
                     current_offset += UUID_32_BIT_BYTES;
+                    break;
                 }
-                break;
+                return;
 
             case UUID_128_BIT_BYTES:
                 if (p_uuid_buff->uuid_128_bit_count < UUID_128_BIT_NUM_MAX)
                 {
                     memcpy(&p_uuid_buff->uuid_128_bit[p_uuid_buff->uuid_128_bit_count++][0], &p_uuid_data[current_offset], UUID_128_BIT_BYTES);
                     current_offset += UUID_128_BIT_BYTES;
+                    break;
                 }
-                break;
+                return;
 
             default:
                 return;
@@ -181,12 +184,12 @@ static void ble_scanner_data_parse(const ble_gap_evt_adv_report_t *p_adv_report,
     memcpy(&p_parse_report->peer_addr, &p_adv_report->broadcaster_addr, sizeof(ble_gap_bdaddr_t));
     memcpy(&s_scanner_env.conn_param.peer_addr, &p_adv_report->broadcaster_addr, sizeof(ble_gap_bdaddr_t));
 
-    uint8_t  parse_offset         = 0;
-    uint8_t *adv_data             = p_adv_report->data;
-    uint8_t  adv_data_len         = p_adv_report->length;
-    uint8_t  fragment_ad_type     = 0;
-    uint8_t  fragment_length      = 0;
-    uint8_t  data_length          = 0;
+    uint32_t  parse_offset         = 0;
+    uint8_t  *adv_data             = p_adv_report->data;
+    uint16_t  adv_data_len         = p_adv_report->length;
+    uint8_t   fragment_ad_type     = 0;
+    uint16_t  fragment_length      = 0;
+    uint16_t  data_length          = 0;
 
     while (parse_offset < adv_data_len)
     {
@@ -502,12 +505,11 @@ void ble_scanner_evt_on_ble_capture(const ble_evt_t *p_evt)
             break;
 
         case BLE_GAPM_EVT_ADV_REPORT:
-            if (p_evt->evt.gapm_evt.params.adv_report.adv_type <= BLE_GAP_REPORT_TYPE_PER_ADV)
+            if (p_evt->evt.gapm_evt.params.adv_report.adv_type < BLE_GAP_REPORT_TYPE_PER_ADV)
             {
                 on_scanner_adv_report(&p_evt->evt.gapm_evt.params.adv_report);
-                break;
             }
-
+            break;
         case BLE_GAPC_EVT_CONNECTED:
             on_scanner_connected(p_evt->evt.gapc_evt.index);
             break;

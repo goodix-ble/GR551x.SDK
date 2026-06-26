@@ -57,10 +57,10 @@
 /**@brief Bluetooth device address. */
 static const uint8_t  s_bd_addr[SYS_BD_ADDR_LEN] = {0x11, 0x00, 0xcf, 0x3e, 0xcb, 0xea};
 
-#ifdef SOC_GR533X
-#define DFU_FW_SAVE_ADDR       (FLASH_START_ADDR + 0x40000)
-#else
+#if defined(SOC_GR5515) || defined(SOC_GR5X25) || defined(SOC_GR5526)
 #define DFU_FW_SAVE_ADDR       (FLASH_START_ADDR + 0x60000)
+#else
+#define DFU_FW_SAVE_ADDR       (FLASH_START_ADDR + 0x40000)
 #endif
 
 /*
@@ -74,7 +74,7 @@ static void rtc_time_get(app_log_store_time_t *time)
 {
     calendar_time_t calendar_time;
     app_rtc_get_time(&calendar_time);
-    
+
     uint8_t *p_time = (uint8_t *)time;
     p_time[0] = calendar_time.year;
     p_time[1] = calendar_time.mon;

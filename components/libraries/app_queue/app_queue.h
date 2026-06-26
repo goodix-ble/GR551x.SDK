@@ -114,6 +114,22 @@ sdk_err_t app_queue_peek(app_queue_t *p_queue, void *p_elemment);
 
 /**
  *****************************************************************************************
+ * @brief Peek one element pointer from app queue by index (1-based).
+ *
+ * This function returns the pointer to the element at the given position in the queue,
+ * without removing it. The index starts from 1, where 1 refers to the first element
+ * (head) of the queue, 2 to the second element, and so on.
+ *
+ * @param[in]  p_queue: Pointer to app queue instance.
+ * @param[in]  idx:     Element index (1-based) in the queue.
+ *
+ * @return Pointer to the element on success, or NULL if index is invalid or queue is empty.
+ *****************************************************************************************
+ */
+void *app_queue_peek_by_idx(app_queue_t *p_queue, uint16_t idx);
+
+/**
+ *****************************************************************************************
  * @brief Pop one element from tail of app queue.
  *
  * @param[in]  p_queue:    Pointer to app queue instance.

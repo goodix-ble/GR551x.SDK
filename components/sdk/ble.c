@@ -2,6 +2,7 @@
 #include "ble.h"
 #include "ble_event.h"
 #include "patch_tab.h"
+#include "gr55xx_nvds.h"
 
 extern void ble_con_env_init(void);
 extern void ble_adv_env_init(void);
@@ -67,8 +68,53 @@ void ble_sdk_patch_env_init(void)
     #endif
 }
 
+// user's config CFG_MAX_BOND_DEVS shall not more than BLE_MAX_BOND_DEVS_SIZE
+#define BLE_MAX_BOND_DEVS_SIZE   30
+// tag for saving lru_bond_list in nvds
+#define LRU_BOND_LIST_TAG        0x8001
+
+#if CFG_MAX_BOND_DEVS > BLE_MAX_BOND_DEVS_SIZE
+#error CFG_MAX_BOND_DEVS shall not more than BLE_MAX_BOND_DEVS_SIZE
+#endif
+
 uint16_t ble_stack_init(ble_evt_handler_t evt_handler, stack_heaps_table_t *p_heaps_table)
 {
+    // if CFG_MAX_BOND_DEVS changed or nvds_lru_bond_list contains multiple 0, need to init lru_bond_list in nvds
+    uint8_t nvds_lru_bond_list[BLE_MAX_BOND_DEVS_SIZE];
+    uint16_t nvds_lru_bond_list_size = BLE_MAX_BOND_DEVS_SIZE;
+    uint8_t temp_value[CFG_MAX_BOND_DEVS];
+
+    for (uint32_t i = 0; i < CFG_MAX_BOND_DEVS; i++)
+    {
+        temp_value[i] = i;
+    }
+
+    if (NVDS_SUCCESS == nvds_get(LRU_BOND_LIST_TAG, &nvds_lru_bond_list_size, nvds_lru_bond_list))
+    {
+        if (nvds_lru_bond_list_size != CFG_MAX_BOND_DEVS)
+        {
+            nvds_put(LRU_BOND_LIST_TAG, CFG_MAX_BOND_DEVS, temp_value);
+        }
+        else
+        {
+            uint8_t zero_value_cnt = 0;
+
+            for (uint32_t i = 0; i < CFG_MAX_BOND_DEVS; i++)
+            {
+                if (0 == nvds_lru_bond_list[i])
+                {
+                    zero_value_cnt++;
+                }
+
+                if (zero_value_cnt >= 2)
+                {
+                    nvds_put(LRU_BOND_LIST_TAG, CFG_MAX_BOND_DEVS, temp_value);
+                    break;
+                }
+            }
+        }
+    }
+
     ble_sdk_patch_env_init();
     return ble_stack_enable(evt_handler, p_heaps_table);
 }

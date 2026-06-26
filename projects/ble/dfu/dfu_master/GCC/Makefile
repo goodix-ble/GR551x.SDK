@@ -53,7 +53,7 @@ PRJ_C_SRC_FILES:=   \
 ../../../../../components/drivers_ext/gr55xx/gr55xx_spi_flash.c  \
 ../../../../../external/segger_rtt/SEGGER_RTT.c  \
 ../Src/platform/user_periph_setup.c  \
-../Src/platform/user_dfu_m_cfg.c  \
+../Src/platform/user_dfu_master.c  \
 ../Src/user/main.c  \
 ../Src/user/user_app.c  \
 
@@ -198,6 +198,7 @@ GCC_STARTUP_ASM_FILE 	= ../../../../../platform/arch/arm/cortex-m/gcc/startup_gr
 
 ## Set LDFLAGS
 LDFLAGS += -Wl,--gc-sections
+LDFLAGS += -L../../../../../components/libraries/app_crypto/gcc/ -lapp_crypto
 LDFLAGS += -L../../../../../platform/soc/linker/gcc/ -lble_sdk
 
 ## Set compile output directory
@@ -249,6 +250,9 @@ $(BUILD_OBJ)/%.o : %.s
 $(BUILD)/$(MAKE_TARGET_NAME).hex: $(BUILD_LST)/$(MAKE_TARGET_NAME).elf
 	$(ECHO) "compile hex file ..."
 	$(V_OBJCOPY) $(OBJCOPY) -O ihex $< $@
+
+	arm-none-eabi-objdump -d $(BUILD_LST)/$(MAKE_TARGET_NAME).elf > $(BUILD_LST)/$(MAKE_TARGET_NAME).s
+	arm-none-eabi-size $(BUILD_LST)/$(MAKE_TARGET_NAME).elf
 
 $(BUILD)/$(MAKE_TARGET_NAME).bin: $(BUILD_LST)/$(MAKE_TARGET_NAME).elf
 	$(ECHO) "compile binary file ..."

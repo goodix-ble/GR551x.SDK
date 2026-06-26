@@ -33,14 +33,22 @@
 
 __WEAK void SystemInit(void)
 {
+    // Enable FPU for floating point operations
     #if (__FPU_USED == 1U)
-    SCB->CPACR |= ( (3UL << (10*2)) |                 /* set CP10 Full Access */
-                    (3UL << (11*2)) );               /* set CP11 Full Access */
+    SCB->CPACR |= ((3UL << (10*2)) |                 /* set CP10 Full Access */
+                   (3UL << (11*2)));                 /* set CP11 Full Access */
     #endif
 
+    // Trap unaligned memory access
     #ifdef UNALIGNED_SUPPORT_DISABLE
     SCB->CCR |= SCB_CCR_UNALIGN_TRP_Msk;
     #endif
 
-    return;
+    #ifdef HAL_MPU_V8
+    // ARMv8-M, allows HardFault and NMI handlers to bypass stack limit checks
+    SCB->CCR |= SCB_CCR_STKOFHFNMIGN_Msk;
+    #endif
+
+    // Enable SEVONPEND to allow WFE to wake up on pending interrupts
+    SCB->SCR |= SCB_SCR_SEVONPEND_Msk;
 }

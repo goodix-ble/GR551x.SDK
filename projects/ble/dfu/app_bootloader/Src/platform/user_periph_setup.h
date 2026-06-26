@@ -34,8 +34,8 @@
   POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************************
  */
-#ifndef _USER_PERIPH_SETUP_H__
-#define _USER_PERIPH_SETUP_H__
+#ifndef __USER_PERIPH_SETUP_H__
+#define __USER_PERIPH_SETUP_H__
 
 /*
  * GLOBAL FUNCTION DECLARATION
@@ -50,9 +50,48 @@ void app_periph_init(void);
 
 /**
  *****************************************************************************************
- * @brief Feed watcg dog ...).
+ * @brief Deinitialize User Periph.
+ *****************************************************************************************
+ */
+void app_periph_deinit(void);
+
+/**
+ *****************************************************************************************
+ * @brief Feed watch dog.
  *****************************************************************************************
  */
 void bootloader_wdt_refresh(void);
+
+/**
+ *****************************************************************************************
+ * @brief Get bootloader running time. Unit: milliseconds.
+ *****************************************************************************************
+ */
+size_t bootloader_get_time(void);
+
+/**
+ *****************************************************************************************
+ * @brief Refresh timeout time.
+ * If an external command is received refresh start time.
+ *****************************************************************************************
+ */
+void bootloader_timeout_refresh(void);
+
+/**
+ *****************************************************************************************
+ * @brief Get bootloader timeout start time. Unit: milliseconds.
+ *****************************************************************************************
+ */
+size_t bootloader_timeout_get_start_time(void);
+
+/**
+ ****************************************************************************************
+ * @brief  Check if the ISP command is received.
+ * Note: After receiving the ISP command, it will enter the non copy upgrade mode(single bank).
+ * @return true: received ISP command.
+ *         false: not received ISP command.
+ ****************************************************************************************
+ */
+bool bootloader_uart_isp_check(void);
 
 #endif

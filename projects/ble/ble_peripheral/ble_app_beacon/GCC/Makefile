@@ -190,6 +190,7 @@ GCC_STARTUP_ASM_FILE 	= ../../../../../platform/arch/arm/cortex-m/gcc/startup_gr
 
 ## Set LDFLAGS
 LDFLAGS += -Wl,--gc-sections
+LDFLAGS += -L../../../../../components/libraries/app_crypto/gcc/ -lapp_crypto
 LDFLAGS += -L../../../../../platform/soc/linker/gcc/ -lble_sdk
 
 ## Set compile output directory
@@ -241,6 +242,9 @@ $(BUILD_OBJ)/%.o : %.s
 $(BUILD)/$(MAKE_TARGET_NAME).hex: $(BUILD_LST)/$(MAKE_TARGET_NAME).elf
 	$(ECHO) "compile hex file ..."
 	$(V_OBJCOPY) $(OBJCOPY) -O ihex $< $@
+
+	arm-none-eabi-objdump -d $(BUILD_LST)/$(MAKE_TARGET_NAME).elf > $(BUILD_LST)/$(MAKE_TARGET_NAME).s
+	arm-none-eabi-size $(BUILD_LST)/$(MAKE_TARGET_NAME).elf
 
 $(BUILD)/$(MAKE_TARGET_NAME).bin: $(BUILD_LST)/$(MAKE_TARGET_NAME).elf
 	$(ECHO) "compile binary file ..."

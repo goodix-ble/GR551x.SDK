@@ -24,7 +24,7 @@ LR_FLASH APP_CODE_RUN_ADDR FLASH_SIZE {
 
     #if defined(XIP_MODE)
     ; Ram code space AREA
-    RAM_CODE (RAM_CODE_SPACE_START) RAM_CODE_SPACE_SIZE {
+    RAM_CODE (RAM_CODE_SPACE_START) {
         .ANY(RAM_CODE)
     }
     #endif

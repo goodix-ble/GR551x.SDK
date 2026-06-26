@@ -85,6 +85,13 @@
 #define PLATFORM_INIT_ENABLE      1
 #endif
 
+// <o> Enable auto remove protection AON WDT(3s) upon the completion of platform initialization
+// <0=> DISABLE
+// <1=> ENABLE
+#ifndef PLATFORM_REMOVE_AON_WDT_PROT_ENABLE
+#define PLATFORM_REMOVE_AON_WDT_PROT_ENABLE      1
+#endif
+
 // <o> Enable system fault trace module
 // <0=> DISABLE
 // <1=> ENABLE

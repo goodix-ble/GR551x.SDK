@@ -804,7 +804,11 @@ void hal_gpio_exti_callback(gpio_regs_t *GPIOx, uint16_t gpio_pin)
     }
 }
 
+#ifdef AON_GPIO_IRQ_HANDLER_SRAM
+SECTION_RAM_CODE void hal_aon_gpio_callback(uint16_t aon_gpio_pin)
+#else
 void hal_aon_gpio_callback(uint16_t aon_gpio_pin)
+#endif
 {
     app_io_evt_t io_evt;
     uint16_t pin_index = 0;

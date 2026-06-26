@@ -1061,9 +1061,6 @@
 <name>$PROJ_DIR$\..\..\..\..\..\drivers\src\app_uart.c</name>
 </file>
 <file>
-<name>$PROJ_DIR$\..\..\..\..\..\drivers\src\app_spi.c</name>
-</file>
-<file>
 <name>$PROJ_DIR$\..\..\..\..\..\drivers\src\app_uart_dma.c</name>
 </file>
 </group>

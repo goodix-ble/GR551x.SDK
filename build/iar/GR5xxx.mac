@@ -1,0 +1,10 @@
+execUserReset()
+{
+    __message "IAR START DEBUG\r\n";
+    //Load stack pointer
+    #SP = __readMemory32(0x00000000, "Memory");
+    //Load program counter
+    #PC = __readMemory32(0x00000004, "Memory");
+    //Write 0 to vector table register, remap vector
+    __writeMemory32(0xE000ED08, 0x00000000, "Memory");
+}

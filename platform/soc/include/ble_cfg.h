@@ -134,9 +134,9 @@
 #define NON_RET_HEAP_SIZE   MEM_CALC_HEAP_LEN_IN_BYTES(328 * 2)
 
 #define PRF_BUF_SIZE              (92*USER_MAX_PRFS + 4)
-#define BOND_BUF_SIZE             (8*USER_MAX_BOND_DEVS + 4)
+#define BOND_BUF_SIZE             (15*USER_MAX_BOND_DEVS + 4)
 #define CONN_BUF_SIZE             (372*USER_MAX_CONNECTIONS + 4)
-#define SCAN_DUP_FILT_BUF_SIZE    (2 * USER_SCAN_DUP_FILT_NUM + 4)
+#define SCAN_DUP_FILT_BUF_SIZE    (10 * USER_SCAN_DUP_FILT_NUM + 4)
 
 #if (CFG_MAX_CONNECTIONS < 3) && (CFG_MAX_ADVS < 2) && (CFG_MESH_SUPPORT < 1)
 #define EM_BASE_ADDR               (0xB0008000)

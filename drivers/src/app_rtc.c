@@ -122,7 +122,7 @@ uint16_t app_rtc_deinit(void)
         return APP_DRV_ERR_INVALID_ID;
     }
 
-    clock_calib_notify_register(NULL);
+    clock_calib_notify_unregister(app_rtc_time_sync);
 
     s_rtc_env.rtc_state = APP_RTC_INVALID;
 
@@ -273,7 +273,7 @@ uint16_t app_rtc_deinit(void)
     HAL_ERR_CODE_CHECK(err_code);
 
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
-    clock_calib_notify_register(NULL);
+    clock_calib_notify_unregister(app_rtc_time_sync);
 #endif
 
     s_rtc_env.rtc_state = APP_RTC_INVALID;

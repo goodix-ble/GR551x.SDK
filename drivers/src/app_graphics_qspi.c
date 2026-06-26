@@ -941,7 +941,7 @@ bool app_qspi_async_veri_draw_screen(app_qspi_id_t screen_id,
 
     if(p_cur_scroll->frame_draw_lines > send_lines_once) {
 
-        if(APP_QSPI_EXCEPT_DEBUG_EN) printf("+++ ERR: Set psram(frame_draw_lines) <= %d in each Link Point\r\n", send_lines_once);
+        if(APP_QSPI_EXCEPT_DEBUG_EN) printf("+++ ERR: Set psram(frame_draw_lines) <= %ld in each Link Point\r\n", send_lines_once);
         p_qspi_env[screen_id]->start_flag = false;
         if(storage_id <= APP_QSPI_ID_2) {
             p_qspi_env[storage_id]->start_flag = false;
@@ -1145,7 +1145,7 @@ bool app_qspi_async_llp_draw_block(app_qspi_id_t screen_id,
 
     if (p_cur_block->frame_draw_lines > send_lines_once) {
         if (APP_QSPI_EXCEPT_DEBUG_EN)
-            printf("+++ ERR: Set psram(frame_draw_lines) <= %d in each Link Point\r\n", send_lines_once);
+            printf("+++ ERR: Set psram(frame_draw_lines) <= %ld in each Link Point\r\n", send_lines_once);
 
         p_qspi_env[screen_id]->start_flag = false;
 
@@ -1319,13 +1319,13 @@ uint16_t app_qspi_send_display_frame(app_qspi_id_t screen_id,
         shift_bit  = 1;
     } else if(p_screen_cmd->data_size == QSPI_DATASIZE_32_BITS) {
         if(s_cmd.length % 4 != 0) {
-            printf("Not Support length: %d\r\n", s_cmd.length);
+            printf("Not Support length: %ld\r\n", s_cmd.length);
             return APP_DRV_ERR_INVALID_PARAM;
         }
         xfer_width = DMA_SDATAALIGN_WORD | DMA_DDATAALIGN_WORD ;
         shift_bit  = 2;
     } else {
-        printf("Not Support data_size: %d\r\n", p_screen_cmd->data_size);
+        printf("Not Support data_size: %ld\r\n", p_screen_cmd->data_size);
         return APP_DRV_ERR_INVALID_PARAM;
     }
 

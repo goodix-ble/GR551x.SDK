@@ -48,25 +48,21 @@
 #include "grx_sys.h"
 #include "board_SK.h"
 #include "dfu_master.h"
+#include "app_log.h"
 
 /*
  * LOCAL VARIABLE DEFINITIONS
  *****************************************************************************************
  */
-/**@brief Stack global variables for Bluetooth protocol stack. */
-STACK_HEAP_INIT(heaps_table);
-
 int main (void)
 {
-    // Initialize user peripherals.
-    app_periph_init();
+    systick_init();
+    uart_console_init();
+    uart_console_reset();
 
-    // Initialize BLE Stack.
-    ble_stack_init(ble_evt_handler, &heaps_table);
-
-    // loop
     while (1)
     {
-        dfu_m_schedule(app_dfu_rev_cmd_cb);
+        uart_console_schedule();
+        dfu_m_schedule(NULL);
     }
 }

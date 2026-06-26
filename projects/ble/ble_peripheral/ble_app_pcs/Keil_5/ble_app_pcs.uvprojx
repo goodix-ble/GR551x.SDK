@@ -9,13 +9,13 @@
       <TargetName>GRxx_Soc</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060750::V5.06 update 6 (build 750)::ARMCC</pCCUsed>
+      <pCCUsed>5060750::V5.06 update 6 (build 750)::.\ARMCC</pCCUsed>
       <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
           <Device>ARMCM4_FP</Device>
           <Vendor>ARM</Vendor>
-          <PackID>ARM.CMSIS.5.6.0</PackID>
+          <PackID>ARM.CMSIS.5.9.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IROM(0x00000000,0x80000) IRAM(0x20000000,0x20000) CPUTYPE(&quot;Cortex-M4&quot;) FPU2 CLOCK(12000000) ESEL ELITTLE</Cpu>
           <FlashUtilSpec/>
@@ -184,6 +184,8 @@
             <uocXRam>0</uocXRam>
             <RvdsVP>2</RvdsVP>
             <RvdsMve>0</RvdsMve>
+            <RvdsCdeCp>0</RvdsCdeCp>
+            <nBranchProt>0</nBranchProt>
             <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -350,7 +352,7 @@
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
             <useXO>0</useXO>
-            <uClangAs>0</uClangAs>
+            <ClangAsOpt>4</ClangAsOpt>
             <VariousControls>
               <MiscControls/>
               <Define>SVC_HANDLER_IN_PATCH_LIB</Define>
@@ -496,7 +498,27 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\components\libraries\pmu_calibration\pmu_calibration.c</FilePath>
             </File>
-          <File><FileName>ble.c</FileName><FileType>1</FileType><FilePath>..\..\..\..\..\components\sdk\ble.c</FilePath></File></Files>
+            <File>
+              <FileName>ble.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\sdk\ble.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_assert.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\app_assert\app_assert.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_error.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\app_error\app_error.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_log.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\app_log\app_log.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>gr_profiles</GroupName>

@@ -109,7 +109,7 @@ uint8_t prf_find_idx_by_handle(uint16_t handle,  uint16_t start_hdl,
     for (uint8_t i = 1; i < char_nb; i++) {
         byte = i / 8;
         bit  = i % 8;
-        if ((p_char_mask[byte] >> bit) & 0x01) {
+        if ((NULL == p_char_mask) || ((p_char_mask[byte] >> bit) & 0x01)) {
             // check if value handle correspond to requested handle
             if (cur_hdl == handle) {
                 index = i;
@@ -137,7 +137,7 @@ uint16_t prf_find_handle_by_idx(uint8_t idx, uint16_t start_hdl,
             byte = i / 8;
             bit  = i % 8;
 
-            if ((p_char_mask[byte] >> bit) & 0x01) {
+            if ((NULL == p_char_mask) || ((p_char_mask[byte] >> bit) & 0x01)) {
                 cur_hdl++;
 
                 if (i == idx) {
@@ -154,7 +154,8 @@ bool prf_is_cccd_value_valid(uint16_t cccd_value)
 {
     if (PRF_CLI_STOP_NTFIND == cccd_value || \
         PRF_CLI_START_NTF == cccd_value || \
-        PRF_CLI_START_IND == cccd_value)
+        PRF_CLI_START_IND == cccd_value || \
+        (PRF_CLI_START_NTF | PRF_CLI_START_IND) == cccd_value)
     {
         return true;
     }

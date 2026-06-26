@@ -97,7 +97,7 @@ void rng_polling(void)
     app_rng_init(&rng_polling_params, NULL);
     printf("\r\nuse the seed for user to generate random number(Polling)\r\n");
     app_rng_gen_sync(g_random_seed, &random_number);
-    printf("random numbers is %08x\r\n", random_number);
+    printf("random numbers is %08lx\r\n", random_number);
     app_rng_deinit();
 
     /* Use FR0 to generate true random number */
@@ -107,7 +107,7 @@ void rng_polling(void)
     app_rng_init(&rng_polling_params, NULL);
     printf("\r\nuse FR0 to generate random number(Polling)\r\n");
     app_rng_gen_sync(NULL, &random_number);
-    printf("random numbers is %08x\r\n", random_number);
+    printf("random numbers is %08lx\r\n", random_number);
     app_rng_deinit();
 }
 
@@ -118,7 +118,7 @@ void rng_interrupt(void)
     g_flag_it = 0;
     app_rng_gen_async(g_random_seed);
     while(g_flag_it == 0);
-    printf("random numbers is %08x\r\n", g_data);
+    printf("random numbers is %08lx\r\n", g_data);
     app_rng_deinit();
 
     /* Use FR0 to generate true random number */
@@ -130,7 +130,7 @@ void rng_interrupt(void)
     g_flag_it = 0;
     app_rng_gen_async(NULL);
     while(g_flag_it == 0);
-    printf("random numbers is %08x\r\n", g_data);
+    printf("random numbers is %08lx\r\n", g_data);
     app_rng_deinit();
 }
 

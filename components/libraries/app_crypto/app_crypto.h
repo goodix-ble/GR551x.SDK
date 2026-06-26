@@ -56,6 +56,7 @@
 #define AC_SUCCESS                   0
 #define AC_ERR_INVALID_PARAM        -1
 #define AC_ERR_INVALID_TYPE         -2
+#define AC_ERR_AUTH_FAIL            -3
 #define AC_ERR_INTERNAL             -99
 /** @} */
 

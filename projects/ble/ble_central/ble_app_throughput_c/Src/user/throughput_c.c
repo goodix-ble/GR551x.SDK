@@ -144,18 +144,29 @@ static bool ci_param_send(uint8_t *p_data, uint16_t length)
         data_length++;
     }
 
-    ci_param_send_data[0] = 0x00;
-    ci_param_send_data[1] = LO_U16(ci_param_check[0]);
-    ci_param_send_data[2] = HI_U16(ci_param_check[0]);
-    ci_param_send_data[3] = LO_U16(ci_param_check[1]);
-    ci_param_send_data[4] = HI_U16(ci_param_check[1]);
-    ci_param_send_data[5] = LO_U16(ci_param_check[2]);
-    ci_param_send_data[6] = HI_U16(ci_param_check[2]);
-    ci_param_send_data[7] = LO_U16(ci_param_check[3]);
-    ci_param_send_data[8] = HI_U16(ci_param_check[3]);
+    uint16_t interval_min = ci_param_check[0];
+    uint16_t interval_max = ci_param_check[1];
+    uint16_t latency      = ci_param_check[2];
+    uint16_t timeout      = ci_param_check[3];
+    if ((interval_min < 6) || (interval_min > interval_max) || (timeout * 10 < ((1 + latency) * interval_max * 1.25 * 2)))
+    {
+        APP_LOG_INFO("Invalid parameter.");
+        return false;
+    }
+    else
+    {
+        ci_param_send_data[0] = 0x00;
+        ci_param_send_data[1] = LO_U16(ci_param_check[0]);
+        ci_param_send_data[2] = HI_U16(ci_param_check[0]);
+        ci_param_send_data[3] = LO_U16(ci_param_check[1]);
+        ci_param_send_data[4] = HI_U16(ci_param_check[1]);
+        ci_param_send_data[5] = LO_U16(ci_param_check[2]);
+        ci_param_send_data[6] = HI_U16(ci_param_check[2]);
+        ci_param_send_data[7] = LO_U16(ci_param_check[3]);
+        ci_param_send_data[8] = HI_U16(ci_param_check[3]);
+        ths_c_comm_param_send(0, ci_param_send_data, 9);
+    }
 
-
-    ths_c_comm_param_send(0, ci_param_send_data, 9);
     return true;
 }
 
@@ -462,18 +473,25 @@ static void print_response_from_peer(uint8_t *p_data, uint16_t length)
     switch (p_data[0])
     {
         case THS_C_SETTINGS_TYPE_CI:
-            interval = BUILD_U16(p_data[2], p_data[3]);
-            latency  = BUILD_U16(p_data[4], p_data[5]);
-            time_out = BUILD_U16(p_data[6], p_data[7]);
-            UNUSED_VARIABLE(interval);
-            UNUSED_VARIABLE(latency);
-            UNUSED_VARIABLE(time_out);
-            APP_LOG_INFO("Connection parameter setted.Interval:%d(%0.2fms); Latency:%d; Time out:%d(%dms).",
-                         interval,
-                         interval * 1.25,
-                         latency,
-                         time_out,
-                         time_out * 10);
+            if (BLE_SUCCESS != p_data[1])
+            {
+                APP_LOG_INFO("Connection parameter update failed, error code:0X%02x.", p_data[1]);
+            }
+            else
+            {
+                interval = BUILD_U16(p_data[2], p_data[3]);
+                latency  = BUILD_U16(p_data[4], p_data[5]);
+                time_out = BUILD_U16(p_data[6], p_data[7]);
+                UNUSED_VARIABLE(interval);
+                UNUSED_VARIABLE(latency);
+                UNUSED_VARIABLE(time_out);
+                APP_LOG_INFO("Connection parameter setted.Interval:%d(%d.%02dms); Latency:%d; Time out:%d(%dms).",
+                             interval,
+                             (int32_t)(interval * 1.25), (int32_t)((interval * 1.25 - (int32_t)(interval * 1.25)) * 100),
+                             latency,
+                             time_out,
+                             time_out * 10);
+            }
             break;
 
         case THS_C_SETTINGS_TYPE_PDU:

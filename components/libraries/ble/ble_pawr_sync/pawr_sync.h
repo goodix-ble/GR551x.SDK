@@ -70,7 +70,6 @@ void ble_gap_pawr_subevent_sync_param_set(ble_gap_per_sync_trans_param_t *sync_p
  *****************************************************************************************
  * @brief Capture pawr sync events on BLE.
  *
- * @param[in] p_evt:   Event ID on BLE.
  * @param[in] p_evt:   pointer on BLE event.
  *****************************************************************************************
  */

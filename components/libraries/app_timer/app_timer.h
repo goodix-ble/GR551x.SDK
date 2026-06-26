@@ -56,8 +56,6 @@
 /** @brief App timer assert enable define. */
 #define APP_TIMER_ASSERT_ENABLE   0
 
-/** @brief App timer trigger window enable define. */
-#define APP_TIMER_TRIGGER_WINDOW_ENABLE   1
 /** @} */
 
 /**
@@ -87,7 +85,6 @@ typedef void (*app_timer_fun_t)(void* p_ctx);
 /** @brief App timer global variable. */
 typedef struct app_timer_s
 {
-    uint8_t                  timer_mark;
     uint8_t                  timer_node_status;           /**< Timer node status. */
     uint8_t                  timer_node_mode;             /**< Next trigger mode. */
     uint64_t                 original_delay;              /**< Original delay (us). */
@@ -181,26 +178,6 @@ uint8_t app_timer_get_status(void);
  *****************************************************************************************
  */
 sdk_err_t app_timer_deinit(void);
-
-#if APP_TIMER_TRIGGER_WINDOW_ENABLE
-/**
- *****************************************************************************************
- * @brief  Set the app timer's trigger window, all timer nodes that fall within the window
- *         will be triggered at the same time.
- * @param[in] window_us: new trigger window size, in us
- *****************************************************************************************
- */
-void app_timer_trigger_window_set(uint64_t window_us);
-
-/**
- *****************************************************************************************
- * @brief  Get the app timer's trigger window, all timer nodes that fall within the window
- *         will be triggered at the same time.
- * @return current trigger window size, in us
- *****************************************************************************************
- */
-uint64_t app_timer_trigger_window_get(void);
-#endif
 
 #define IS_APP_TIMER_MODE(MODE)                             \
         (((MODE) == ATIMER_ONE_SHOT) || ((MODE) == ATIMER_REPEAT))

@@ -45,10 +45,12 @@
 #include "gr_plat.h"
 #include "custom_config.h"
 
+//no need BUILD_IN_APP_INFO in DTM ATE mode, remove it to reduce code size
+#ifndef DTM_ATE_ENABLE
 #if defined (__CC_ARM )
 const APP_INFO_t BUILD_IN_APP_INFO __attribute__((at(APP_INFO_ADDR))) =
 #elif (defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 6100100))
-const APP_INFO_t BUILD_IN_APP_INFO __attribute__((section(".ARM.__at_"APP_INFO_AT_ADDR), used )) =
+const APP_INFO_t BUILD_IN_APP_INFO __attribute__((section("APP_INFO"), used )) =
 #elif defined (__ICCARM__)
 __root const APP_INFO_t BUILD_IN_APP_INFO @ (APP_INFO_ADDR) =
 #else
@@ -69,6 +71,7 @@ const APP_INFO_t BUILD_IN_APP_INFO __attribute__((section(".app_info"))) =
 #endif
     .reserved1        = {APP_INFO_RESERVED}
 };
+#endif
 
 __WEAK void C_CONSTRUCTOR system_platform_init(void)
 {
@@ -84,9 +87,45 @@ __WEAK void C_CONSTRUCTOR system_platform_init(void)
 
 #elif defined ( __GNUC__ ) && !defined ( __CC_ARM )
 extern int main(void);
+
+#if defined (SOC_SGP)
+extern uint32_t __funcvector_load_start__, __funcvector_start__, __funcvector_end__;
+extern uint32_t __ram_code_load_start__, __ram_code_start__, __ram_code_end__;
+extern uint32_t __data_load_start__, __data_start__, __data_end__;
+extern uint32_t __bss_start__, __bss_end__;
+
+static void copy_section(uint32_t *src, uint32_t *dst, uint32_t *dst_end)
+{
+    while (dst < dst_end)
+    {
+        *dst++ = *src++;
+    }
+}
+
+static void zero_section(uint32_t *dst, uint32_t *dst_end)
+{
+    while (dst < dst_end)
+    {
+        *dst++ = 0;
+    }
+}
+
+void __main(void)
+{
+    copy_section(&__funcvector_load_start__, &__funcvector_start__, &__funcvector_end__);
+    copy_section(&__ram_code_load_start__,   &__ram_code_start__,   &__ram_code_end__);
+    copy_section(&__data_load_start__,       &__data_start__,       &__data_end__);
+    zero_section(&__bss_start__, &__bss_end__);
+    system_platform_init();
+    main();
+}
+
+#else
+
 void __main(void)
 {
     __asm("ldr    r1, =__etext\n");
+
     __asm("ldr    r2, =__data_start__\n");
     __asm("ldr    r3, =__data_end__\n");
     __asm(".L_loop1:\n");
@@ -95,6 +134,7 @@ void __main(void)
     __asm("ldrlt  r0, [r1], #4\n");
     __asm("strlt  r0, [r2], #4\n");
     __asm("blt    .L_loop1\n");
+
     __asm("ldr    r1, =__bss_start__\n");
     __asm("ldr    r2, =__bss_end__\n");
     __asm("movs   r0, 0\n");
@@ -106,6 +146,8 @@ void __main(void)
     system_platform_init();
     main();
 }
+#endif
+
 #elif defined ( __ICCARM__ )
 extern void __iar_program_start(void);
 void __main(void)

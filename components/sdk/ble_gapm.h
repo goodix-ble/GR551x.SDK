@@ -131,18 +131,9 @@
 #define BLE_APPEARANCE_OUTDOOR_SPORTS_ACT_LOC_POD          5187     /**< Location Pod (Outdoor Sports Activity subtype). */
 #define BLE_APPEARANCE_OUTDOOR_SPORTS_ACT_LOC_AND_NAV_POD  5188     /**< Location and Navigation Pod (Outdoor Sports Activity subtype). */
 
-/**@defgroup BLE_GAP_PHYS GAP PHYs (bitmask)
- * @{ */
-#define BLE_GAP_PHY_ANY       0x00     /**< No preferred PHY. */
-#define BLE_GAP_PHY_LE_1MBPS  (1 << 0) /**< LE 1M PHY preferred for an active link. */
-#define BLE_GAP_PHY_LE_2MBPS  (1 << 1) /**< LE 2M PHY preferred for an active link. */
-#define BLE_GAP_PHY_LE_CODED  (1 << 2) /**< LE Coded PHY preferred for an active link. */
-/**@} */
-
-
 /**@defgroup BLE_GAP_ADV_CHANNEL GAP ADV CHANNEL (bitmask)
  * @{ */
-#define BLE_GAP_ADV_CHANNEL_37              0x01 /**< Advertising Channel 37 (2402MHz). */ 
+#define BLE_GAP_ADV_CHANNEL_37              0x01 /**< Advertising Channel 37 (2402MHz). */
 #define BLE_GAP_ADV_CHANNEL_38              0x02 /**< Advertising Channel 38 (2426MHz). */
 #define BLE_GAP_ADV_CHANNEL_39              0x04 /**< Advertising Channel 39 (2480MHz). */
 #define BLE_GAP_ADV_CHANNEL_37_38_39        0x07 /**< Advertising Channel 37, 38, 39. */
@@ -741,7 +732,17 @@ typedef struct
 } ble_gap_bond_dev_list_t;
 
 /**
- * @brief White list 
+ * @brief Bonded device list with local address
+ */
+typedef struct
+{
+    uint8_t             num;                                 /**< Number of bonded device. */
+    ble_gap_bdaddr_t    peer_items[BLE_GAP_MAX_BOND_NUM];    /**< Bonded device addr info for peer. */
+    ble_gap_bdaddr_t    local_items[BLE_GAP_MAX_BOND_NUM];   /**< Bonded device addr info for local. */
+} ble_gap_bond_dev_list_with_local_addr_t;
+
+/**
+ * @brief White list
  */
 typedef struct
 {
@@ -976,6 +977,29 @@ uint16_t ble_gap_privacy_params_set(uint16_t renew_dur, bool enable_flag);
 
 /**
  ****************************************************************************************
+ * @brief Set privacy auto renew device address enable or disable, if needed.
+ *
+ * @param[in] enable: If true, stack would auto renew device address when renew duration tiemout.
+ *                    If false, stack would not auto renew device address.
+ ****************************************************************************************
+ */
+void ble_gap_privacy_auto_renew_addr_set(bool enable);
+
+/**
+ ****************************************************************************************
+ * @brief Set advertising rpa, can be called before advertising start.
+ *
+ * @param[in] adv_idx: Advertising index, range is 0 to 4.
+ * @param[in] rpa:     Pointer to rpa set.
+ *
+ * @retval SDK_SUCCESS: Operation is successful.
+ * @retval SDK_ERR_INVALID_PARAM: Invalid parameter supplied.
+ ****************************************************************************************
+ */
+uint16_t ble_gap_adv_rpa_rotate(uint8_t adv_idx, uint8_t rpa[BLE_GAP_ADDR_LEN]);
+
+/**
+ ****************************************************************************************
  * @brief Set suggested default LE data length.
  *
  * @param[in] sugg_max_tx_octet: Suggested value for the Controller's maximum transmitted number of payload octets to be used, the range is 27~251.
@@ -1008,8 +1032,8 @@ uint16_t ble_gap_l2cap_params_set(uint16_t max_mtu,uint16_t max_mps,uint8_t max_
  ****************************************************************************************
  * @brief Set the preferred values for the transmitter PHY and receiver PHY.
  *
- * @param[in] tx_pref_phy: A bit field that indicates the transmitter PHYs that the Host prefers the Controller to use(see @ref BLE_GAP_PHY_OPTIONS).
- * @param[in] rx_pref_phy: A bit field that indicates the receiver PHYs that the Host prefers the Controller to use(see @ref BLE_GAP_PHY_OPTIONS).
+ * @param[in] tx_pref_phy: A bit field that indicates the transmitter PHYs that the Host prefers the Controller to use(see @ref ble_gap_phy_bit_t).
+ * @param[in] rx_pref_phy: A bit field that indicates the receiver PHYs that the Host prefers the Controller to use(see @ref ble_gap_phy_bit_t).
  ****************************************************************************************
  */
 void ble_gap_pref_phy_set(uint8_t tx_pref_phy, uint8_t rx_pref_phy);
@@ -1055,11 +1079,9 @@ uint16_t ble_gap_chnl_map_timer_set(bool enable_flag);
  ****************************************************************************************
  * @brief Get all bonded devices.
  *
+ * @param[in] p_bond_list: Pointer to the bond list info.
+ *
  * @retval ::SDK_SUCCESS: Operation is successful.
- * @retval ::SDK_ERR_SDK_INTERNAL: SDK internal error.
- * @retval ::SDK_ERR_NVDS_NOT_INIT: NVDS is not initiated.
- * @retval ::SDK_ERR_LIST_ITEM_NOT_FOUND: Item not found in list.
- * @retval ::SDK_ERR_LIST_FULL: List is full.
  * @retval ::SDK_ERR_POINTER_NULL: Invalid pointer supplied.
  ****************************************************************************************
  */
@@ -1067,7 +1089,19 @@ uint16_t ble_gap_bond_devs_get(ble_gap_bond_dev_list_t *p_bond_list);
 
 /**
  ****************************************************************************************
- * @brief Get BD address of the bonded device.
+ * @brief Get all bonded devices with local address.
+ *
+ * @param[in] p_bond_list: Pointer to the bond list info.
+ *
+ * @retval ::SDK_SUCCESS: Operation is successful.
+ * @retval ::SDK_ERR_POINTER_NULL: Invalid pointer supplied.
+ ****************************************************************************************
+ */
+uint16_t ble_gap_bond_devs_get_with_local_addr(ble_gap_bond_dev_list_with_local_addr_t *p_bond_list);
+
+/**
+ ****************************************************************************************
+ * @brief Get BD address of the bonded device by connection index.
  *
  * @param[in] conn_idx:     The index of connection.
  * @param[in] p_peer_addr:  Pointer to the peer BD addrss
@@ -1077,7 +1111,7 @@ uint16_t ble_gap_bond_devs_get(ble_gap_bond_dev_list_t *p_bond_list);
  * @retval ::SDK_ERR_INVALID_PARAM: The parameter is invalid.
  ****************************************************************************************
  */
-uint16_t ble_gap_bond_dev_addr_get(uint8_t conn_idx, ble_gap_bdaddr_t *p_peer_addr);
+uint16_t ble_gap_bond_dev_addr_get_by_conn_idx(uint8_t conn_idx, ble_gap_bdaddr_t *p_peer_addr);
 
 /**
  ****************************************************************************************
@@ -1107,6 +1141,23 @@ uint16_t ble_gap_bond_devs_clear(void);
  ****************************************************************************************
  */
 uint16_t ble_gap_bond_dev_del(const ble_gap_bdaddr_t *p_peer_addr);
+
+/**
+ ****************************************************************************************
+ * @brief Delete a bond device with the specified BD address.
+ *
+ * @param[in] p_peer_addr: Pointer to the peer addrss.
+ * @param[in] p_local_addr: Pointer to the local addrss.
+ *
+ * @retval ::SDK_SUCCESS: Operation is successful.
+ * @retval ::SDK_ERR_SDK_INTERNAL: SDK internal error.
+ * @retval ::SDK_ERR_NVDS_NOT_INIT: NVDS is not initiated.
+ * @retval ::SDK_ERR_LIST_ITEM_NOT_FOUND: Item not found in list.
+ * @retval ::SDK_ERR_LIST_FULL: List is full.
+ * @retval ::SDK_ERR_POINTER_NULL: Invalid pointer supplied.
+ ****************************************************************************************
+ */
+uint16_t ble_gap_bond_dev_del_with_local_addr(const ble_gap_bdaddr_t *p_peer_addr, const ble_gap_bdaddr_t *p_local_addr);
 
 /**
  ****************************************************************************************
@@ -1604,6 +1655,23 @@ uint16_t ble_gap_lepsm_unregister(uint16_t le_psm);
  ****************************************************************************************
  */
 uint16_t ble_gap_privacy_mode_set(ble_gap_bdaddr_t peer_addr, ble_gap_privacy_mode_t mode);
+
+/**
+ *****************************************************************************************
+ * @brief  Add rpa list.
+ *
+ * @param[in] p_peer_iden_addr: Pointer to the peer identity address.
+ * @param[in] p_peer_irk: Pointer to the peer irk.
+ *
+ * @retval ::SDK_SUCCESS: Operation is Success.
+ * @retval ::SDK_ERR_POINTER_NULL: Invalid pointer supplied.
+ * @retval ::SDK_ERR_LIST_FULL: Rpa list is full.
+ * @retval ::SDK_ERR_LIST_ITEM_ALREADY_EXISTED: Item already exists in list.
+ * @retval ::SDK_ERR_DISALLOWED: Operation is disallowed.
+ * @retval ::SDK_ERR_NO_RESOURCES: Not enough resources for operation.
+ *****************************************************************************************
+ */
+uint16_t ble_gap_rpa_list_add(ble_gap_bdaddr_t *p_peer_iden_addr, uint8_t *p_peer_irk);
 
 /**
  ****************************************************************************************

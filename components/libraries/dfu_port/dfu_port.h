@@ -34,23 +34,28 @@
   POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************************
  */
-#ifndef _DFU_PORT_H__
-#define _DFU_PORT_H__
+#ifndef __DFU_PORT_H__
+#define __DFU_PORT_H__
 
 #include "gr_includes.h"
 #include "otas.h"
 #include "gr5xx_dfu.h"
 
-#define DFU_COPY_UPGRADE_MODE_PATTERN       0x44425942                                                    /**< Double Bank update mode. */
-#define DFU_NON_COPY_UPGRADE_MODE_PATTERN   0x53424e42                                                    /**< Single Bank update mode. */
+#define DFU_COPY_UPGRADE_MODE_PATTERN       0x44425942U                                                   /**< Double Bank update mode. */
+#define DFU_NON_COPY_UPGRADE_MODE_PATTERN   0x53424e42U                                                   /**< Single Bank update mode. */
 
-#define DFU_FLASH_SECTOR_SIZE               4096                                                          /**< Flash sector size. */
+#define DFU_FLASH_SECTOR_SIZE               4096U                                                          /**< Flash sector size. */
 #define DFU_INFO_START_ADDR                 (FLASH_START_ADDR + 0x3000)                                   /**< The start address of dfu info. */
 #define DFU_FW_IMG_INFO_ADDR                (DFU_INFO_START_ADDR + 4)                                     /**< The start address of img info. */
 #define DFU_MODE_PATTER_ADDR                (DFU_INFO_START_ADDR + 4 + sizeof(dfu_image_info_t))          /**< The address of update mode pattern. */
 #define APP_INFO_START_ADDR                 (FLASH_START_ADDR + 0x2000)                                   /**< The address of app info. */
 #define CHIP_REGS_BASE_ADDR_SEC             (PERIPH_BASE + 0x10000)                                       /**< The address of chip regs. */
 
+#define DFU_MODE_COPY_UPGRADE               1U      /**< Copy DFU mode (Double bank, Background). */
+#define DFU_MODE_NON_COPY_UPGRADE           2U      /**< Non-Copy DFU mode (Single bank, Non-background). */
+#define DFU_SIGN_LEN                        856U    /**< Firmware signature length. */
+#define DFU_IMAGE_INFO_LEN                  48U     /**< Image information length. */
+#define DFU_ADV_NAME_RANDOM_DATA_SIZE       6U      /**< DFU advertising name random data size. */
 
 /**@brief DFU info. */
 typedef struct
@@ -58,6 +63,7 @@ typedef struct
     uint32_t            dfu_fw_save_addr;                                                                 /**< The save addr of dfu firmware. */
     dfu_image_info_t    dfu_img_info;                                                                     /**< The img_info of dfu firmware. */
     uint32_t            dfu_mode_pattern;                                                                 /**< The dfu mode pattern. */
+    uint8_t             dfu_adv_name_random_data[DFU_ADV_NAME_RANDOM_DATA_SIZE];                          /**< DFU advertising name random data. */
 } dfu_info_t;
 
 /**@brief DFU uart send data function definition. */
@@ -65,6 +71,57 @@ typedef void (*dfu_uart_send_data)(uint8_t *p_data, uint16_t length);
 
 /**@brief DFU enter callback definition. */
 typedef void (*dfu_enter_callback)(void);
+
+#if defined(SOC_GR5515) || defined(SOC_GR5X25) || defined(SOC_GR5526)
+/**
+ *****************************************************************************************
+ * @brief DFU flash port. Re-implement this interface to limit the scope of DFU flash writing
+ *
+ * @param[in] addr: Address to write data in flash.
+ * @param[in] p_data: Pointer to data buffer.
+ * @param[in] size: Size of p_data bytes.
+ * @return Size of bytes written.
+ *****************************************************************************************
+ */
+uint32_t dfu_exflash_write(uint32_t addr, const uint8_t *p_data, uint32_t size);
+
+/**
+ *****************************************************************************************
+ * @brief DFU flash port. Re-implement this interface to limit the scope of DFU flash erasing
+ *
+ * @param[in] addr: Address to erase data in flash.
+ * @param[in] size: Size of erase bytes.
+ * @return true: successful. false: failure.
+ *****************************************************************************************
+ */
+bool dfu_exflash_erase(uint32_t addr, uint32_t size);
+#else
+/**
+ *****************************************************************************************
+ * @brief DFU flash port. Re-implement this interface to limit the scope of DFU flash writing
+ *
+ * @param[in] addr: Address to write data in flash.
+ * @param[in] p_data: Pointer to data buffer.
+ * @param[in] size: Size of p_data bytes.
+ * @return Result of operation, @ref hal_status_t
+ *****************************************************************************************
+ */
+uint32_t dfu_exflash_write(uint32_t addr, uint8_t *p_data, uint32_t size);
+
+/**
+ *****************************************************************************************
+ * @brief DFU flash port. Re-implement this interface to limit the scope of DFU flash erasing
+ *
+ * @param[in] erase_type: Erase flash with sector/chip
+ *            @arg @ref EXFLASH_ERASE_SECTOR
+ *            @arg @ref EXFLASH_ERASE_CHIP
+ * @param[in] addr: Address to erase data in flash.
+ * @param[in] size: Size of erase bytes.
+ * @return Result of operation, @ref hal_status_t
+ *****************************************************************************************
+ */
+uint32_t dfu_exflash_erase(uint32_t erase_type, uint32_t addr, uint32_t size);
+#endif //defined(SOC_GR5515) || defined(SOC_GR5X25) || defined(SOC_GR5526)
 
 /**
  *****************************************************************************************
@@ -103,7 +160,6 @@ uint16_t dfu_port_init(dfu_uart_send_data uart_send_data, uint32_t dfu_fw_save_a
  */
 void dfu_schedule(void);
 
-
 /**
  *****************************************************************************************
  * @brief Function for reset fast dfu state.
@@ -118,15 +174,14 @@ void fast_dfu_state_machine_reset(void);
  * @brief  get the dfu firmware image info.
  *
  * @param[in]  dfu_fw_save_addr: The dfu firmware save address
- * @param[in]  fw_image_size   : The size of firmware 
- * @param[in]  is_sign_fw      : Whether it is an sign firware
+ * @param[in]  fw_image_size   : The size of firmware
+ * @param[in]  is_sign_fw      : Whether it is a sign firmware
  * @param[out] p_image_info    : The temporary variables that save imag_info
  *
  * @return Result of operation.
  ****************************************************************************************
  */
 uint16_t dfu_fw_image_info_get(uint32_t dfu_fw_save_addr, uint32_t fw_image_size, bool is_sign_fw, dfu_image_info_t *p_image_info);
-
 
 /**
  ****************************************************************************************
@@ -153,6 +208,4 @@ void dfu_mode_update(uint32_t mode_pattern);
 
 /** @} */
 
-#endif
-
-
+#endif // __DFU_PORT_H__

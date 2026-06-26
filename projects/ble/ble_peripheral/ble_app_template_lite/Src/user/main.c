@@ -75,7 +75,8 @@ int main (void)
 {
     // Initialize user peripherals.
     app_periph_init();
-    
+
+#ifndef SOC_GR5515
     stack_heaps_table_t heaps_table = { (uint32_t *)env_heap_buf,\
                                         (uint32_t *)att_db_heap_buf,\
                                         (uint32_t *)ke_msg_heap_buf,\
@@ -89,7 +90,30 @@ int main (void)
                                         (uint8_t *)bond_buf,\
                                         BOND_BUF_LITE_SIZE,\
                                         (uint8_t *)conn_buf,\
-                                        CONN_BUF_LITE_SIZE};
+                                        CONN_BUF_LITE_SIZE,\
+                                        0,\
+                                        0,\
+                                        0,\
+                                        0,\
+                                        0};
+#else
+    stack_heaps_table_t heaps_table = { (uint32_t *)env_heap_buf,\
+                                        (uint32_t *)att_db_heap_buf,\
+                                        (uint32_t *)ke_msg_heap_buf,\
+                                        (uint32_t *)non_ret_heap_buf,\
+                                        ENV_HEAP_LITE_SIZE,\
+                                        ATT_DB_HEAP_LITE_SIZE,\
+                                        KE_MSG_HEAP_LITE_SIZE,\
+                                        NON_RET_HEAP_LITE_SIZE,\
+                                        (uint8_t *)prf_buf,\
+                                        PRF_BUF_LITE_SIZE,\
+                                        (uint8_t *)bond_buf,\
+                                        BOND_BUF_LITE_SIZE,\
+                                        (uint8_t *)conn_buf,\
+                                        CONN_BUF_LITE_SIZE,\
+                                        0,\
+                                        0};
+#endif
 
     // Initialize ble stack.
     ble_stack_init(ble_evt_handler, &heaps_table);

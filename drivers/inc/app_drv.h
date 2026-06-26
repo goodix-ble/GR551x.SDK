@@ -40,7 +40,7 @@
 #if APP_DRV_ASSERT_ENABLE
     #define APP_DRV_ASSERT(x)  if(!(x)) { __set_PRIMASK(1); while(1); }
 #else
-    #define APP_DRV_ASSERT(ignore)  ((void)0)
+    #define APP_DRV_ASSERT(ignore)  ((void)(ignore))
 #endif
 #endif
 

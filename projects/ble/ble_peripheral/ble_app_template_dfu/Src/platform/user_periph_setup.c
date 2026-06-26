@@ -55,15 +55,15 @@
  */
 /**@brief Bluetooth device address. */
 static const uint8_t  s_bd_addr[SYS_BD_ADDR_LEN] = {0x20, 0xaa, 0xcf, 0x3e, 0xcb, 0xea};
-static app_uart_params_t dfu_uart_param;
+static app_uart_params_t s_dfu_uart_param;
 
 #define DFU_UART_RX_BUFF_SIZE  0x400
 #define DFU_UART_TX_BUFF_SIZE  0x400
 
-#ifdef SOC_GR533X
-#define DFU_FW_SAVE_ADDR       (FLASH_START_ADDR + 0x40000)
-#else
+#if defined(SOC_GR5515) || defined(SOC_GR5X25) || defined(SOC_GR5526)
 #define DFU_FW_SAVE_ADDR       (FLASH_START_ADDR + 0x60000)
+#else
+#define DFU_FW_SAVE_ADDR       (FLASH_START_ADDR + 0x40000)
 #endif
 
 static uint8_t s_dfu_uart_rx_buffer[DFU_UART_RX_BUFF_SIZE];
@@ -105,7 +105,7 @@ static void dfu_program_end_callback(uint8_t status)
 
 void dfu_uart_evt_handler(app_uart_evt_t * p_evt)
 {
-    switch(p_evt->type)
+    switch (p_evt->type)
     {
         case APP_UART_EVT_TX_CPLT:
             break;
@@ -118,7 +118,8 @@ void dfu_uart_evt_handler(app_uart_evt_t * p_evt)
         case APP_UART_EVT_ERROR:
             break;
 
-        default:break;
+        default:
+            break;
     }
 }
 
@@ -129,23 +130,23 @@ static void dfu_uart_init(void)
     uart_buffer.tx_buf       = s_dfu_uart_tx_buffer;
     uart_buffer.tx_buf_size  = DFU_UART_TX_BUFF_SIZE;
 
-    dfu_uart_param.id                   = APP_UART1_ID;
-    dfu_uart_param.init.baud_rate       = APP_UART_BAUDRATE;
-    dfu_uart_param.init.data_bits       = UART_DATABITS_8;
-    dfu_uart_param.init.stop_bits       = UART_STOPBITS_1;
-    dfu_uart_param.init.parity          = UART_PARITY_NONE;
-    dfu_uart_param.init.hw_flow_ctrl    = UART_HWCONTROL_NONE;
-    dfu_uart_param.init.rx_timeout_mode = UART_RECEIVER_TIMEOUT_ENABLE;
-    dfu_uart_param.pin_cfg.rx.type      = APP_UART1_RX_IO_TYPE;
-    dfu_uart_param.pin_cfg.rx.pin       = APP_UART1_RX_PIN;
-    dfu_uart_param.pin_cfg.rx.mux       = APP_UART1_RX_PINMUX;
-    dfu_uart_param.pin_cfg.rx.pull      = APP_UART_RX_PULL;
-    dfu_uart_param.pin_cfg.tx.type      = APP_UART1_TX_IO_TYPE;
-    dfu_uart_param.pin_cfg.tx.pin       = APP_UART1_TX_PIN;
-    dfu_uart_param.pin_cfg.tx.mux       = APP_UART1_TX_PINMUX;
-    dfu_uart_param.pin_cfg.tx.pull      = APP_UART_TX_PULL;
+    s_dfu_uart_param.id                   = APP_UART1_ID;
+    s_dfu_uart_param.init.baud_rate       = APP_UART1_BAUDRATE;
+    s_dfu_uart_param.init.data_bits       = UART_DATABITS_8;
+    s_dfu_uart_param.init.stop_bits       = UART_STOPBITS_1;
+    s_dfu_uart_param.init.parity          = UART_PARITY_NONE;
+    s_dfu_uart_param.init.hw_flow_ctrl    = UART_HWCONTROL_NONE;
+    s_dfu_uart_param.init.rx_timeout_mode = UART_RECEIVER_TIMEOUT_ENABLE;
+    s_dfu_uart_param.pin_cfg.rx.type      = APP_UART1_RX_IO_TYPE;
+    s_dfu_uart_param.pin_cfg.rx.pin       = APP_UART1_RX_PIN;
+    s_dfu_uart_param.pin_cfg.rx.mux       = APP_UART1_RX_PINMUX;
+    s_dfu_uart_param.pin_cfg.rx.pull      = APP_UART1_RX_PULL;
+    s_dfu_uart_param.pin_cfg.tx.type      = APP_UART1_TX_IO_TYPE;
+    s_dfu_uart_param.pin_cfg.tx.pin       = APP_UART1_TX_PIN;
+    s_dfu_uart_param.pin_cfg.tx.mux       = APP_UART1_TX_PINMUX;
+    s_dfu_uart_param.pin_cfg.tx.pull      = APP_UART1_TX_PULL;
 
-    app_uart_init(&dfu_uart_param, dfu_uart_evt_handler, &uart_buffer);
+    app_uart_init(&s_dfu_uart_param, dfu_uart_evt_handler, &uart_buffer);
     app_uart_receive_async(APP_UART1_ID, s_dfu_uart_rx_buffer, sizeof(s_dfu_uart_rx_buffer));
 }
 
@@ -167,5 +168,3 @@ void app_periph_init(void)
     pwr_mgmt_mode_set(PMR_MGMT_ACTIVE_MODE);
     dfu_port_init(uart_send_data, DFU_FW_SAVE_ADDR, &dfu_pro_call);
 }
-
-

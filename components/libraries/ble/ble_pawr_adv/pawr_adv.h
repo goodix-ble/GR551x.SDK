@@ -49,7 +49,8 @@
 #include "gr_includes.h"
 #include "app_log.h"
 
-#define PAWR_MAX_SENT_DATA_LEN               251
+#define PAWR_MAX_SENT_BUFF_NUM               10
+#define PAWR_MAX_SENT_DATA_LEN               250
 #define PAWR_SENT_DATA_LEN_OFFSET            0
 #define PAWR_SENT_DATA_TYPE_OFFSET           1
 
@@ -69,6 +70,7 @@ typedef void (*pawr_rsp_data_report_func_t)(uint8_t subevet_idx, uint8_t rsp_slo
 
 typedef struct
 {
+    uint8_t grp_id;
     uint8_t sent_num;
     uint16_t data_len;
     uint8_t data_arr[PAWR_MAX_SENT_DATA_LEN];
@@ -87,7 +89,7 @@ typedef struct
  *
  *****************************************************************************************
  */
-void pawr_adv_param_fast_set(uint8_t adv_idx, struct ble_per_adv_param_t *per_adv_params_p);
+uint16_t pawr_adv_param_fast_set(uint8_t adv_idx, struct ble_per_adv_param_t *per_adv_params_p);
 
 /**
  *****************************************************************************************

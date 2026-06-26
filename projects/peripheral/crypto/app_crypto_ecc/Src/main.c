@@ -208,7 +208,7 @@ exit:
 void mbedtls_ecdsa_test(void)
 {
     int ret = 0;
-    int i;
+    uint32_t i;
     uint32_t slen = 0;
     uint8_t hash[32] = {
         0xf3, 0xae, 0xfe, 0x62, 0x96, 0x5a, 0x91, 0x90,
@@ -282,7 +282,7 @@ void mbedtls_ecdsa_test(void)
     }
 
     /* 4. sign */
-    ret = mbedtls_ecdsa_write_signature( &ctx, MBEDTLS_MD_NONE, hash, sizeof hash, signature, &slen, mbedtls_ctr_drbg_random, &ctr_drbg );
+    ret = mbedtls_ecdsa_write_signature( &ctx, MBEDTLS_MD_NONE, hash, sizeof hash, signature, (size_t *)&slen, mbedtls_ctr_drbg_random, &ctr_drbg );
     if(ret != 0)
     {
         printf( " failed\n  ! mbedtls_ecdsa_write_signature returned %d\r\n", ret );

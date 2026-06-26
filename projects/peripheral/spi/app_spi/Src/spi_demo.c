@@ -74,7 +74,7 @@ static void  print_verify_data(uint32_t addr, uint8_t *p_data, uint32_t nbytes)
     {
         if (!(i & 0x7))
         {
-            printf("\r\n0x%08X\t", addr + i);
+            printf("\r\n0x%08lX\t", addr + i);
         }
         printf("0x%02X ", p_data[i]);
     }
@@ -147,7 +147,7 @@ static void spi_master_init(void)
     spi_flash_init(FLASH_CLOCK_PRESCALER);
 
     flash_id = spi_flash_read_id();
-    printf("Flash id is:0x%x\r\n", flash_id);
+    printf("Flash id is:0x%lx\r\n", flash_id);
 }
 
 static void spi_master_process(void)
@@ -173,7 +173,7 @@ static void spi_master_process(void)
         ret = data_cmp(FLASH_PROGRAM_START_ADDR, read_buffer, write_buffer, FLASH_OPERATION_LENGTH);
         if (ret == 0)
         {
-            printf("[Time:%02d:%02d] SPI flash read data verify success.\r\n", test_sec / 60, test_sec % 60);
+            printf("[Time:%02ld:%02ld] SPI flash read data verify success.\r\n", test_sec / 60, test_sec % 60);
         }
         else
         {

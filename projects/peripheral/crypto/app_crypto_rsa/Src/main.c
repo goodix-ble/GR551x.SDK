@@ -358,7 +358,7 @@ void mbedtls_rsa_rsassa_pkcs1_v15_test(void)
     /* 4. sign */
     printf( "\r\nRSA rsassa pkcs1 v15 sign..." );
 
-    ret = mbedtls_pk_sign( &ctx, MBEDTLS_MD_NONE, hash, 32, sig, &sig_len, mbedtls_ctr_drbg_random, &ctr_drbg );
+    ret = mbedtls_pk_sign( &ctx, MBEDTLS_MD_NONE, hash, 32, sig, (size_t *)&sig_len, mbedtls_ctr_drbg_random, &ctr_drbg );
     if(ret != 0) {
         printf("failed! mbedtls_rsa_pkcs1_sign returned %d(-0x%04x)\r\n", ret, -ret);
         goto exit;
@@ -449,7 +449,7 @@ void mbedtls_rsa_rsassa_pss_test(void)
     /* 4. sign */
     printf( "\r\nRSA rsassa pss sign..." );
 
-    ret = mbedtls_pk_sign( &ctx, MBEDTLS_MD_NONE, hash, 32, sig, &sig_len, mbedtls_ctr_drbg_random, &ctr_drbg );
+    ret = mbedtls_pk_sign( &ctx, MBEDTLS_MD_NONE, hash, 32, sig, (size_t *)&sig_len, mbedtls_ctr_drbg_random, &ctr_drbg );
     if(ret != 0) {
         printf("failed! mbedtls_rsa_pkcs1_sign returned %d(-0x%04x)\r\n", ret, -ret);
         goto exit;

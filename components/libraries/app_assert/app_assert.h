@@ -54,6 +54,28 @@
             app_assert_handler(#EXPR, __FILE__, __LINE__);  \
         }                                                   \
     } while(0)
+
+/**@brief APP_ASSERT info length defines. */
+#define APP_ASSERT_FILE_NAME_LEN             64             /**< Length of file name. Unit: byte. */
+#define APP_ASSERT_FILE_LINE_LEN             4              /**< Length of file line. Unit: byte. */
+#define APP_ASSERT_PARAM0_LEN                4              /**< Length of param0. Unit: byte. */
+#define APP_ASSERT_PARAM1_LEN                4              /**< Length of param1. Unit: byte. */
+
+/** @} */
+
+/**
+ * @defgroup APP_ASSERT_ENUM Enums
+ * @{
+ */
+/**
+  * @brief APP_ASSERT_ERROR error code.
+  */
+typedef enum
+{
+    APP_ASSERT_SUCCESS                   = 0x0,
+    APP_ASSERT_NO_INFO                   = 0x1,
+    APP_ASSERT_INSUFFICIENT_BUFFER_SPACE = 0x2
+} app_assert_error_t;
 /** @} */
 
 /**
@@ -113,6 +135,19 @@ void app_assert_param_cb(int param0, int param1, const char *file, int line);
  */
 void app_assert_err_cb(const char *expr, const char *file, int line);
 
+/**
+ *****************************************************************************************
+ * @brief Get assert information.
+ *
+ * @param[in] p_info:     A buffer that points to the storage of p_info.
+ *                        Layout: APP_ASSERT_FILE_NAME_LEN bytes file_name + APP_ASSERT_FILE_LINE_LEN byte file_line + APP_ASSERT_PARAM0_LEN byte param0 + APP_ASSERT_PARAM1_LEN byte param1.
+ * @param[in] info_len:   buffer length.
+ *                        Note: info_len >= (APP_ASSERT_FILE_NAME_LEN + APP_ASSERT_FILE_LINE_LEN + APP_ASSERT_PARAM0_LEN + APP_ASSERT_PARAM1_LEN).
+ *
+ * @return Result of get assert info. @ref APP_ASSERT_ERROR.
+ *****************************************************************************************
+ */
+app_assert_error_t app_assert_get_info(uint8_t *p_info, uint8_t info_len);
 
 /** @} */
 

@@ -166,7 +166,7 @@ uint8_t  rx_buffer[CFG_BOND_DEVS][BLE_TRANS_DATA_SIZE+6];                       
 static ble_sec_param_t s_sec_param =
 {
     .level    = BLE_SEC_MODE1_LEVEL1,
-    .io_cap   = BLE_SEC_IO_KEYBOARD_ONLY,
+    .io_cap   = BLE_SEC_IO_DISPLAY_ONLY,
     .oob      = false,
     .auth     = BLE_SEC_AUTH_BOND | BLE_SEC_AUTH_MITM,
     .key_size = 16,

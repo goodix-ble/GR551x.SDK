@@ -203,7 +203,7 @@ void lcp_init(void)
     lcp_config.access_address = ACCESS_ADDRESS;
     lcp_config.crc_init = CRC_INIT;
     lcp_config.rx_handler_cb = gdx_lcp_data_rx_handler_callback;
-    gdx_lcp_init(&lcp_config);
+    error_code = gdx_lcp_init(&lcp_config);
     APP_ERROR_CHECK(error_code);
     app_lcp_timer_init();
     APP_LOG_INFO("PRX Light Communication Protocol Client Example Started.");

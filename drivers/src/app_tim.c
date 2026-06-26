@@ -61,7 +61,7 @@ static const uint32_t    s_tim_instance[APP_TIM_ID_MAX] = { TIMER0_BASE, TIMER1_
 
 tim_env_t *p_tim_env[APP_TIM_ID_MAX];
 
-const static app_sleep_callbacks_t tim_sleep_cb =
+static const app_sleep_callbacks_t tim_sleep_cb =
 {
     .app_prepare_for_sleep = tim_prepare_for_sleep,
     .app_wake_up_ind       = tim_wake_up_ind,

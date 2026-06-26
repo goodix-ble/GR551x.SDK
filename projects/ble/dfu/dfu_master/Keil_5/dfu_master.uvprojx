@@ -582,9 +582,9 @@
               <FilePath>..\Src\platform\user_periph_setup.c</FilePath>
             </File>
             <File>
-              <FileName>user_dfu_m_cfg.c</FileName>
+              <FileName>user_dfu_master.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Src\platform\user_dfu_m_cfg.c</FilePath>
+              <FilePath>..\Src\platform\user_dfu_master.c</FilePath>
             </File>
           </Files>
         </Group>

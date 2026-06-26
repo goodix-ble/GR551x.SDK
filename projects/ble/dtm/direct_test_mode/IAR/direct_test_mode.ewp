@@ -213,7 +213,7 @@
                 <debug>1</debug>
                 <option>
                     <name>CCDefines</name>
-                    <state>GR5515_SK</state><state>APP_LOG_USE_BSP_CFG_ENABLE=0</state><state>DTM_TEST_ENABLE=1</state></option>
+                    <state>GR5515_SK</state><state>APP_LOG_USE_BSP_CFG_ENABLE=0</state></option>
                 <option>
                     <name>CCPreprocFile</name>
                     <state>0</state>

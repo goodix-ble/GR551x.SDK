@@ -78,6 +78,13 @@ extern "C" {
 
 /**
   * @brief SPI module Enumerations definition
+  * @note: 1. When the SPI device is configured as a Slave mode,
+  *          the pull-up or pull-down mode of the CS pin should be set according to the clock polarity:
+  *          if the clock polarity is configured for low level active, the CS pin should be configured as pull-up mode;
+  *          if the clock polarity is configured for high level active, the CS pin should be configured as pull-down mode.
+  *       2. It is recommended that when initializing the SPI Slave device,
+  *          the SPI Master device should first be initialized and in a stable state to avoid interference
+  *          to the Slave device from I/O signal changes during the Master device's initialization.
   */
 typedef enum
 {

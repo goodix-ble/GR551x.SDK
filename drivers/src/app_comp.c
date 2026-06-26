@@ -61,7 +61,7 @@ static void comp_wake_up_ind(void);
  */
 comp_env_t *p_comp_env = NULL;
 
-const static app_sleep_callbacks_t comp_sleep_cb =
+static const app_sleep_callbacks_t comp_sleep_cb =
 {
     .app_prepare_for_sleep = comp_prepare_for_sleep,
     .app_wake_up_ind       = comp_wake_up_ind

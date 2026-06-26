@@ -104,7 +104,7 @@ void app_dual_tim0_event_handler(app_dual_tim_evt_t *p_evt)
 {
     if (*p_evt == APP_DUAL_TIM_EVT_DONE)
     {
-         printf("\r\nThis is %dth call DUAL TIMER0.\r\n", g_tim0_cnt++);
+         printf("\r\nThis is %ldth call DUAL TIMER0.\r\n", g_tim0_cnt++);
     }
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
     if (*p_evt == APP_DUAL_TIM_EVT_ACT_START)
@@ -151,7 +151,7 @@ void app_dual_tim1_event_handler(app_dual_tim_evt_t *p_evt)
     if (*p_evt == APP_DUAL_TIM_EVT_DONE)
     {
          g_tim1_done_flag = 1;
-         printf("\r\n  This is %dth call DUAL TIMER1.\r\n", g_tim1_cnt++);
+         printf("\r\n  This is %ldth call DUAL TIMER1.\r\n", g_tim1_cnt++);
     }
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
     if (*p_evt == APP_DUAL_TIM_EVT_ACT_START)

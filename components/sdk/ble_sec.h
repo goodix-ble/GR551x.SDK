@@ -50,6 +50,7 @@
 #define __BLE_SEC_H__
 
 #include "ble_error.h"
+#include "ble_gapc.h"
 #include <stdbool.h>
 
 /**@addtogroup BLE_SM_DEFINES Defines
@@ -63,7 +64,7 @@
 #define BLE_SEC_AUTH_MITM              (1 << 2)           /**< MITM flag. */
 #define BLE_SEC_AUTH_SEC_CON           (1 << 3)           /**< Security connection flag. */
 #define BLE_SEC_AUTH_KEY_PRESS_NOTIFY  (1 << 4)           /**< Key press notify flag. */
-#define BLE_SEC_AUTH_ALL               (AUTH_BOND | AUTH_MITM | AUTH_SEC_CON | AUTH_KEY_PRESS_NOTIFY)  /**< All authentication flags are on. */
+#define BLE_SEC_AUTH_ALL               (BLE_SEC_AUTH_BOND | BLE_SEC_AUTH_MITM | BLE_SEC_AUTH_SEC_CON | BLE_SEC_AUTH_KEY_PRESS_NOTIFY)  /**< All authentication flags are on. */
 /**@} */
 
 /**@defgroup BLE_SEC_KEY_DIST_FLAG  SEC Key Distribution Flag
@@ -271,6 +272,21 @@ uint16_t ble_sec_enc_start(uint8_t conn_idx);
 
 /**
  ****************************************************************************************
+ * @brief Send pair request, this interface is used only by master.
+ *
+ * @note Invoke this api, the master will send pair request whether the peer device is bonded or not.
+ *
+ * @param[in] conn_idx: ACL connection index, the first ACL connection index is 0, and increased one by one.
+ *
+ * @retval ::SDK_SUCCESS: Send pair request is successfully set to the BLE stack.
+ * @retval ::SDK_ERR_INVALID_CONN_IDX: Invalid connection index supplied.
+ * @retval ::SDK_ERR_DISALLOWED: Operation is disallowed.
+ ****************************************************************************************
+ */
+uint16_t ble_sec_send_pair_req(uint8_t conn_idx);
+
+/**
+ ****************************************************************************************
  * @brief Send the encrypt confirm information
  *
  * @param[in] conn_idx:  ACL connection index, the first ACL connection index is 0, and increased one by one.
@@ -297,6 +313,18 @@ uint16_t ble_sec_enc_cfm(uint8_t conn_idx, const ble_sec_cfm_enc_t *p_cfm_enc);
  ****************************************************************************************
  */
 uint16_t ble_sec_keypress_notify_send(uint8_t conn_idx, uint8_t notify_type);
+
+/**
+ ****************************************************************************************
+ * @brief Check bonded state by peer address.
+ *
+ * @param[in] p_peer_iden_addr: Pointer to the peer identity address.
+ *
+ * @retval ::true: Peer address is bonded.
+ * @retval ::false: Peer address is not bonded.
+ ****************************************************************************************
+ */
+bool ble_sec_check_bonded_by_addr(ble_gap_bdaddr_t *p_peer_iden_addr);
 /** @} */
 
 #endif

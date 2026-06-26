@@ -71,7 +71,7 @@ const uint32_t s_io_to_input_src[ADC_INPUT_SRC_REF + 1] =
  */
 adc_env_t *p_adc_env = NULL;
 
-const static app_sleep_callbacks_t adc_sleep_cb =
+static const app_sleep_callbacks_t adc_sleep_cb =
 {
     .app_prepare_for_sleep = adc_prepare_for_sleep,
     .app_wake_up_ind       = adc_wake_up_ind
@@ -182,8 +182,13 @@ uint16_t app_adc_init(app_adc_params_t *p_params, app_adc_evt_handler_t evt_hand
     }
     p_adc_env = &(p_params->adc_env);
 
-    app_err_code = adc_config_gpio(p_params->init.input_mode, p_params->pin_cfg, p_params->init.ref_source);
-    APP_DRV_ERR_CODE_CHECK(app_err_code);
+    if (ADC_INPUT_SRC_TMP != p_params->init.channel_n && (ADC_INPUT_SRC_BAT != p_params->init.channel_n))
+    {
+        app_err_code = adc_config_gpio(p_params->init.input_mode, p_params->pin_cfg, p_params->init.ref_source);
+        APP_DRV_ERR_CODE_CHECK(app_err_code);
+
+        p_adc_env->p_pin_cfg = &p_params->pin_cfg;
+    }
 
     p_adc_env->evt_handler = evt_handler;
     memcpy(&p_adc_env->handle.init, &p_params->init, sizeof(adc_init_t));
@@ -200,16 +205,59 @@ uint16_t app_adc_init(app_adc_params_t *p_params, app_adc_evt_handler_t evt_hand
 
 uint16_t app_adc_deinit(void)
 {
-    hal_status_t  hal_err_code;
+    app_drv_err_t app_err_code = APP_DRV_SUCCESS;
+    hal_status_t hal_err_code = HAL_OK;
 
     if ((p_adc_env == NULL) || (p_adc_env->adc_state == APP_ADC_INVALID))
     {
         return APP_DRV_ERR_NOT_INIT;
     }
 
+    if (ADC_INPUT_SRC_TMP != p_adc_env->handle.init.channel_n && (ADC_INPUT_SRC_BAT != p_adc_env->handle.init.channel_n))
+    {
+#ifdef APP_ADC_SNSADC_ENABLE
+        if (p_adc_env->handle.init.input_mode == LL_ADC_INPUT_DIFFERENTIAL)
+#endif
+#ifdef APP_ADC_GPADC_ENABLE
+        if (IS_ADC_DIFF_INPUT(p_adc_env->handle.init.channel_n) && (p_adc_env->handle.init.channel_n == p_adc_env->handle.init.channel_p))
+#endif
+        {
+            app_err_code = app_io_deinit(p_adc_env->p_pin_cfg->channel_p.type, p_adc_env->p_pin_cfg->channel_p.pin);
+            APP_DRV_ERR_CODE_CHECK(app_err_code);
+        }
+
+        app_err_code = app_io_deinit(p_adc_env->p_pin_cfg->channel_n.type, p_adc_env->p_pin_cfg->channel_n.pin);
+        APP_DRV_ERR_CODE_CHECK(app_err_code);
+
+#ifdef APP_ADC_SNSADC_ENABLE
+        if (p_adc_env->handle.init.ref_source >= LL_ADC_REF_SRC_IO0)
+        {
+            app_err_code = app_io_deinit(p_adc_env->p_pin_cfg->extern_ref.type, p_adc_env->p_pin_cfg->extern_ref.pin);
+            APP_DRV_ERR_CODE_CHECK(app_err_code);
+        }
+#endif
+    }
+
+    app_adc_sample_node_t *p_node = p_adc_env->p_first_sample_node;
+    for (uint32_t num = 0; num < p_adc_env->multi_channel_total; num++)
+    {
+        if (s_io_to_input_src[p_node->channel])
+        {
+            app_err_code = app_io_deinit(APP_IO_TYPE_MSIO, s_io_to_input_src[p_node->channel]);
+            APP_DRV_ERR_CODE_CHECK(app_err_code);
+        }
+        if (NULL == p_node->next)
+        {
+            break;
+        }
+        p_node = p_node->next;
+    }
+
     p_adc_env->adc_state = APP_ADC_INVALID;
     p_adc_env->p_current_sample_node = NULL;
+    p_adc_env->p_first_sample_node = NULL;
     p_adc_env->multi_channel = 0;
+    p_adc_env->multi_channel_total = 0;
 
     pwr_unregister_sleep_cb(ADC_PWR_ID);
 
@@ -225,7 +273,7 @@ uint16_t app_adc_deinit(void)
 
 uint16_t app_adc_conversion_sync(uint16_t *p_data, uint32_t length, uint32_t timeout)
 {
-    hal_status_t err_code;
+    hal_status_t err_code = HAL_OK;
 
     if ((p_adc_env == NULL) || (p_adc_env->adc_state == APP_ADC_INVALID))
     {
@@ -317,7 +365,7 @@ uint16_t app_adc_conversion_async(uint16_t *p_data, uint32_t length)
 
 uint16_t app_adc_multi_channel_conversion_async(app_adc_sample_node_t *p_begin_node, uint32_t total_nodes)
 {
-    hal_status_t err_code;
+    hal_status_t err_code = HAL_OK;
     uint32_t check_node_num;
     app_adc_sample_node_t *p_check_node;
 
@@ -386,7 +434,9 @@ uint16_t app_adc_multi_channel_conversion_async(app_adc_sample_node_t *p_begin_n
     HAL_ERR_CODE_CHECK(err_code);
 
     p_adc_env->p_current_sample_node = p_begin_node;
+    p_adc_env->p_first_sample_node = p_begin_node;
     p_adc_env->multi_channel = total_nodes;
+    p_adc_env->multi_channel_total = total_nodes;
     err_code = hal_adc_start_dma(&p_adc_env->handle, p_begin_node->p_buf, p_begin_node->len);
     HAL_ERR_CODE_CHECK(err_code);
 

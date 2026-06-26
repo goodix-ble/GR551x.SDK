@@ -40,6 +40,9 @@ PRJ_C_SRC_FILES:=   \
 ../../../../../components/libraries/app_timer/app_timer.c  \
 ../../../../../components/libraries/pmu_calibration/pmu_calibration.c  \
 ../../../../../components/sdk/ble.c  \
+../../../../../components/libraries/app_assert/app_assert.c  \
+../../../../../components/libraries/app_error/app_error.c  \
+../../../../../components/libraries/app_log/app_log.c  \
 ../../../../../components/profiles/common/ble_prf_utils.c  \
 ../../../../../components/profiles/pcs/pcs.c  \
 ../../../../../external/segger_rtt/SEGGER_RTT.c  \
@@ -189,6 +192,7 @@ GCC_STARTUP_ASM_FILE 	= ../../../../../platform/arch/arm/cortex-m/gcc/startup_gr
 
 ## Set LDFLAGS
 LDFLAGS += -Wl,--gc-sections
+LDFLAGS += -L../../../../../components/libraries/app_crypto/gcc/ -lapp_crypto
 LDFLAGS += -L../../../../../platform/soc/linker/gcc/ -lble_sdk
 
 ## Set compile output directory
@@ -240,6 +244,9 @@ $(BUILD_OBJ)/%.o : %.s
 $(BUILD)/$(MAKE_TARGET_NAME).hex: $(BUILD_LST)/$(MAKE_TARGET_NAME).elf
 	$(ECHO) "compile hex file ..."
 	$(V_OBJCOPY) $(OBJCOPY) -O ihex $< $@
+
+	arm-none-eabi-objdump -d $(BUILD_LST)/$(MAKE_TARGET_NAME).elf > $(BUILD_LST)/$(MAKE_TARGET_NAME).s
+	arm-none-eabi-size $(BUILD_LST)/$(MAKE_TARGET_NAME).elf
 
 $(BUILD)/$(MAKE_TARGET_NAME).bin: $(BUILD_LST)/$(MAKE_TARGET_NAME).elf
 	$(ECHO) "compile binary file ..."

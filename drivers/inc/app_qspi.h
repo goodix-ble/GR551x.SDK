@@ -81,28 +81,26 @@ extern "C" {
   * @{
   */
 
-/** @addtogroup APP_QSPI_PIN Qspi pin defines
-  * @{
+/**
+  * @brief APP_QSPI_PIN Qspi pin defines
   */
 #define APP_QSPI_PIN_ENABLE                     1    /**< QSPI pin enable  */
 #define APP_QSPI_PIN_DISABLE                    0    /**< QSPI pin disable */
-/** @} */
 
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5526X) || (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5525X)
-/** @defgroup APP_MAX_XFER MAX_XREF Defines
-  * @{
+/**
+  * @brief APP_MAX_XFER MAX_XREF Defines
   */
 #define QSPI_MAX_XFER_SIZE_ONCE                 (0xFFFCu)            /**< max xfer beat in every qspi xfer */
 #define DMA_MAX_XFER_SIZE_ONCE                  (4095u)              /**< max xfer beat in every dma xfer  */
-/** @} */
 
 //#define APP_STORAGE_RAM_ID    0xf                  /**< Special ID to handle RAM Source */
 #endif
 
-/** @addtogroup QSPI_SMART_CS_ENABLE smart cs enable defines. NOTE: If QSPI_DATA_MODE_SPI, enable smart cs
-  * @{
-  */
 #ifndef QSPI_SMART_CS_ENABLE
+/**
+  * @brief QSPI_SMART_CS_ENABLE smart cs enable defines. NOTE: If QSPI_DATA_MODE_SPI, enable smart cs
+  */
   #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR551X)
     #define  QSPI_SMART_CS_ENABLE  1  /**< CS pin is controlled by software */
   #else
@@ -111,6 +109,9 @@ extern "C" {
 #endif
 
 #if QSPI_SMART_CS_ENABLE
+/**
+  * @brief QSPI_SMART_CS_LOW Pull down QSPI CS.
+  */
   #define QSPI_SMART_CS_LOW(id)                                           \
       do {                                                                \
               if(p_qspi_env[id]->p_pin_cfg->cs.enable == APP_QSPI_PIN_ENABLE) \
@@ -121,6 +122,9 @@ extern "C" {
               }                                                           \
           } while(0)
 
+/**
+  * @brief QSPI_SMART_CS_HIGH Pull up QSPI CS.
+  */
   #define QSPI_SMART_CS_HIGH(id)                                          \
       do {                                                                \
               if(p_qspi_env[id]->p_pin_cfg->cs.enable == APP_QSPI_PIN_ENABLE) \
@@ -134,7 +138,6 @@ extern "C" {
   #define QSPI_SMART_CS_LOW(id)
   #define QSPI_SMART_CS_HIGH(id)
 #endif /* QSPI_SMART_CS_ENABLE */
-/** @} */
 
 /** @} */
 

@@ -102,7 +102,7 @@ static void ancs_notify_attr_print(void)
     uint16_t UID;
     uint8_t attr_id;
     uint16_t attr_size = 0;
-    memcpy(&UID, &s_attr_buf[1], 4);
+    memcpy(&UID, &s_attr_buf[1], 2);
     memcpy(&attr_size, &s_attr_buf[6], 2);
 
     if (commd_id == CTRL_POINT_GET_NTF_ATTRIBUTE)

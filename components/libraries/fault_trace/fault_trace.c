@@ -317,7 +317,7 @@ sdk_err_t fault_db_record_add(const uint8_t *p_data, uint16_t length)
         s_fault_info_db_env.usable_tag = s_fault_info_db_env.rec_tag[0];
         s_fault_info_db_env.rec_tag[FAULT_INFO_RECORDS_MAX - 1] = 0xFFFF;
         s_fault_info_db_env.rec_num--;
-        memcpy(&s_fault_info_db_env.rec_tag[0],
+        memmove(&s_fault_info_db_env.rec_tag[0],
                &s_fault_info_db_env.rec_tag[1],
                (FAULT_INFO_RECORDS_MAX - 1) * sizeof(NvdsTag_t));
     }
@@ -415,26 +415,16 @@ sdk_err_t fault_db_record_clear(void)
     return fault_info_db_env_update();
 }
 
-#if defined ( __CC_ARM )
-void hardfault_trace_handler(unsigned int sp)
+void hardfault_trace_handler(uint32_t sp)
 {
-    unsigned int stacked_r0;
-    unsigned int stacked_r1;
-    unsigned int stacked_r2;
-    unsigned int stacked_r3;
-    unsigned int stacked_r12;
-    unsigned int stacked_lr;
-    unsigned int stacked_pc;
-    unsigned int stacked_psr;
-
-    stacked_r0  = ((unsigned long *)sp)[0];
-    stacked_r1  = ((unsigned long *)sp)[1];
-    stacked_r2  = ((unsigned long *)sp)[2];
-    stacked_r3  = ((unsigned long *)sp)[3];
-    stacked_r12 = ((unsigned long *)sp)[4];
-    stacked_lr  = ((unsigned long *)sp)[5];
-    stacked_pc  = ((unsigned long *)sp)[6];
-    stacked_psr = ((unsigned long *)sp)[7];
+    uint32_t stacked_r0 = ((uint32_t *)sp)[0];
+    uint32_t stacked_r1 = ((uint32_t *)sp)[1];
+    uint32_t stacked_r2 = ((uint32_t *)sp)[2];
+    uint32_t stacked_r3 = ((uint32_t *)sp)[3];
+    uint32_t stacked_r12 = ((uint32_t *)sp)[4];
+    uint32_t stacked_lr = ((uint32_t *)sp)[5];
+    uint32_t stacked_pc = ((uint32_t *)sp)[6];
+    uint32_t stacked_psr = ((uint32_t *)sp)[7];
 
     memset(s_fault_info, 0, FAULT_INFO_LEN_MAX);
 
@@ -442,39 +432,10 @@ void hardfault_trace_handler(unsigned int sp)
             stacked_r0, stacked_r1, stacked_r2, stacked_r3, stacked_r12, stacked_lr, stacked_pc, stacked_psr);
 
     fault_db_record_add((uint8_t *)s_fault_info, strlen(s_fault_info));
+
+    while (1)
+        ;
 }
-
-#elif defined ( __GNUC__ )
-
-void hardfault_trace_handler(unsigned int *args)
-{
-    unsigned int stacked_r0;
-    unsigned int stacked_r1;
-    unsigned int stacked_r2;
-    unsigned int stacked_r3;
-    unsigned int stacked_r12;
-    unsigned int stacked_lr;
-    unsigned int stacked_pc;
-    unsigned int stacked_psr;
-
-    stacked_r0  = ((unsigned long)args[0]);
-    stacked_r1  = ((unsigned long)args[1]);
-    stacked_r2  = ((unsigned long)args[2]);
-    stacked_r3  = ((unsigned long)args[3]);
-
-    stacked_r12 = ((unsigned long)args[4]);
-    stacked_lr  = ((unsigned long)args[5]);
-    stacked_pc  = ((unsigned long)args[6]);
-    stacked_psr = ((unsigned long)args[7]);
-
-    memset(s_fault_info, 0, FAULT_INFO_LEN_MAX);
-
-    sprintf(s_fault_info, "HARDFAULT CALLSTACK INFO: R0-%08X R1-%08X R2-%08X R3-%08X R12-%08X LR-%08X PC-%08X XPSR-%08X\r\n",
-            stacked_r0, stacked_r1, stacked_r2, stacked_r3, stacked_r12, stacked_lr, stacked_pc, stacked_psr);
-
-    fault_db_record_add((uint8_t *)s_fault_info, strlen(s_fault_info));
-}
-#endif
 
 #endif
 

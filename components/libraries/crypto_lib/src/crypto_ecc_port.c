@@ -1,3 +1,8 @@
+
+
+#include  "custom_config.h"
+#if !defined(SOC_GR533X) && !defined(SOC_SGP)
+
 #include "crypto_ecc_port.h"
 #include "crypto_pkc.h"
 #include "crypto_pkc_port.h"
@@ -183,3 +188,4 @@ uint32_t ecc_is_infinite_point(algo_ecc_point_t *point)
 
     return 1;
 }
+#endif

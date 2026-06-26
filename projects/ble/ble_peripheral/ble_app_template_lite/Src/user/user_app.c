@@ -120,7 +120,7 @@ static void gap_params_init(void)
     if (!strcmp((const char *)dev_name, BLE_GAP_DEVNAME_DEFAULT))
     {
         // Set the default Device Name.
-        ble_gap_device_name_set(BLE_GAP_WRITE_PERM_NOAUTH, DEVICE_NAME, strlen(DEVICE_NAME));
+        ble_gap_device_name_set(BLE_GAP_WRITE_PERM_NOAUTH, (uint8_t *)DEVICE_NAME, strlen(DEVICE_NAME));
     }
     else
     {

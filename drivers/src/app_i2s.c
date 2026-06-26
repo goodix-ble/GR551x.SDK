@@ -84,7 +84,7 @@ static const uint32_t  s_i2s_instance[APP_I2S_ID_MAX] = {I2S_S_BASE, I2S_M_BASE}
 
 i2s_env_t *p_i2s_env[APP_I2S_ID_MAX];
 
-const static app_sleep_callbacks_t i2s_sleep_cb =
+static const app_sleep_callbacks_t i2s_sleep_cb =
 {
     .app_prepare_for_sleep = i2s_prepare_for_sleep,
     .app_wake_up_ind       = i2s_wake_up_ind

@@ -125,7 +125,6 @@ sdk_err_t fault_db_records_dump(uint8_t *p_buffer, uint32_t *p_length);
  */
 sdk_err_t fault_db_record_clear(void);
 
-#if defined ( __CC_ARM )
 /**
  *****************************************************************************************
  * @brief Hardfault trace handler.
@@ -133,19 +132,8 @@ sdk_err_t fault_db_record_clear(void);
  * @param[in] sp: Stack Pointer.
  *****************************************************************************************
  */
-void hardfault_trace_handler(unsigned int sp);
+void hardfault_trace_handler(uint32_t sp);
 
-#elif defined ( __GNUC__ )
-
-/**
- *****************************************************************************************
- * @brief Hardfault trace handler.
- *
- * @param[in] args: Hardfault args.
- *****************************************************************************************
- */
-void hardfault_trace_handler(unsigned int *args);
-#endif
 /** @} */
 #endif
 #endif

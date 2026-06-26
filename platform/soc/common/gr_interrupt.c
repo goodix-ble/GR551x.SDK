@@ -58,39 +58,65 @@ extern void BusFault_Handler(void);
 extern void UsageFault_Handler(void);
 extern void SecureFault_Handler(void);
 
+#ifndef SYS_FAULT_TRACE_ENABLE
+#define SYS_FAULT_TRACE_ENABLE    0
+#endif
+
 /**
  ****************************************************************************************
  * @brief  hardfault Interrupt Handler
  * @retval void
  ****************************************************************************************
  */
-#ifdef SYS_FAULT_TRACE_ENABLE
-
+#if SYS_FAULT_TRACE_ENABLE
 __WEAK void app_log_flush(void)
 {
 }
 
-#if defined ( __CC_ARM )
-uint32_t R4_R11_REG[8];
-SECTION_RAM_CODE __WEAK void hardfault_trace_handler(uint32_t sp)
-{
-    printf("HARDFAULT CALLSTACK INFO:\r\n");
-    printf("================================\r\n");
-    printf("  r0: %08x     r1: %08x\r\n",   ((uint32_t *)sp)[0], ((uint32_t *)sp)[1]);
-    printf("  r2: %08x     r3: %08x\r\n",   ((uint32_t *)sp)[2], ((uint32_t *)sp)[3]);
-    printf("  r4: %08x     r5: %08x\r\n",   R4_R11_REG[0],  R4_R11_REG[1] );
-    printf("  r6: %08x     r7: %08x\r\n",   R4_R11_REG[2],  R4_R11_REG[3] );
-    printf("  r8: %08x     r9: %08x\r\n",   R4_R11_REG[4],  R4_R11_REG[5] );
-    printf("  r10:%08x     r11:%08x\r\n",   R4_R11_REG[6],  R4_R11_REG[7] );
-    printf("  r12:%08x     lr: %08x\r\n",   ((uint32_t *)sp)[4], ((uint32_t *)sp)[5]);
-    printf("  pc: %08x     xpsr: %08x\r\n", ((uint32_t *)sp)[6], ((uint32_t *)sp)[7]);
-    printf("================================\r\n");
-    app_log_flush();
-    while (1);
-}
-
 SECTION_RAM_CODE __WEAK void cortex_backtrace_fault_handler(uint32_t fault_handler_lr, uint32_t fault_handler_sp)
 {
+}
+
+static void hardfault_trace_impl(uint32_t sp)
+{
+    uint32_t stacked_r0 = ((uint32_t *)sp)[0];
+    uint32_t stacked_r1 = ((uint32_t *)sp)[1];
+    uint32_t stacked_r2 = ((uint32_t *)sp)[2];
+    uint32_t stacked_r3 = ((uint32_t *)sp)[3];
+
+    uint32_t stacked_r12 = ((uint32_t *)sp)[4];
+    uint32_t stacked_lr = ((uint32_t *)sp)[5];
+    uint32_t stacked_pc = ((uint32_t *)sp)[6];
+    uint32_t stacked_psr = ((uint32_t *)sp)[7];
+
+    printf("HARDFAULT CALLSTACK INFO:\r\n");
+    printf("================================\r\n");
+    printf("R0 = %x\r\n", stacked_r0);
+    printf("R1 = %x\r\n", stacked_r1);
+    printf("R2 = %x\r\n", stacked_r2);
+    printf("R3 = %x\r\n", stacked_r3);
+    printf("R12 = %x\r\n", stacked_r12);
+    printf("LR [R14] = %x  subroutine call return address\r\n", stacked_lr);
+    printf("PC [R15] = %x  program counter\r\n", stacked_pc);
+    printf("PSR = %x\r\n", stacked_psr);
+    printf("BFAR = %x\r\n", (*((volatile uint32_t *)(0xE000ED38U))));
+    printf("CFSR = %x\r\n", (*((volatile uint32_t *)(0xE000ED28U))));
+    printf("HFSR = %x\r\n", (*((volatile uint32_t *)(0xE000ED2CU))));
+    printf("DFSR = %x\r\n", (*((volatile uint32_t *)(0xE000ED30U))));
+    printf("AFSR = %x\r\n", (*((volatile uint32_t *)(0xE000ED3CU))));
+    printf("SCB_SHCSR = %x\r\n", SCB->SHCSR);
+    printf("================================\r\n");
+    app_log_flush();
+
+    for (;;)
+    {
+    }
+}
+
+#if defined ( __CC_ARM )
+SECTION_RAM_CODE __WEAK void hardfault_trace_handler(uint32_t sp)
+{
+    hardfault_trace_impl(sp);
 }
 
 SECTION_RAM_CODE __WEAK __asm void HardFault_Handler (void)
@@ -98,10 +124,10 @@ SECTION_RAM_CODE __WEAK __asm void HardFault_Handler (void)
 #if (ENABLE_BACKTRACE_FEA == 0)//use fault trace module
     PRESERVE8
     IMPORT  hardfault_trace_handler
-    IMPORT  R4_R11_REG
-    LDR R0,=R4_R11_REG
-    STMIA R0!,{R4-R11}
-    MOV R0,SP
+    TST LR,#4
+    ITE EQ
+    MRSEQ R0,MSP
+    MRSNE R0,PSP
     BL  hardfault_trace_handler
 #elif (ENABLE_BACKTRACE_FEA == 1)//use cortex_backtrace module
     PRESERVE8
@@ -116,52 +142,9 @@ Fault_Loop
     ALIGN
 }
 #elif(defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 6100100))
-__WEAK void __attribute__((used)) hardfault_trace_handler(unsigned int *hardfault_args)
+__WEAK void __attribute__((used)) hardfault_trace_handler(uint32_t sp)
 {
-    unsigned int stacked_r0;
-    unsigned int stacked_r1;
-    unsigned int stacked_r2;
-    unsigned int stacked_r3;
-    unsigned int stacked_r12;
-    unsigned int stacked_lr;
-    unsigned int stacked_pc;
-    unsigned int stacked_psr;
-
-    stacked_r0 = ((unsigned long) hardfault_args[0]);
-    stacked_r1 = ((unsigned long) hardfault_args[1]);
-    stacked_r2 = ((unsigned long) hardfault_args[2]);
-    stacked_r3 = ((unsigned long) hardfault_args[3]);
-
-    stacked_r12 = ((unsigned long) hardfault_args[4]);
-    stacked_lr = ((unsigned long) hardfault_args[5]);
-    stacked_pc = ((unsigned long) hardfault_args[6]);
-    stacked_psr = ((unsigned long) hardfault_args[7]);
-    printf("HARDFAULT CALLSTACK INFO:\r\n");
-    printf("================================\r\n");
-    printf("R0 = %x\r\n", stacked_r0);
-    printf("R1 = %x\r\n", stacked_r1);
-    printf("R2 = %x\r\n", stacked_r2);
-    printf("R3 = %x\r\n", stacked_r3);
-    printf("R12 = %x\r\n", stacked_r12);
-    printf("LR [R14] = %x  subroutine call return address\r\n", stacked_lr);
-    printf("PC [R15] = %x  program counter\r\n", stacked_pc);
-    printf("PSR = %x\r\n", stacked_psr);
-    printf("BFAR = %x\r\n", (*((volatile unsigned int *)(0xE000ED38U))));
-    printf("CFSR = %x\r\n", (*((volatile unsigned int *)(0xE000ED28U))));
-    printf("HFSR = %x\r\n", (*((volatile unsigned int *)(0xE000ED2CU))));
-    printf("DFSR = %x\r\n", (*((volatile unsigned int *)(0xE000ED30U))));
-    printf("AFSR = %x\r\n", (*((volatile unsigned int *)(0xE000ED3CU))));
-    printf("SCB_SHCSR = %x\r\n", SCB->SHCSR);
-    printf("================================\r\n");
-    app_log_flush();
-
-    for (;;)
-    {
-    }
-}
-
-SECTION_RAM_CODE __WEAK void cortex_backtrace_fault_handler(uint32_t fault_handler_lr, uint32_t fault_handler_sp)
-{
+    hardfault_trace_impl(sp);
 }
 
 SECTION_RAM_CODE __WEAK void HardFault_Handler (void)
@@ -186,52 +169,9 @@ SECTION_RAM_CODE __WEAK void HardFault_Handler (void)
     }
 }
 #elif defined ( __GNUC__ )
-__WEAK void __attribute__((used)) hardfault_trace_handler(unsigned int *hardfault_args)
+__WEAK void __attribute__((used)) hardfault_trace_handler(uint32_t sp)
 {
-    unsigned int stacked_r0;
-    unsigned int stacked_r1;
-    unsigned int stacked_r2;
-    unsigned int stacked_r3;
-    unsigned int stacked_r12;
-    unsigned int stacked_lr;
-    unsigned int stacked_pc;
-    unsigned int stacked_psr;
-
-    stacked_r0 = ((unsigned long) hardfault_args[0]);
-    stacked_r1 = ((unsigned long) hardfault_args[1]);
-    stacked_r2 = ((unsigned long) hardfault_args[2]);
-    stacked_r3 = ((unsigned long) hardfault_args[3]);
-
-    stacked_r12 = ((unsigned long) hardfault_args[4]);
-    stacked_lr = ((unsigned long) hardfault_args[5]);
-    stacked_pc = ((unsigned long) hardfault_args[6]);
-    stacked_psr = ((unsigned long) hardfault_args[7]);
-    printf("HARDFAULT CALLSTACK INFO:\r\n");
-    printf("================================\r\n");
-    printf("R0 = %x\r\n", stacked_r0);
-    printf("R1 = %x\r\n", stacked_r1);
-    printf("R2 = %x\r\n", stacked_r2);
-    printf("R3 = %x\r\n", stacked_r3);
-    printf("R12 = %x\r\n", stacked_r12);
-    printf("LR [R14] = %x  subroutine call return address\r\n", stacked_lr);
-    printf("PC [R15] = %x  program counter\r\n", stacked_pc);
-    printf("PSR = %x\r\n", stacked_psr);
-    printf("BFAR = %x\r\n", (*((volatile unsigned long *)(0xE000ED38U))));
-    printf("CFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED28U))));
-    printf("HFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED2CU))));
-    printf("DFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED30U))));
-    printf("AFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED3CU))));
-    printf("SCB_SHCSR = %x\r\n", SCB->SHCSR);
-    printf("================================\r\n");
-    app_log_flush();
-
-    for (;;)
-    {
-    }
-}
-
-SECTION_RAM_CODE __WEAK void cortex_backtrace_fault_handler(uint32_t fault_handler_lr, uint32_t fault_handler_sp)
-{
+   hardfault_trace_impl(sp);
 }
 
 SECTION_RAM_CODE __WEAK void HardFault_Handler (void)
@@ -254,57 +194,14 @@ SECTION_RAM_CODE __WEAK void HardFault_Handler (void)
 }
 
 #elif defined ( __ICCARM__ )
-__root void hardfault_trace_handler(unsigned int *hardfault_args)
+__root __WEAK void hardfault_trace_handler(uint32_t sp)
 {
-    unsigned int stacked_r0;
-    unsigned int stacked_r1;
-    unsigned int stacked_r2;
-    unsigned int stacked_r3;
-    unsigned int stacked_r12;
-    unsigned int stacked_lr;
-    unsigned int stacked_pc;
-    unsigned int stacked_psr;
-
-    stacked_r0 = ((unsigned long) hardfault_args[0]);
-    stacked_r1 = ((unsigned long) hardfault_args[1]);
-    stacked_r2 = ((unsigned long) hardfault_args[2]);
-    stacked_r3 = ((unsigned long) hardfault_args[3]);
-
-    stacked_r12 = ((unsigned long) hardfault_args[4]);
-    stacked_lr = ((unsigned long) hardfault_args[5]);
-    stacked_pc = ((unsigned long) hardfault_args[6]);
-    stacked_psr = ((unsigned long) hardfault_args[7]);
-    printf("HARDFAULT CALLSTACK INFO:\r\n");
-    printf("================================\r\n");
-    printf("R0 = %x\r\n", stacked_r0);
-    printf("R1 = %x\r\n", stacked_r1);
-    printf("R2 = %x\r\n", stacked_r2);
-    printf("R3 = %x\r\n", stacked_r3);
-    printf("R12 = %x\r\n", stacked_r12);
-    printf("LR [R14] = %x  subroutine call return address\r\n", stacked_lr);
-    printf("PC [R15] = %x  program counter\r\n", stacked_pc);
-    printf("PSR = %x\r\n", stacked_psr);
-    printf("BFAR = %x\r\n", (*((volatile unsigned long *)(0xE000ED38U))));
-    printf("CFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED28U))));
-    printf("HFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED2CU))));
-    printf("DFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED30U))));
-    printf("AFSR = %x\r\n", (*((volatile unsigned long *)(0xE000ED3CU))));
-    printf("SCB_SHCSR = %x\r\n", SCB->SHCSR);
-    printf("================================\r\n");
-    app_log_flush();
-
-    for (;;)
-    {
-    }
-}
-
-SECTION_RAM_CODE __WEAK void cortex_backtrace_fault_handler(uint32_t fault_handler_lr, uint32_t fault_handler_sp)
-{
+    hardfault_trace_impl(sp);
 }
 
 SECTION_RAM_CODE void __attribute__((naked))HardFault_Handler (void)
 {
-    extern void hardfault_trace_handler(unsigned int *hardfault_args);
+    extern void hardfault_trace_handler(uint32_t sp);
     extern void cortex_backtrace_fault_handler(uint32_t fault_handler_lr, uint32_t fault_handler_sp);
 
 #if (ENABLE_BACKTRACE_FEA == 0)//use fault trace module
@@ -312,11 +209,13 @@ SECTION_RAM_CODE void __attribute__((naked))HardFault_Handler (void)
                   "ITE     EQ \n\t"
                   "MRSEQ   R0,MSP \n\t"
                   "MRSNE   R0,PSP \n\t"
-                  "BL      hardfault_trace_handler");
+                  "LDR     R1, =hardfault_trace_handler \n\t"
+                  "BLX     R1");
 #elif (ENABLE_BACKTRACE_FEA == 1)//use cortex_backtrace module
     asm volatile ("MOV     r0, lr \n\t"
                   "MOV     r1, sp \n\t"
-                  "BL      cortex_backtrace_fault_handler");
+                  "LDR     R2, =cortex_backtrace_fault_handler \n\t"
+                  "BLX     R2");
 #endif
     for (;;)
     {
@@ -335,7 +234,6 @@ __WEAK void HardFault_Handler (void)
 #endif
 
 #else /*SYS_FAULT_TRACE_ENABLE*/
-
 SECTION_RAM_CODE __WEAK void HardFault_Handler (void)
 {
     for (;;)
@@ -403,6 +301,14 @@ __WEAK void SecureFault_Handler(void)
  * @retval  void
  ****************************************************************************************
  */
+#if defined (SOC_SGP)
+__WEAK void SVC_Handler(void)
+{
+    for (;;)
+    {
+    }
+}
+#else
 #if defined ( __CC_ARM )
 SECTION_RAM_CODE __WEAK __ASM void SVC_Handler(void)
 {
@@ -435,7 +341,7 @@ SECTION_RAM_CODE __WEAK void __attribute__((naked))SVC_Handler (void)
                   "BX     R0");
 }
 #endif
-
+#endif /* SOC_SGP */
 /**
  ****************************************************************************************
  * @brief  DebugMon Interrupt Handler

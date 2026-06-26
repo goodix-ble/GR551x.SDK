@@ -69,17 +69,17 @@
 #define QSPI_CLOCK_PRESCALER             8u                     /* The QSPI CLOCK Freq = Peripheral CLK/QSPI_CLOCK_PRESCALER */
 #define QSPI_WAIT_TIMEOUT_MS             1500u                  /* default time(ms) for     wait operation */
 #define QSPI_TIMING_MODE                 QSPI_CLOCK_MODE_0
-#endif
 
-/*****************************************
- * CHANGE FOLLOWING SETTINGS CAREFULLY !
- *****************************************/
 #if QSPI_CLOCK_PRESCALER == 2u
     #define QSPI_RX_SAMPLE_DELAY         1u
 #else
     #define QSPI_RX_SAMPLE_DELAY         0u
 #endif
+#endif
 
+/*****************************************
+ * CHANGE FOLLOWING SETTINGS CAREFULLY !
+ *****************************************/
 #define FLASH_SIZE_16M                   0x1000000
 
 /*
@@ -169,7 +169,7 @@ static void spi_app_spim_callback(app_spi_evt_t *p_evt)
         g_qspi_ctl.spi_tmt_done = 1;
         g_qspi_ctl.spi_rcv_done = 1;
         g_qspi_ctl.spi_tx_rx_done = 1;
-        printf("spi error event!!");
+        // printf("spi error event!!");
     }
 }
 
@@ -188,7 +188,7 @@ static void app_qspi_callback(app_qspi_evt_t *p_evt)
     {
         g_qspi_ctl.qspi_tmt_done = 1;
         g_qspi_ctl.qspi_rcv_done = 1;
-        printf("QSPI error event!!");
+        // printf("QSPI error event!!");
     }
 }
 #endif
@@ -201,7 +201,10 @@ static void spi_flash_write_enable(void)
     {
         g_qspi_ctl.spi_tmt_done = 0;
         app_spi_dma_transmit_async(g_qspi_ctl.spi_id, control_frame, sizeof(control_frame));
-        while(g_qspi_ctl.spi_tmt_done == 0);
+        while (g_qspi_ctl.spi_tmt_done == 0)
+        {
+            // Nothing to do.
+        }
     }
 #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5332X)
     else
@@ -238,7 +241,10 @@ static uint8_t spi_flash_read_status(void)
 
         g_qspi_ctl.spi_tx_rx_done = 0;
         app_spi_dma_read_eeprom_async(g_qspi_ctl.spi_id, &cmd, &status, 1,  1);
-        while(g_qspi_ctl.spi_tx_rx_done == 0);
+        while (g_qspi_ctl.spi_tx_rx_done == 0)
+        {
+            // Nothing to do.
+        }
     }
 #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5332X)
     else
@@ -276,8 +282,12 @@ static uint32_t spi_flash_device_size(void)
 
         g_qspi_ctl.spi_tx_rx_done = 0;
         app_spi_dma_read_eeprom_async(g_qspi_ctl.spi_id, control_frame, data, 5,  5);
-        while(g_qspi_ctl.spi_tx_rx_done == 0);
+        while (g_qspi_ctl.spi_tx_rx_done == 0)
+        {
+            // Nothing to do.
+        }
 
+        //lint -e690 -e831 The data is initialized to 5 bytes, so this operation will not go out of bounds.
         if (data[0] != 0 && data[3] < 0xFF)
         {
             flash_size = ((data[3] << 24) + (data[2] << 16) + (data[1] << 8) + (data[0] << 0) + 1) / 8;
@@ -320,7 +330,10 @@ static bool spim_flash_wakeup(void)
     uint8_t control_frame[1] = {SPI_FLASH_CMD_RDP};
     g_qspi_ctl.spi_tmt_done = 0;
     app_spi_transmit_async(g_qspi_ctl.spi_id, control_frame, sizeof(control_frame));
-    while(g_qspi_ctl.spi_tmt_done == 0);
+    while (g_qspi_ctl.spi_tmt_done == 0)
+    {
+        // Nothing to do.
+    }
 
     return true;
 }
@@ -330,7 +343,10 @@ static bool spim_flash_addr_32bit_enable(void)
    uint8_t control_frame[1] = {SPI_FLASH_CMD_ADDR_32BIT_EN};
    g_qspi_ctl.spi_tmt_done = 0;
    app_spi_transmit_async(g_qspi_ctl.spi_id, control_frame, sizeof(control_frame));
-   while(g_qspi_ctl.spi_tmt_done == 0);
+   while (g_qspi_ctl.spi_tmt_done == 0)
+   {
+        // Nothing to do.
+   }
 
    return true;
 }
@@ -340,7 +356,10 @@ static bool spim_flash_addr_32bit_disable(void)
    uint8_t control_frame[1] = {SPI_FLASH_CMD_ADDR_32BIT_DIS};
    g_qspi_ctl.spi_tmt_done = 0;
    app_spi_transmit_async(g_qspi_ctl.spi_id, control_frame, sizeof(control_frame));
-   while(g_qspi_ctl.spi_tmt_done == 0);
+   while (g_qspi_ctl.spi_tmt_done == 0)
+   {
+        // Nothing to do.
+   }
 
    return true;
 }
@@ -362,7 +381,10 @@ static uint32_t spim_flash_write(uint32_t address, uint8_t *buffer, uint32_t nby
 
     if(ret == APP_DRV_SUCCESS)
     {
-        while(g_qspi_ctl.spi_tmt_done == 0);
+        while (g_qspi_ctl.spi_tmt_done == 0)
+        {
+                // Nothing to do.
+        }
         return nbytes;
     }
     else
@@ -398,7 +420,10 @@ static uint32_t spim_flash_read(uint32_t address, uint8_t *buffer, uint32_t nbyt
 
     if(ret == APP_DRV_SUCCESS)
     {
-        while(g_qspi_ctl.spi_tx_rx_done == 0);
+        while (g_qspi_ctl.spi_tx_rx_done == 0)
+        {
+                // Nothing to do.
+        }
         return nbytes;
     }
     else
@@ -431,7 +456,10 @@ static bool spim_flash_sector_erase(uint32_t address)
 
     g_qspi_ctl.spi_tmt_done = 0;
     ret = app_spi_dma_transmit_async(g_qspi_ctl.spi_id, control_frame, addr_size);
-    while(g_qspi_ctl.spi_tmt_done == 0);
+    while (g_qspi_ctl.spi_tmt_done == 0)
+    {
+        // Nothing to do.
+    }
 
     return (ret == APP_DRV_SUCCESS) ? SPI_FLASH_ERASE_SUCCESS : SPI_FLASH_ERASE_FAIL;
 }
@@ -442,7 +470,10 @@ static bool qspi_flash_wakeup(void)
     uint8_t control_frame[1] = {SPI_FLASH_CMD_RDP};
     g_qspi_ctl.qspi_tmt_done = 0;
     app_qspi_dma_transmit_async_ex(g_qspi_ctl.qspi_id, QSPI_DATA_MODE_SPI, QSPI_DATASIZE_08_BITS, control_frame, sizeof(control_frame));
-    while(g_qspi_ctl.qspi_tmt_done == 0);
+    while (g_qspi_ctl.qspi_tmt_done == 0)
+    {
+        // Nothing to do.
+    }
 
     return true;
 }
@@ -452,7 +483,10 @@ static bool qspi_flash_addr_32bit_enable(void)
    uint8_t control_frame[1] = {SPI_FLASH_CMD_ADDR_32BIT_EN};
    g_qspi_ctl.qspi_tmt_done = 0;
    app_qspi_dma_transmit_async_ex(g_qspi_ctl.qspi_id, QSPI_DATA_MODE_SPI, QSPI_DATASIZE_08_BITS, control_frame, sizeof(control_frame));
-   while(g_qspi_ctl.qspi_tmt_done == 0);
+   while (g_qspi_ctl.qspi_tmt_done == 0)
+   {
+        // Nothing to do.
+   }
 
    return true;
 }
@@ -462,7 +496,10 @@ static bool qspi_flash_addr_32bit_disable(void)
    uint8_t control_frame[1] = {SPI_FLASH_CMD_ADDR_32BIT_DIS};
    g_qspi_ctl.qspi_tmt_done = 0;
    app_qspi_dma_transmit_async_ex(g_qspi_ctl.qspi_id, QSPI_DATA_MODE_SPI, QSPI_DATASIZE_08_BITS, control_frame, sizeof(control_frame));
-   while(g_qspi_ctl.qspi_tmt_done == 0);
+   while (g_qspi_ctl.qspi_tmt_done == 0)
+   {
+        // Nothing to do.    
+   }
 
    return true;
 }
@@ -491,7 +528,10 @@ static uint32_t qspi_flash_write(uint32_t address, uint8_t *buffer, uint32_t nby
 
     if(ret == APP_DRV_SUCCESS)
     {
-        while(g_qspi_ctl.qspi_tmt_done == 0);
+        while (g_qspi_ctl.qspi_tmt_done == 0)
+        {
+            // Nothing to do.
+        }
         return nbytes;
     }
     else
@@ -522,7 +562,10 @@ static uint32_t qspi_flash_dual_write(uint32_t address, uint8_t *buffer, uint32_
     ret = app_qspi_dma_command_transmit_async(g_qspi_ctl.qspi_id, &command, buffer);
     if(ret == APP_DRV_SUCCESS)
     {
-        while(g_qspi_ctl.qspi_tmt_done == 0);
+        while (g_qspi_ctl.qspi_tmt_done == 0)
+        {
+            // Nothing to do.
+        }
         return nbytes;
     }
     else
@@ -553,7 +596,10 @@ static uint32_t qspi_flash_read(uint32_t address, uint8_t *buffer, uint32_t nbyt
     ret = app_qspi_dma_command_receive_async(g_qspi_ctl.qspi_id, &command, &buffer[0]);
     if(ret == APP_DRV_SUCCESS)
     {
-        while(g_qspi_ctl.qspi_rcv_done == 0);
+        while (g_qspi_ctl.qspi_rcv_done == 0)
+        {
+            // Nothing to do.
+        }
         return nbytes;
     }
     else
@@ -584,7 +630,10 @@ static uint32_t qspi_flash_dual_read(uint32_t address, uint8_t *buffer, uint32_t
     ret = app_qspi_dma_command_receive_async(g_qspi_ctl.qspi_id, &command, &buffer[0]);
     if(ret == APP_DRV_SUCCESS)
     {
-        while(g_qspi_ctl.qspi_rcv_done == 0);
+        while (g_qspi_ctl.qspi_rcv_done == 0)
+        {
+            // Nothing to do.
+        }
         return nbytes;
     }
     else
@@ -619,7 +668,10 @@ static bool qspi_flash_sector_erase(uint32_t address)
     ret = app_qspi_dma_transmit_async_ex(g_qspi_ctl.qspi_id, QSPI_DATA_MODE_SPI, QSPI_DATASIZE_08_BITS, control_frame, addr_size);
     if(ret == APP_DRV_SUCCESS)
     {
-        while(g_qspi_ctl.qspi_tmt_done == 0);
+        while (g_qspi_ctl.qspi_tmt_done == 0)
+        {
+            // Nothing to do.
+        }
         return SPI_FLASH_ERASE_SUCCESS;
     }
     else
@@ -672,14 +724,14 @@ uint32_t spi_flash_init(flash_init_t *p_flash_init)
         ret = app_spi_init(&spim_params, spi_app_spim_callback);
         if (ret != 0)
         {
-            printf("SPI master initial failed! Please check the input paraments.\r\n");
+            // printf("SPI master initial failed! Please check the input paraments.\r\n");
             return SPI_FLASH_SPI_FAIL;
         }
         ret = app_spi_dma_init(&spim_params);
 
         if (ret != 0)
         {
-            printf("SPI master dma initial failed! Please check the input paraments.\r\n");
+            // printf("SPI master dma initial failed! Please check the input paraments.\r\n");
             return SPI_FLASH_SPI_DMA_FAIL;
         }
 
@@ -787,13 +839,13 @@ uint32_t spi_flash_init(flash_init_t *p_flash_init)
         ret = app_qspi_init(&qspi_params, app_qspi_callback);
         if (ret != 0)
         {
-            printf("QSPI initial failed! Please check the input paraments.");
+            // printf("QSPI initial failed! Please check the input paraments.");
             return SPI_FLASH_SPI_FAIL;
         }
         ret = app_qspi_dma_init(&qspi_params);
         if (ret != 0)
         {
-            printf("QSPI initial dma failed! Please check the input paraments.");
+            // printf("QSPI initial dma failed! Please check the input paraments.");
             return SPI_FLASH_SPI_DMA_FAIL;
         }
 
@@ -855,13 +907,13 @@ uint32_t spi_flash_deinit(void)
         ret = app_spi_dma_deinit(APP_SPI_ID_MASTER);
         if (ret != 0)
         {
-            printf("SPI deinitial failed! Please check the input paraments.");
+            // printf("SPI deinitial failed! Please check the input paraments.");
             return SPI_FLASH_SPI_DMA_FAIL;
         }
         ret = app_spi_deinit(APP_SPI_ID_MASTER);
         if (ret != 0)
         {
-            printf("SPI deinitial failed! Please check the input paraments.");
+            // printf("SPI deinitial failed! Please check the input paraments.");
             return SPI_FLASH_SPI_FAIL;
         }
     }
@@ -875,13 +927,13 @@ uint32_t spi_flash_deinit(void)
         ret = app_qspi_dma_deinit(g_qspi_ctl.qspi_id);
         if (ret != 0)
         {
-            printf("QSPI deinitial failed! Please check the input paraments.");
+            // printf("QSPI deinitial failed! Please check the input paraments.");
             return SPI_FLASH_SPI_DMA_FAIL;
         }
         ret = app_qspi_deinit(g_qspi_ctl.qspi_id);
         if (ret != 0)
         {
-            printf("QSPI deinitial failed! Please check the input paraments.");
+            // printf("QSPI deinitial failed! Please check the input paraments.");
             return SPI_FLASH_SPI_FAIL;
         }
     }
@@ -927,7 +979,10 @@ uint32_t spi_flash_write(uint32_t address, uint8_t *buffer, uint32_t nbytes)
             }
         }
 #endif
-        while(spi_flash_read_status() & 0x1);
+        while (spi_flash_read_status() & 0x1)
+        {
+            // Nothing to do.
+        }
 
         address += write_size;
         buffer += write_size;
@@ -1000,7 +1055,10 @@ bool spi_flash_sector_erase(uint32_t address, uint32_t size)
             status = qspi_flash_sector_erase(erase_addr);
         }
 #endif
-        while(spi_flash_read_status() & 0x1);
+        while (spi_flash_read_status() & 0x1)
+        {
+            // Nothing to do.
+        }
 
         erase_addr += erase_size;
     }
@@ -1010,7 +1068,7 @@ bool spi_flash_sector_erase(uint32_t address, uint32_t size)
 
 bool spi_flash_chip_erase(void)
 {
-    uint32_t ret;
+    uint32_t ret = APP_DRV_ERR_BUSY;
 
     uint8_t control_frame[1] = {SPI_FLASH_CMD_CE};
     spi_flash_write_enable();
@@ -1019,7 +1077,10 @@ bool spi_flash_chip_erase(void)
     {
         g_qspi_ctl.spi_tmt_done = 0;
         ret = app_spi_dma_transmit_async(g_qspi_ctl.spi_id, control_frame, sizeof(control_frame));
-        while(g_qspi_ctl.spi_tmt_done == 0);
+        while (g_qspi_ctl.spi_tmt_done == 0)
+        {
+            // Nothing to do.
+        }
     }
 #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5332X)
     else
@@ -1027,9 +1088,15 @@ bool spi_flash_chip_erase(void)
         g_qspi_ctl.qspi_tmt_done = 0;
         ret = app_qspi_dma_transmit_async_ex(g_qspi_ctl.qspi_id, QSPI_DATA_MODE_SPI, QSPI_DATASIZE_08_BITS, control_frame, sizeof(control_frame));
 
-        while(g_qspi_ctl.qspi_tmt_done == 0);
+        while (g_qspi_ctl.qspi_tmt_done == 0)
+        {
+            // Nothing to do.
+        }
     }
-    while(spi_flash_read_status() & 0x1);
+    while (spi_flash_read_status() & 0x1)
+    {
+        // Nothing to do.
+    }
 #endif
 
     return (ret == APP_DRV_SUCCESS) ? SPI_FLASH_ERASE_SUCCESS : SPI_FLASH_ERASE_FAIL;
@@ -1059,7 +1126,10 @@ void spi_flash_chip_reset(void)
     {
         g_qspi_ctl.spi_tmt_done = 0;
         app_spi_dma_transmit_async(g_qspi_ctl.spi_id, control_frame, sizeof(control_frame));
-        while(g_qspi_ctl.spi_tmt_done == 0);
+        while (g_qspi_ctl.spi_tmt_done == 0)
+        {
+            // Nothing to do.
+        }
     }
 #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5332X)
     else
@@ -1067,7 +1137,10 @@ void spi_flash_chip_reset(void)
         g_qspi_ctl.qspi_tmt_done = 0;
         app_qspi_dma_transmit_async_ex(g_qspi_ctl.qspi_id, QSPI_DATA_MODE_SPI, QSPI_DATASIZE_08_BITS, control_frame, sizeof(control_frame));
 
-        while(g_qspi_ctl.qspi_tmt_done == 0);
+        while(g_qspi_ctl.qspi_tmt_done == 0)
+        {
+            // Nothing to do.
+        }
     }
 #endif
     control_frame[0] = SPI_FLASH_CMD_RST;
@@ -1075,15 +1148,20 @@ void spi_flash_chip_reset(void)
     {
         g_qspi_ctl.spi_tmt_done = 0;
         app_spi_dma_transmit_async(g_qspi_ctl.spi_id, control_frame, sizeof(control_frame));
-        while(g_qspi_ctl.spi_tmt_done == 0);
+        while(g_qspi_ctl.spi_tmt_done == 0)
+        {
+            // Nothing to do.
+        }
     }
 #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5332X)
     else
     {
         g_qspi_ctl.qspi_tmt_done = 0;
-
         app_qspi_dma_transmit_async_ex(g_qspi_ctl.qspi_id, QSPI_DATA_MODE_SPI, QSPI_DATASIZE_08_BITS, control_frame, sizeof(control_frame));
-        while(g_qspi_ctl.qspi_tmt_done == 0);
+        while(g_qspi_ctl.qspi_tmt_done == 0)
+        {
+            // Nothing to do.
+        }
     }
 #endif
     return;
@@ -1099,7 +1177,10 @@ uint32_t spi_flash_device_id(void)
 
         g_qspi_ctl.spi_tx_rx_done = 0;
         app_spi_dma_read_eeprom_async(g_qspi_ctl.spi_id, control_frame, data, 1, 3);
-        while(g_qspi_ctl.spi_tx_rx_done == 0);
+        while (g_qspi_ctl.spi_tx_rx_done == 0)
+        {
+            // Nothing to do.
+        }
     }
 #if (APP_DRIVER_CHIP_TYPE != APP_DRIVER_GR5332X)
     else
@@ -1120,7 +1201,10 @@ uint32_t spi_flash_device_id(void)
             };
         g_qspi_ctl.qspi_rcv_done = 0;
         app_qspi_dma_command_receive_async(g_qspi_ctl.qspi_id, &command, data);
-        while(g_qspi_ctl.qspi_rcv_done == 0);
+        while (g_qspi_ctl.qspi_rcv_done == 0)
+        {
+            // Nothing to do.
+        }
     }
 #endif
     return (((uint32_t)data[0] << 16) + ((uint32_t)data[1] << 8) + data[2]);

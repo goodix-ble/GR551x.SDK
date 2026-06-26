@@ -314,7 +314,7 @@ static void app_sec_init(bool erase_bond)
     sdk_err_t    error_code;
 
     ble_gap_pair_enable(true);
-    error_code = ble_gap_device_name_set(BLE_GAP_WRITE_PERM_DISABLE, DEVICE_NAME, 
+    error_code = ble_gap_device_name_set(BLE_GAP_WRITE_PERM_DISABLE, (uint8_t *)DEVICE_NAME,
                                          strlen(DEVICE_NAME));
 
 #ifdef PTS_AUTO_TEST
@@ -447,8 +447,9 @@ static void ble_conn_evt_handler(ble_conn_evt_t *p_evt)
 
         case BLE_CONN_EVT_PATAM_UPDATED:
             APP_LOG_INFO("BLE_CONN_EVT_PATAM_UPDATED.");
-            APP_LOG_INFO("Connection update completed, intvl %0.2fms, ltcy %d, to %dms",
-                        p_evt->param.p_update_param->conn_interval * 1.25,
+            APP_LOG_INFO("Connection update completed, intvl %d.%02dms, ltcy %d, to %dms",
+                        (int32_t)(p_evt->param.p_update_param->conn_interval * 1.25),
+                        (int32_t)((p_evt->param.p_update_param->conn_interval * 1.25 - (int32_t)(p_evt->param.p_update_param->conn_interval * 1.25)) * 100),
                         p_evt->param.p_update_param->slave_latency,
                         p_evt->param.p_update_param->sup_timeout * 10);
             break;

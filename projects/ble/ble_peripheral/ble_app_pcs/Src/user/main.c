@@ -62,11 +62,22 @@ int main(void)
 
     if (is_enter_ultra_deep_sleep())
     {
+        #ifdef SOC_SGP
+        pwr_mgmt_ultra_sleep(0, 0);
+        #else
         pwr_mgmt_ultra_sleep(0);
+        #endif
     }
 
     // Initialize ble stack.
     ble_stack_init(ble_evt_handler, &heaps_table);
+
+#if defined(SOC_SGP)
+    extern void ble_rf_rx_agc_force(bool force_enable, uint8_t agc_grade);
+    ble_rf_rx_agc_force(true, 5); /**< force AGC level for BLE/CS RX for power test only, because auto AGC control will result in variation in RX current. 
+                                        But this configuration is not used in actual applicaiton. */
+#endif
+
 
     // Loop
     while (1)

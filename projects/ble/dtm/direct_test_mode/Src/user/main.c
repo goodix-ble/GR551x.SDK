@@ -66,12 +66,11 @@ extern void ble_test_evn_init(void);
 
 int main (void)
 {
-    pwr_mgmt_mode_set(PMR_MGMT_IDLE_MODE);
+#if DTM_TEST_ENABLE == 0
+    #error "Must define DTM_TEST_ENABLE as 1 in custom_config.h"
+#endif
+    //pwr_mgmt_mode_set(PMR_MGMT_IDLE_MODE);
     ble_hci_uart_init();
-
-    #if(defined SOC_GR533X)
-    ble_rf_tx_mode_set((ble_rf_tx_mode_t)RF_TX_PA_SELECT);
-    #endif
 
     #if (defined SOC_GR5X25) || (defined SOC_GR533X)
     ble_sdk_patch_env_init();
@@ -84,7 +83,7 @@ int main (void)
     //loop
     while(1)
     {
-        pwr_mgmt_schedule();
+        //pwr_mgmt_schedule();
     }
 }
 

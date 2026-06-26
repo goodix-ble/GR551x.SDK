@@ -67,7 +67,7 @@ void app_tim0_event_handler(app_tim_evt_t *p_evt)
 {
     if (*p_evt == APP_TIM_EVT_DONE)
     {
-         printf("\r\nThis is %dth call TIMER0.\r\n", g_tim0_cnt++);
+         printf("\r\nThis is %ldth call TIMER0.\r\n", g_tim0_cnt++);
     }
 #if (APP_DRIVER_CHIP_TYPE == APP_DRIVER_GR5332X)
     if(*p_evt == APP_TIM_EVT_CHANNEL0)

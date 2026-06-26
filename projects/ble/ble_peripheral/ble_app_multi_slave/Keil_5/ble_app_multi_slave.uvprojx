@@ -9,13 +9,13 @@
       <TargetName>GRxx_Soc</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060750::V5.06 update 6 (build 750)::ARMCC</pCCUsed>
+      <pCCUsed>5060750::V5.06 update 6 (build 750)::.\ARMCC</pCCUsed>
       <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
           <Device>ARMCM4_FP</Device>
           <Vendor>ARM</Vendor>
-          <PackID>ARM.CMSIS.5.8.0</PackID>
+          <PackID>ARM.CMSIS.5.6.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IROM(0x00000000,0x80000) IRAM(0x20000000,0x20000) CPUTYPE(&quot;Cortex-M4&quot;) FPU2 CLOCK(12000000) ESEL ELITTLE</Cpu>
           <FlashUtilSpec/>
@@ -88,7 +88,7 @@
             <nStopA1X>0</nStopA1X>
             <nStopA2X>0</nStopA2X>
           </AfterMake>
-          <SelectedForBatchBuild>0</SelectedForBatchBuild>
+          <SelectedForBatchBuild>1</SelectedForBatchBuild>
           <SVCSIdString/>
         </TargetCommonOption>
         <CommonProperty>
@@ -184,6 +184,8 @@
             <uocXRam>0</uocXRam>
             <RvdsVP>2</RvdsVP>
             <RvdsMve>0</RvdsMve>
+            <RvdsCdeCp>0</RvdsCdeCp>
+            <nBranchProt>0</nBranchProt>
             <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -203,12 +205,12 @@
             <Ro1Chk>0</Ro1Chk>
             <Ro2Chk>0</Ro2Chk>
             <Ro3Chk>0</Ro3Chk>
-            <Ir1Chk>0</Ir1Chk>
+            <Ir1Chk>1</Ir1Chk>
             <Ir2Chk>0</Ir2Chk>
             <Ra1Chk>0</Ra1Chk>
             <Ra2Chk>0</Ra2Chk>
             <Ra3Chk>0</Ra3Chk>
-            <Im1Chk>0</Im1Chk>
+            <Im1Chk>1</Im1Chk>
             <Im2Chk>0</Im2Chk>
             <OnChipMemories>
               <Ocm1>
@@ -335,9 +337,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls/>
-              <Define>CFG_MUL_LINK_WITH_SAME_DEV=1,CFG_MAX_SCAN=0,CFG_MAX_ADVS=2,SK_GUI_ENABLE=0,</Define>
+              <Define>CFG_MUL_LINK_WITH_SAME_DEV=1</Define>
               <Undefine/>
-              <IncludePath>..\Src\config;..\Src\platform;..\Src\user;..\Src\config;..\..\..\..\..\components\boards;..\..\..\..\..\components\drivers_ext\gr55xx;..\..\..\..\..\components\drivers_ext\st7735;..\..\..\..\..\components\drivers_ext\vs1005;..\..\..\..\..\components\libraries\app_alarm;..\..\..\..\..\components\libraries\app_assert;..\..\..\..\..\components\libraries\app_error;..\..\..\..\..\components\libraries\app_key;..\..\..\..\..\components\libraries\app_log;..\..\..\..\..\components\libraries\app_queue;..\..\..\..\..\components\libraries\app_timer;..\..\..\..\..\components\libraries\at_cmd;..\..\..\..\..\components\libraries\dfu_master;..\..\..\..\..\components\libraries\dfu_port;..\..\..\..\..\components\libraries\gui;..\..\..\..\..\components\libraries\gui\gui_config;..\..\..\..\..\components\libraries\hal_flash;..\..\..\..\..\components\libraries\hci_uart;..\..\..\..\..\components\libraries\pmu_calibration;..\..\..\..\..\components\libraries\ring_buffer;..\..\..\..\..\components\libraries\sensorsim;..\..\..\..\..\components\libraries\utility;..\..\..\..\..\components\patch\ind;..\..\..\..\..\components\profiles\ams_c;..\..\..\..\..\components\profiles\ancs_c;..\..\..\..\..\components\profiles\ans;..\..\..\..\..\components\profiles\ans_c;..\..\..\..\..\components\profiles\bas;..\..\..\..\..\components\profiles\bas_c;..\..\..\..\..\components\profiles\bcs;..\..\..\..\..\components\profiles\bps;..\..\..\..\..\components\profiles\common;..\..\..\..\..\components\profiles\cscs;..\..\..\..\..\components\profiles\cts;..\..\..\..\..\components\profiles\cts_c;..\..\..\..\..\components\profiles\dis;..\..\..\..\..\components\profiles\dis_c;..\..\..\..\..\components\profiles\gls;..\..\..\..\..\components\profiles\gus;..\..\..\..\..\components\profiles\gus_c;..\..\..\..\..\components\profiles\hids;..\..\..\..\..\components\profiles\hrrcps;..\..\..\..\..\components\profiles\hrs;..\..\..\..\..\components\profiles\hrs_c;..\..\..\..\..\components\profiles\hts;..\..\..\..\..\components\profiles\ias;..\..\..\..\..\components\profiles\lls;..\..\..\..\..\components\profiles\ndcs;..\..\..\..\..\components\profiles\otas;..\..\..\..\..\components\profiles\otas_c;..\..\..\..\..\components\profiles\pass;..\..\..\..\..\components\profiles\pass_c;..\..\..\..\..\components\profiles\pcs;..\..\..\..\..\components\profiles\rscs;..\..\..\..\..\components\profiles\rscs_c;..\..\..\..\..\components\profiles\rtus;..\..\..\..\..\components\profiles\sample;..\..\..\..\..\components\profiles\ths;..\..\..\..\..\components\profiles\ths_c;..\..\..\..\..\components\profiles\thscps;..\..\..\..\..\components\profiles\tps;..\..\..\..\..\components\profiles\wechat;..\..\..\..\..\components\sdk\;..\..\..\..\..\drivers\inc;..\..\..\..\..\drivers\inc\hal;..\..\..\..\..\external\freertos\include;..\..\..\..\..\external\segger_rtt;..\..\..\..\..\platform\arch\arm\cortex-m\cmsis\core\include;..\..\..\..\..\platform\boards;..\..\..\..\..\platform\include;..\..\..\..\..\platform\soc\include;..\..\..\..\..\platform\soc\linker\keil</IncludePath>
+              <IncludePath>..\Src\config;..\Src\platform;..\Src\user;..\Src\config;..\..\..\..\..\components\boards;..\..\..\..\..\components\drivers_ext\gr55xx;..\..\..\..\..\components\drivers_ext\st7735;..\..\..\..\..\components\drivers_ext\vs1005;..\..\..\..\..\components\libraries\app_alarm;..\..\..\..\..\components\libraries\app_assert;..\..\..\..\..\components\libraries\app_error;..\..\..\..\..\components\libraries\app_key;..\..\..\..\..\components\libraries\app_log;..\..\..\..\..\components\libraries\app_queue;..\..\..\..\..\components\libraries\app_timer;..\..\..\..\..\components\libraries\at_cmd;..\..\..\..\..\components\libraries\dfu_master;..\..\..\..\..\components\libraries\dfu_port;..\..\..\..\..\components\libraries\gui;..\..\..\..\..\components\libraries\gui\gui_config;..\..\..\..\..\components\libraries\hal_flash;..\..\..\..\..\components\libraries\hci_uart;..\..\..\..\..\components\libraries\pmu_calibration;..\..\..\..\..\components\libraries\ring_buffer;..\..\..\..\..\components\libraries\sensorsim;..\..\..\..\..\components\libraries\fault_trace;..\..\..\..\..\components\libraries\utility;..\..\..\..\..\components\patch\ind;..\..\..\..\..\components\profiles\ams_c;..\..\..\..\..\components\profiles\ancs_c;..\..\..\..\..\components\profiles\ans;..\..\..\..\..\components\profiles\ans_c;..\..\..\..\..\components\profiles\bas;..\..\..\..\..\components\profiles\bas_c;..\..\..\..\..\components\profiles\bcs;..\..\..\..\..\components\profiles\bps;..\..\..\..\..\components\profiles\common;..\..\..\..\..\components\profiles\cscs;..\..\..\..\..\components\profiles\cts;..\..\..\..\..\components\profiles\cts_c;..\..\..\..\..\components\profiles\dis;..\..\..\..\..\components\profiles\dis_c;..\..\..\..\..\components\profiles\gls;..\..\..\..\..\components\profiles\gus;..\..\..\..\..\components\profiles\gus_c;..\..\..\..\..\components\profiles\hids;..\..\..\..\..\components\profiles\hrrcps;..\..\..\..\..\components\profiles\hrs;..\..\..\..\..\components\profiles\hrs_c;..\..\..\..\..\components\profiles\hts;..\..\..\..\..\components\profiles\ias;..\..\..\..\..\components\profiles\lls;..\..\..\..\..\components\profiles\ndcs;..\..\..\..\..\components\profiles\otas;..\..\..\..\..\components\profiles\otas_c;..\..\..\..\..\components\profiles\pass;..\..\..\..\..\components\profiles\pass_c;..\..\..\..\..\components\profiles\pcs;..\..\..\..\..\components\profiles\rscs;..\..\..\..\..\components\profiles\rscs_c;..\..\..\..\..\components\profiles\rtus;..\..\..\..\..\components\profiles\sample;..\..\..\..\..\components\profiles\ths;..\..\..\..\..\components\profiles\ths_c;..\..\..\..\..\components\profiles\thscps;..\..\..\..\..\components\profiles\tps;..\..\..\..\..\components\profiles\wechat;..\..\..\..\..\components\sdk\;..\..\..\..\..\drivers\inc;..\..\..\..\..\drivers\inc\hal;..\..\..\..\..\external\freertos\include;..\..\..\..\..\external\segger_rtt;..\..\..\..\..\platform\arch\arm\cortex-m\cmsis\core\include;..\..\..\..\..\platform\boards;..\..\..\..\..\platform\include;..\..\..\..\..\platform\soc\include;..\..\..\..\..\platform\soc\linker\keil</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -350,10 +352,10 @@
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
             <useXO>0</useXO>
-            <uClangAs>0</uClangAs>
+            <ClangAsOpt>4</ClangAsOpt>
             <VariousControls>
               <MiscControls/>
-              <Define>SVC_HANDLER_IN_PATCH_LIB</Define>
+              <Define/>
               <Undefine/>
               <IncludePath/>
             </VariousControls>
@@ -482,11 +484,6 @@
               <FilePath>..\..\..\..\..\components\libraries\utility\utility.c</FilePath>
             </File>
             <File>
-              <FileName>sensorsim.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\sensorsim\sensorsim.c</FilePath>
-            </File>
-            <File>
               <FileName>app_timer.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\components\libraries\app_timer\app_timer.c</FilePath>
@@ -526,7 +523,22 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\components\libraries\app_key\app_key_core.c</FilePath>
             </File>
-          <File><FileName>ble.c</FileName><FileType>1</FileType><FilePath>..\..\..\..\..\components\sdk\ble.c</FilePath></File></Files>
+            <File>
+              <FileName>cortex_backtrace.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\app_error\cortex_backtrace.c</FilePath>
+            </File>
+            <File>
+              <FileName>fault_trace.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\fault_trace\fault_trace.c</FilePath>
+            </File>
+            <File>
+              <FileName>ble.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\sdk\ble.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>gr_profiles</GroupName>
@@ -537,24 +549,14 @@
               <FilePath>..\..\..\..\..\components\profiles\common\ble_prf_utils.c</FilePath>
             </File>
             <File>
-              <FileName>bas.c</FileName>
+              <FileName>hids.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\profiles\bas\bas.c</FilePath>
-            </File>
-            <File>
-              <FileName>dis.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\profiles\dis\dis.c</FilePath>
+              <FilePath>..\..\..\..\..\components\profiles\hids\hids.c</FilePath>
             </File>
             <File>
               <FileName>hrs.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\components\profiles\hrs\hrs.c</FilePath>
-            </File>
-            <File>
-              <FileName>hids.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\profiles\hids\hids.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -587,14 +589,14 @@
               <FilePath>..\Src\user\main.c</FilePath>
             </File>
             <File>
-              <FileName>user_app.c</FileName>
+              <FileName>heartrate_slave.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Src\user\user_app.c</FilePath>
+              <FilePath>..\Src\user\heartrate_slave.c</FilePath>
             </File>
             <File>
-              <FileName>user_keyboard.c</FileName>
+              <FileName>keyboard_slave.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Src\user\user_keyboard.c</FilePath>
+              <FilePath>..\Src\user\keyboard_slave.c</FilePath>
             </File>
             <File>
               <FileName>..\Src\config\custom_config.h</FileName>

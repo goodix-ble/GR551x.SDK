@@ -31,6 +31,8 @@
 
 #if defined(MBEDTLS_PKCS5_C)
 
+#include "mbedtls/platform_util.h"
+
 #include "mbedtls/pkcs5.h"
 #include "mbedtls/error.h"
 

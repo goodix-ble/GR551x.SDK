@@ -39,6 +39,7 @@
  * INCLUDE FILES
  *****************************************************************************************
  */
+#include "custom_config.h"
 #include "user_app.h"
 #include "user_periph_setup.h"
 #include "gr_includes.h"

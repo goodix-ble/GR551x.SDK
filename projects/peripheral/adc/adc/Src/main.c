@@ -175,7 +175,7 @@ void temperater_measure(void)
         aver = aver + conversion[i];
     }
     aver = aver/TEST_CONV_LENGTH;
-    printf("Average Temperature cocdes = %d\r\n", aver);
+    printf("Average Temperature cocdes = %ld\r\n", aver);
 
     app_adc_temperature_conv((uint16_t *)&aver, &temp, 1);
     printf("Temperature value= %0.1f C\r\n", temp);
@@ -220,7 +220,7 @@ void vbattery_measure(void)
         aver = aver + conversion[i];
     }
     aver = aver/(TEST_CONV_LENGTH);
-    printf("Average Vbattery cocdes = %d\r\n", aver);
+    printf("Average Vbattery cocdes = %ld\r\n", aver);
 
     app_adc_vbat_conv((uint16_t *)&aver, &vbat, 1);
     printf("Vbattery= %0.3f V\r\n", vbat);

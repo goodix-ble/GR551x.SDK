@@ -1136,7 +1136,7 @@
 <name>$PROJ_DIR$\..\Src\platform\user_periph_setup.c</name>
 </file>
 <file>
-<name>$PROJ_DIR$\..\Src\platform\user_dfu_m_cfg.c</name>
+<name>$PROJ_DIR$\..\Src\platform\user_dfu_master.c</name>
 </file>
 </group>
 <group>

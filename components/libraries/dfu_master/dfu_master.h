@@ -7,7 +7,7 @@
  *
  *****************************************************************************************
  * @attention
-  #####Copyright (c) 2019 GOODIX
+  #####Copyright (c) 2024 GOODIX
   All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@
  * INCLUDE FILES
  ****************************************************************************************
  */
+#include "dfu_master_config.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -48,9 +49,20 @@
  * @defgroup DFU_MASTER_MAROC Defines
  * @{
  */
-#define DFU_VERSION                          0x02                 /**< The DFU Version. */
-#define FAST_DFU_MODE_ENABLE                 0x02                 /**< Fast DFU Mode Enable. */
-#define FAST_DFU_MODE_DISABLE                0x00                 /**< Fast DFU Mode Disable. */
+#define DFU_VERSION                          0x02U   /**< The DFU Version. */
+
+#define FAST_DFU_MODE_ENABLE                 0x02U   /**< Fast DFU Mode Enable. */
+#define FAST_DFU_MODE_DISABLE                0x00U   /**< Fast DFU Mode Disable. */
+#define DFU_MODE_COPY_UPGRADE                1U      /**< Copy DFU mode (Double bank, Background). */
+#define DFU_MODE_NON_COPY_UPGRADE            2U      /**< Non-Copy DFU mode (Single bank, Non-background). */
+
+#define DFU_FW_ENC_OR_SIGN_PATTERN           0xDEADBEEFU  /**< FW encryption or signature pattern. */
+#define DFU_FW_SIGN_PATTERN                  0x4E474953U  /**< FW sign pattern("SIGN"). */
+
+// DFU master tx frame max length
+#define DFU_TX_FRAME_MAX                     (DFU_ONCE_PROGRAM_LEN + 15U)
+// DFU master rx frame max length
+#define DFU_RX_FRAME_MAX                     64U
 
 /**
  * @defgroup DFU_MASTER_ENUM Enumerations
@@ -59,30 +71,29 @@
 /**@brief DFU master event type definition. */
 typedef enum
 {
-    FRAM_CHECK_ERROR = 0,               /**< Frame check error event. */
-    IMG_INFO_CHECK_FAIL,                /**< FW info check event. */
-    IMG_INFO_LOAD_ADDR_ERROR,           /**< img info load addr error. */
-    GET_INFO_FAIL,                      /**< GET info error event. */
-    PRO_START_ERROR,                    /**< FW program start error event. */
-    PRO_START_SUCCESS,                  /**< FW program start success event. */
-    PRO_FLASH_SUCCESS,                  /**< FW program success event. */
-    PRO_FLASH_FAIL,                     /**< FW program fail event. */
-    PRO_END_SUCCESS,                    /**< FW program end success event. */
-    PRO_END_FAIL,                       /**< FW program end fail event. */
-    ERASE_START_SUCCESS,                /**< Erase Flash success. */
-    ERASEING_SUCCESS,                   /**< Erasing Flash success. */
-    ERASE_END_SUCCESS,                  /**< Erase end success. */
-    ERASE_REGION_NOT_ALIGNED,           /**< Erase regions not aligned. */
-    ERASE_REGION_OVERLAP,               /**< Erase regions overlap. */
-    ERASE_FLASH_FAIL,                   /**< Erase flash fail. */
-    ERASE_REGION_NOT_EXIST,             /**< Erase region not exist. */
-    FAST_DFU_PRO_FLASH_SUCCESS,         /**< fast dfu program flash sucess. */
-    FAST_DFU_FLASH_FAIL,                /**< FW write flash error. */
-    DFU_FW_SAVE_ADDR_CONFLICT           /**< DFU address confilct. */
+    FRAME_CHECK_ERROR = 0,              /**<0x00 Frame check error event. */
+    IMG_INFO_CHECK_FAIL,                /**<0x01 FW info check event. */
+    IMG_INFO_LOAD_ADDR_ERROR,           /**<0x02 img info load addr error. */
+    GET_INFO_FAIL,                      /**<0x03 GET info error event. */
+    PRO_START_ERROR,                    /**<0x04 FW program start error event. */
+    PRO_START_SUCCESS,                  /**<0x05 FW program start success event. */
+    PRO_FLASH_SUCCESS,                  /**<0x06 FW program success event. */
+    PRO_FLASH_FAIL,                     /**<0x07 FW program fail event. */
+    PRO_END_SUCCESS,                    /**<0x08 FW program end success event. */
+    PRO_END_FAIL,                       /**<0x09 FW program end fail event. */
+    ERASE_START_SUCCESS,                /**<0x0A Erase start success. */
+    ERASE_SUCCESS,                      /**<0x0B Erase success. */
+    ERASE_END_SUCCESS,                  /**<0x0C Erase end success. */
+    ERASE_REGION_NOT_ALIGNED,           /**<0x0D Erase regions not aligned. */
+    ERASE_REGION_OVERLAP,               /**<0x0E Erase regions overlap. */
+    ERASE_FLASH_FAIL,                   /**<0x0F Erase flash fail. */
+    ERASE_REGION_NOT_EXIST,             /**<0x10 Erase region not exist. */
+    FAST_DFU_PRO_FLASH_SUCCESS,         /**<0x11 fast dfu program flash success. */
+    FAST_DFU_FLASH_FAIL,                /**<0x12 FW write flash error. */
+    DFU_FW_SAVE_ADDR_CONFLICT,          /**<0x13 DFU address conflict. */
+    DFU_ACK_TIMEOUT                     /**<0x14 ACK timeout. */
 }dfu_m_event_t;
 /** @} */
-
-
 
 /**
  * @defgroup DFU_MASTER_STRUCT Structures
@@ -94,7 +105,7 @@ typedef struct
     uint32_t bin_size;
     uint32_t check_sum;
     uint32_t load_addr;
-    uint32_t run_addr ;
+    uint32_t run_addr;
     uint32_t xqspi_xip_cmd;
     uint32_t xqspi_speed:4;           /*!< bit: 0..3  clock speed */
     uint32_t code_copy_mode:1;        /*!< bit: 4 code copy mode */
@@ -117,11 +128,11 @@ typedef struct
 /**@brief DFU master used function config definition. */
 typedef struct
 {
-    void(*dfu_m_get_img_info)(dfu_img_info_t *img_info);                                    /**< This function is used to get updated firmware information. */
-    void (*dfu_m_get_img_data)(uint32_t addr, uint8_t *data, uint16_t len);                 /**< This function is used to get updated firmware data. */
-    void (*dfu_m_send_data)(uint8_t *data, uint16_t len);                                   /**< This function is used to send data to peer device. */
-    uint32_t (*dfu_m_fw_read)(const uint32_t addr, uint8_t *p_buf, const uint32_t size);    /**< This function is used to read firmware data. */
-    void (*dfu_m_event_handler)(dfu_m_event_t event, uint8_t pre);                          /**< This function is used to send event to app. */
+    void (*dfu_m_get_img_info)(dfu_img_info_t *img_info);                      /**< Get information about the firmware to be updated. */
+    void (*dfu_m_get_img_data)(uint32_t addr, uint8_t *data, uint16_t len);    /**< Get data about the firmware to be updated. */
+    void (*dfu_m_send_data)(uint8_t *data, uint16_t len);                      /**< Send data to peer device. */
+    void (*dfu_m_event_handler)(dfu_m_event_t event, uint8_t progress);        /**< Send event to app. */
+    uint32_t (*dfu_m_get_time)(void);                                          /**< Get system current time, in ms. */
 }dfu_m_func_cfg_t;
 /** @} */
 
@@ -139,67 +150,9 @@ typedef void (*dfu_m_rev_cmd_cb_t)(void);
  */
 /**
  *****************************************************************************************
- * @brief Function for reset the DFU cmd parse state.
- *****************************************************************************************
- */
-void dfu_m_parse_state_reset(void);
-
-/**
- *****************************************************************************************
- * @brief Function for checking DFU master cmd.
- *
- * @note This function should be called in loop.
- *****************************************************************************************
- */
-void dfu_m_schedule(dfu_m_rev_cmd_cb_t rev_cmd_cb);
-
-/**
- *****************************************************************************************
- * @brief Function for start update firmware.
- *
- * @param[in]  security: Upgrade firmware is encrypted?.
- * @param[in]  run_fw: Whether to run the firmware immediately after the upgrade.
- *****************************************************************************************
- */
-void dfu_m_program_start(bool security, bool run_fw);
-
-/**
- *****************************************************************************************
- * @brief Function for get system information.
- *
- *****************************************************************************************
- */
-void dfu_m_system_info_get(void);
-
-/**
- *****************************************************************************************
- * @brief Function for get information.
- *
- *****************************************************************************************
- */
-void dfu_m_get_info(void);
-
-/**
- *****************************************************************************************
- * @brief Function for set dfu mode.
- *
- *****************************************************************************************
- */
-void dfu_m_dfu_mode_set(uint8_t dfu_mode);
-
-/**
- *****************************************************************************************
- * @brief Function for get security mode.
- * @return Result of security mode.
- *****************************************************************************************
- */
-bool dfu_m_get_sec_flag(void);
-
-/**
- *****************************************************************************************
  * @brief Function for initializing the DFU master.
  *
- * @note When APP wants to add DFU master feature,all functions in @ref dfu_m_func_cfg_t should be registered.
+ * @note When APP wants to add DFU master feature, all functions in @ref dfu_m_func_cfg_t should be registered.
  *
  * @param[in]  dfu_m_func_cfg: DFU master used functions.
  * @param[in]  once_send_size: DFU master once send size.
@@ -209,22 +162,87 @@ void dfu_m_init(dfu_m_func_cfg_t *dfu_m_func_cfg, uint16_t once_send_size);
 
 /**
  *****************************************************************************************
- * @brief Function for prase received data.
+ * @brief Start DFU process.
+ *
+ *****************************************************************************************
+ */
+void dfu_m_start(void);
+
+/**
+ *****************************************************************************************
+ * @brief Function for reset the DFU cmd parse state.
+ * @note This function should be called when restart DFU.
+ *****************************************************************************************
+ */
+void dfu_m_parse_state_reset(void);
+
+/**
+ *****************************************************************************************
+ * @brief Function for checking DFU master cmd.
+ * @note This function should be called in loop.
+ *
+ * @param[in] rev_cmd_cb: Receive CMD callback.
+ *****************************************************************************************
+ */
+void dfu_m_schedule(dfu_m_rev_cmd_cb_t rev_cmd_cb);
+
+/**
+ *****************************************************************************************
+ * @brief Function for parse received data.
  *
  * @param[in]  data: Received data.
  * @param[in]  len: Data length.
  *****************************************************************************************
  */
-void dfu_m_cmd_prase(uint8_t* data,uint16_t len);
+void dfu_m_cmd_parse(const uint8_t* data, uint16_t len);
 
+#if DFU_ASYNC_TX_ENABLE
 /**
  *****************************************************************************************
- * @brief This function should be called when data sended completely.
- *
- * @retval void
+ * @brief When asynchronous transmission mode is enabled, this function should be called when data sent completely
  *****************************************************************************************
  */
 void dfu_m_send_data_cmpl_process(void);
+
+#if DFU_BLE_ENABLE
+/**
+ *****************************************************************************************
+ * @brief Set the enabled status of fast dfu mode.
+ * @note Only valid in BLE mode.
+ *
+ * @param[in] setting: FAST_DFU_MODE_ENABLE or FAST_DFU_MODE_DISABLE.
+ *****************************************************************************************
+ */
+void dfu_m_fast_dfu_mode_set(uint8_t setting);
+
+/**
+ *****************************************************************************************
+ * @brief Get the enabled status of fast dfu mode.
+  * @note Only valid in BLE mode.
+ *
+ * @retval FAST_DFU_MODE_ENABLE or FAST_DFU_MODE_DISABLE.
+ *****************************************************************************************
+ */
+uint8_t dfu_m_fast_dfu_mode_get(void);
+
+/**
+ *****************************************************************************************
+ * @brief When fast transmission mode is enabled, this function should be called when data sent completely
+ * @note Only valid in BLE mode.
+ *****************************************************************************************
+ */
+void dfu_m_fast_send_data_cmpl_process(void);
+#endif /* DFU_BLE_ENABLE */
+#endif /* DFU_ASYNC_TX_ENABLE */
+
+/**
+ *****************************************************************************************
+ * @brief Get the flash programmed size.
+ *
+ * @retval Flash programmed size.
+ *****************************************************************************************
+ */
+uint32_t dfu_m_get_program_size(void);
 
 /** @} */
 #endif

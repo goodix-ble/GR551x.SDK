@@ -35,8 +35,8 @@ static uint8_t lcp_buf[280] __attribute__((section (".ARM.__at_0x00820000"), zer
 
 #define SDK_VER_MAJOR                   2
 #define SDK_VER_MINOR                   1
-#define SDK_VER_BUILD                   0
-#define COMMIT_ID                       0x02ee0ce7
+#define SDK_VER_BUILD                   1
+#define COMMIT_ID                       0x36ceb294
 
 static const sdk_version_t sdk_version = {SDK_VER_MAJOR,
                                           SDK_VER_MINOR,
@@ -169,6 +169,9 @@ void platform_init(void)
     ble_wakeup_osc_time_set(run_mode, osc_time);
     #endif
 
+    /* enable protection. */
+    platform_init_push();
+
     /* set sram power state. */
     mem_pwr_mgmt_mode_set(MEM_POWER_AUTO_MODE);
 
@@ -223,6 +226,11 @@ void platform_init(void)
     pmu_calibration_handler(NULL);
     /* Init peripheral sleep management */
     app_pwr_mgmt_init();
+
+#if PLATFORM_REMOVE_AON_WDT_PROT_ENABLE
+    /* disable protection. */
+    platform_init_pop();
+#endif
 
     return;
 }

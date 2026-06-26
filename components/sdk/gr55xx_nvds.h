@@ -109,8 +109,6 @@ typedef uint16_t NvdsTag_t;
  */
 uint8_t nvds_init(uint32_t start_addr, uint8_t sectors);
 
-/** @addtogroup NVDS_FUNCTIONS Functions
- * @{ */
 /**
  ****************************************************************************************
  * @brief De-initialize the sectors for NVDS.
@@ -179,6 +177,7 @@ uint8_t nvds_del(NvdsTag_t tag);
  */
 uint16_t nvds_tag_length(NvdsTag_t tag);
 
+/** @} */
 
 /** @addtogroup LOCAL_FLASH_FUNCTIONS Local Flash Functions
  * @{ */
@@ -284,8 +283,6 @@ void local_hal_flash_set_security(bool enable);
  *******************************************************************************
  */
 uint32_t local_hal_flash_write_r(const uint32_t addr, const uint8_t *buf, const uint32_t size);
-
-/** @} */
 
 /** @} */
 

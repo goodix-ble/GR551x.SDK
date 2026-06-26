@@ -56,6 +56,12 @@
 #define configOVERRIDE_DEFAULT_TICK_CONFIGURATION       1
 #endif
 
+#ifdef SOC_SGP
+#define configENABLE_FPU                                1
+#define configENABLE_MPU                                0
+#define configENABLE_TRUSTZONE                          0
+#endif
+
 #define configUSE_TICKLESS_IDLE                         1
 
 #define configUSE_PREEMPTION                            1 // 1 use Preemptive scheduling,, 0 use Time slice scheduling

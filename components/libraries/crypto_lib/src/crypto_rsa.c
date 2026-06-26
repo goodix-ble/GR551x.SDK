@@ -1,3 +1,8 @@
+
+
+#include  "custom_config.h"
+#if !defined(SOC_GR533X) && !defined(SOC_SGP)
+
 #include "crypto_rsa.h"
 #include "crypto_rsa_port.h"
 #include "crypto_pkc_port.h"
@@ -42,7 +47,7 @@ static void swap_endian(uint32_t *in, uint32_t len, uint32_t *out)
 
 static void swap_order(uint8_t *in, uint32_t len)
 {
-    int i;
+    uint32_t i;
     uint8_t temp;
     for(i = 0; i < len/2; i++)
     {
@@ -321,7 +326,7 @@ static algo_rsa_ret_e rsa_rsassa_pss_sign(rsa_context_t *ctx, const uint8_t *has
         }
 
         memset(sig, 0x0, olen);
-        memset(salt, 0x0, 8);
+        memset(salt, 0x0, sizeof(salt));
         memset(zero_hash_p, 0, ZERO_PADDING_SIZE + 2 * SHA256_SIZE);
         for (i = 0; i < 8; i++)
         {
@@ -899,3 +904,4 @@ algo_rsa_ret_e crypto_rsa_pkcs1_verify(algo_rsa_config_t *rsa_config,
 
     return ret;
 }
+#endif

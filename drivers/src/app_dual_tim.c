@@ -70,7 +70,7 @@ static const uint32_t    s_dual_tim_instance[APP_DUAL_TIM_ID_MAX] = { DUAL_TIM0_
 
 static dual_tim_env_t *p_dual_tim_env[APP_DUAL_TIM_ID_MAX];
 
-const static app_sleep_callbacks_t dual_tim_sleep_cb =
+static const app_sleep_callbacks_t dual_tim_sleep_cb =
 {
     .app_prepare_for_sleep = dual_tim_prepare_for_sleep,
     .app_wake_up_ind       = dual_tim_wake_up_ind,

@@ -74,7 +74,7 @@ static bool     s_start_send_flag;
 static bool     s_start_update_ci_flag;
 static bool     s_start_update_pdu_flag;
 static bool     s_start_update_phy_flag;
-
+static int8_t          s_rssi;
 /*
  * LOCAL FUNCTION DEFINITIONS
  *****************************************************************************************
@@ -169,6 +169,11 @@ static void thrpt_param_set(uint8_t param[])
     }
 }
 
+void thrpt_rssi_update(int8_t rssi)
+{
+    s_rssi = rssi;
+}
+
 /*
  * GLOBAL FUNCTION DEFINITIONS
  *****************************************************************************************
@@ -187,7 +192,7 @@ void thrpt_counter_handler(void *p_arg)
         average_ths =  (s_all_get_bytes + s_all_send_bytes) / s_throughput_1s_counter / 125;
         UNUSED_VARIABLE(instant_ths);
         UNUSED_VARIABLE(average_ths);
-        APP_LOG_INFO("The instant throughput:  %dkbs", instant_ths);
+        APP_LOG_INFO("The instant throughput:  %dkbs   RSSI: %ddBm", instant_ths, s_rssi);
         APP_LOG_INFO("The average throughput:  %dkbs(%ds)\r\n",average_ths, s_throughput_1s_counter);
     }
     else
