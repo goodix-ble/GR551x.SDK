@@ -1,6 +1,8 @@
 /*
- * FreeRTOS Kernel V10.4.3 LTS Patch 2
- * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * FreeRTOS Kernel V11.3.1
+ * Copyright (C) 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * SPDX-License-Identifier: MIT
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -22,7 +24,6 @@
  * https://www.FreeRTOS.org
  * https://github.com/FreeRTOS
  *
- * 1 tab == 4 spaces!
  */
 
 #ifndef __PORT_ASM_H__
@@ -51,7 +52,7 @@ BaseType_t xIsPrivileged( void ) __attribute__( ( naked ) );
  * @brief Raises the privilege level by clearing the bit 0 of the CONTROL
  * register.
  *
- * @note This is a privileged function and should only be called from the kenrel
+ * @note This is a privileged function and should only be called from the kernel
  * code.
  *
  * Bit 0 of the CONTROL register defines the privilege level of Thread Mode.
